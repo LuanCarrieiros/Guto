@@ -1,0 +1,330 @@
+{% extends 'base.html' %}
+
+{% block title %}
+    {% if funcionario %}Editar Funcionário{% else %}Novo Funcionário{% endif %} - GUTO
+{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-800">
+                {% if funcionario %}
+                    <i class="fas fa-edit text-purple-600 mr-2"></i>Editar Funcionário
+                {% else %}
+                    <i class="fas fa-plus text-purple-600 mr-2"></i>Novo Funcionário
+                {% endif %}
+            </h1>
+            <p class="text-gray-600 mt-1">
+                {% if funcionario %}
+                    Atualize as informações básicas do funcionário
+                {% else %}
+                    Preencha as informações básicas do funcionário
+                {% endif %}
+            </p>
+        </div>
+        <a href="{% url 'funcionarios:funcionario_list' %}" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Voltar
+        </a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+        
+        <!-- Informações Pessoais -->
+        <div class="bg-gray-50 rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-user text-purple-600 mr-2"></i>Informações Pessoais
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="lg:col-span-2">
+                    <label for="{{ form.nome.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.nome.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.nome }}
+                    {% if form.nome.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.nome.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.sexo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.sexo.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.sexo }}
+                    {% if form.sexo.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.sexo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.data_nascimento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.data_nascimento.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.data_nascimento }}
+                    {% if form.data_nascimento.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.data_nascimento.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.cpf.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.cpf.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.cpf }}
+                    {% if form.cpf.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.cpf.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.rg.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.rg.label }}
+                    </label>
+                    {{ form.rg }}
+                    {% if form.rg.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.rg.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.foto.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.foto.label }}
+                    </label>
+                    {{ form.foto }}
+                    {% if form.foto.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.foto.errors.0 }}</p>
+                    {% endif %}
+                    {% if funcionario and funcionario.foto %}
+                        <p class="mt-1 text-sm text-gray-500">Foto atual: <a href="{{ funcionario.foto.url }}" target="_blank" class="text-purple-600 hover:text-purple-800">Ver foto</a></p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Contato -->
+        <div class="bg-gray-50 rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-phone text-purple-600 mr-2"></i>Contato
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label for="{{ form.telefone.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.telefone.label }}
+                    </label>
+                    {{ form.telefone }}
+                    {% if form.telefone.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.telefone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.celular.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.celular.label }}
+                    </label>
+                    {{ form.celular }}
+                    {% if form.celular.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.celular.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.email.label }}
+                    </label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Endereço -->
+        <div class="bg-gray-50 rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-map-marker-alt text-purple-600 mr-2"></i>Endereço
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div>
+                    <label for="{{ form.cep.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.cep.label }}
+                    </label>
+                    {{ form.cep }}
+                    {% if form.cep.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.cep.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="lg:col-span-2">
+                    <label for="{{ form.endereco.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.endereco.label }}
+                    </label>
+                    {{ form.endereco }}
+                    {% if form.endereco.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.endereco.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.numero.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.numero.label }}
+                    </label>
+                    {{ form.numero }}
+                    {% if form.numero.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.numero.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="lg:col-span-2">
+                    <label for="{{ form.complemento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.complemento.label }}
+                    </label>
+                    {{ form.complemento }}
+                    {% if form.complemento.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.complemento.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.bairro.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.bairro.label }}
+                    </label>
+                    {{ form.bairro }}
+                    {% if form.bairro.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.bairro.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.cidade.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.cidade.label }}
+                    </label>
+                    {{ form.cidade }}
+                    {% if form.cidade.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.cidade.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Dados Funcionais -->
+        <div class="bg-gray-50 rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-briefcase text-purple-600 mr-2"></i>Dados Funcionais
+            </h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div>
+                    <label for="{{ form.cargo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.cargo.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.cargo }}
+                    {% if form.cargo.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.cargo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.data_admissao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.data_admissao.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.data_admissao }}
+                    {% if form.data_admissao.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.data_admissao.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.tipo_arquivo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.tipo_arquivo.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.tipo_arquivo }}
+                    {% if form.tipo_arquivo.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.tipo_arquivo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div class="lg:col-span-3">
+                    <div class="flex items-center">
+                        {{ form.ativo }}
+                        <label for="{{ form.ativo.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
+                            {{ form.ativo.label }}
+                        </label>
+                    </div>
+                    {% if form.ativo.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.ativo.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Observações -->
+        <div class="bg-gray-50 rounded-lg p-6">
+            <h2 class="text-xl font-semibold text-gray-800 mb-4">
+                <i class="fas fa-sticky-note text-purple-600 mr-2"></i>Observações
+            </h2>
+            
+            <div>
+                <label for="{{ form.observacoes.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                    {{ form.observacoes.label }}
+                </label>
+                {{ form.observacoes }}
+                {% if form.observacoes.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.observacoes.errors.0 }}</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Botões de ação -->
+        <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+            <div class="text-sm text-gray-500">
+                <i class="fas fa-info-circle mr-1"></i>
+                Campos marcados com <span class="text-red-500">*</span> são obrigatórios
+            </div>
+            
+            <div class="flex space-x-3">
+                <a href="{% url 'funcionarios:funcionario_list' %}" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors">
+                    Cancelar
+                </a>
+                <button type="submit" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200">
+                    <i class="fas fa-save mr-2"></i>
+                    {% if funcionario %}Atualizar{% else %}Cadastrar{% endif %}
+                </button>
+                {% if funcionario %}
+                    <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.codigo %}" class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-blue-700 hover:to-indigo-700 transition-all duration-200">
+                        <i class="fas fa-cogs mr-2"></i>Edição Completa
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </form>
+</div>
+
+<!-- Scripts para auto-preenchimento de CEP -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const cepInput = document.querySelector('#id_cep');
+    if (cepInput) {
+        cepInput.addEventListener('blur', function() {
+            const cep = this.value.replace(/\D/g, '');
+            if (cep.length === 8) {
+                fetch(`https://viacep.com.br/ws/${cep}/json/`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (!data.erro) {
+                            document.querySelector('#id_endereco').value = data.logradouro || '';
+                            document.querySelector('#id_bairro').value = data.bairro || '';
+                            document.querySelector('#id_cidade').value = data.localidade || '';
+                        }
+                    })
+                    .catch(error => console.log('Erro ao buscar CEP:', error));
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,341 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/alunos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+            <p class="text-gray-600 mt-1">
+                {% if is_create %}
+                    Preencha os dados básicos do aluno para cadastrá-lo no sistema
+                {% else %}
+                    Edite os dados básicos do aluno {{ aluno.nome }}
+                {% endif %}
+            </p>
+        </div>
+        <a href="{% url 'alunos:aluno_list' %}" class="btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Voltar à Lista
+        </a>
+    </div>
+
+    <!-- Formulário -->
+    <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+        <form method="post" enctype="multipart/form-data" class="space-y-0">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="form-errors">
+                <h4 class="font-medium text-red-800 mb-2">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    Corrija os erros abaixo:
+                </h4>
+                <ul>
+                    {% for field, errors in form.errors.items %}
+                        {% for error in errors %}
+                            <li>{{ field|title }}: {{ error }}</li>
+                        {% endfor %}
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <!-- Seção: Dados Básicos -->
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-user mr-2 text-blue-600"></i>
+                    Dados Básicos do Aluno
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Informações básicas obrigatórias</p>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nome Completo -->
+                    <div class="form-group required md:col-span-2">
+                        <label class="required-label block text-sm font-medium text-gray-700 mb-2">
+                            Nome Completo
+                        </label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.nome.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Deve conter nome e sobrenome (RNF101)
+                        </p>
+                    </div>
+                    
+                    <!-- Nome Social -->
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Nome Social
+                        </label>
+                        {{ form.nome_social }}
+                        {% if form.nome_social.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.nome_social.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Data de Nascimento -->
+                    <div class="form-group required">
+                        <label class="required-label block text-sm font-medium text-gray-700 mb-2">
+                            Data de Nascimento
+                        </label>
+                        {{ form.data_nascimento }}
+                        {% if form.data_nascimento.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.data_nascimento.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Sexo -->
+                    <div class="form-group required">
+                        <label class="required-label block text-sm font-medium text-gray-700 mb-2">
+                            Sexo
+                        </label>
+                        {{ form.sexo }}
+                        {% if form.sexo.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.sexo.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção: Filiação -->
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-t">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-users mr-2 text-green-600"></i>
+                    Filiação
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Dados dos pais ou responsáveis</p>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Nome da Mãe -->
+                    <div class="form-group">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Nome da Mãe
+                            </label>
+                            <div class="flex items-center">
+                                {{ form.mae_nao_declarada }}
+                                <label for="{{ form.mae_nao_declarada.id_for_label }}" class="ml-2 text-sm text-gray-600">
+                                    Mãe não declarada
+                                </label>
+                            </div>
+                        </div>
+                        {{ form.nome_mae }}
+                        {% if form.nome_mae.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.nome_mae.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Nome do Pai -->
+                    <div class="form-group">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="block text-sm font-medium text-gray-700">
+                                Nome do Pai
+                            </label>
+                            <div class="flex items-center">
+                                {{ form.pai_nao_declarado }}
+                                <label for="{{ form.pai_nao_declarado.id_for_label }}" class="ml-2 text-sm text-gray-600">
+                                    Pai não declarado
+                                </label>
+                            </div>
+                        </div>
+                        {{ form.nome_pai }}
+                        {% if form.nome_pai.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.nome_pai.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção: Informações Especiais -->
+            <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-t">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-star mr-2 text-purple-600"></i>
+                    Informações Especiais
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Flags e características especiais do aluno</p>
+            </div>
+            
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Aluno Gêmeo -->
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                        {{ form.aluno_gemeo }}
+                        <div class="ml-3">
+                            <label for="{{ form.aluno_gemeo.id_for_label }}" class="text-sm font-medium text-gray-700">
+                                Aluno Gêmeo
+                            </label>
+                            <p class="text-xs text-gray-500">Marque se o aluno é gêmeo</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Falta Histórico -->
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                        {{ form.falta_historico_escolar }}
+                        <div class="ml-3">
+                            <label for="{{ form.falta_historico_escolar.id_for_label }}" class="text-sm font-medium text-gray-700">
+                                Falta Histórico Escolar
+                            </label>
+                            <p class="text-xs text-gray-500">Aluno sem histórico</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Exclusivo AEE -->
+                    <div class="flex items-center p-3 bg-gray-50 rounded-lg">
+                        {{ form.aluno_exclusivo_aee }}
+                        <div class="ml-3">
+                            <label for="{{ form.aluno_exclusivo_aee.id_for_label }}" class="text-sm font-medium text-gray-700">
+                                Exclusivo AEE
+                            </label>
+                            <p class="text-xs text-gray-500">Apenas atividade complementar</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Seção: Dados Adicionais -->
+            <div class="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-4 border-b border-t">
+                <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-clipboard mr-2 text-orange-600"></i>
+                    Dados Adicionais
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Informações complementares e foto</p>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Lembrete -->
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Lembrete / Observações
+                        </label>
+                        {{ form.lembrete }}
+                        {% if form.lembrete.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.lembrete.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Observações importantes sobre o aluno</p>
+                    </div>
+                    
+                    <!-- Foto -->
+                    <div class="form-group">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Foto do Aluno
+                        </label>
+                        {% if aluno.foto %}
+                            <div class="mb-3">
+                                <img src="{{ aluno.foto.url }}" alt="{{ aluno.nome }}" 
+                                     class="w-24 h-24 rounded-lg object-cover border-2 border-gray-200">
+                                <p class="text-xs text-gray-500 mt-1">Foto atual</p>
+                            </div>
+                        {% endif %}
+                        {{ form.foto }}
+                        {% if form.foto.errors %}
+                            <p class="text-red-600 text-sm mt-1">{{ form.foto.errors.0 }}</p>
+                        {% endif %}
+                        <p class="text-xs text-gray-500 mt-1">Formatos aceitos: JPG, PNG (máx. 2MB)</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="bg-gray-50 px-6 py-4 border-t flex flex-col sm:flex-row sm:justify-between space-y-3 sm:space-y-0">
+                <div class="flex space-x-3">
+                    <button type="submit" class="btn-primary">
+                        <i class="fas fa-save mr-2"></i>
+                        {% if is_create %}Cadastrar Aluno{% else %}Salvar Alterações{% endif %}
+                    </button>
+                    
+                    {% if is_create %}
+                    <button type="submit" name="completar_cadastro" value="true" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                        <i class="fas fa-arrow-right mr-2"></i>
+                        Cadastrar e Completar Dados
+                    </button>
+                    {% endif %}
+                </div>
+                
+                <div class="flex space-x-3">
+                    {% if not is_create %}
+                    <a href="{% url 'alunos:aluno_edit_extended' aluno.pk %}" class="bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors">
+                        <i class="fas fa-edit mr-2"></i>
+                        Cadastro Completo
+                    </a>
+                    <a href="{% url 'alunos:aluno_detail' aluno.pk %}" class="btn-secondary">
+                        <i class="fas fa-eye mr-2"></i>
+                        Visualizar
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'alunos:aluno_list' %}" class="btn-secondary">
+                        <i class="fas fa-times mr-2"></i>
+                        Cancelar
+                    </a>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Informações Importantes -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h4 class="text-sm font-medium text-blue-800 mb-2">
+            <i class="fas fa-info-circle mr-2"></i>
+            Informações Importantes
+        </h4>
+        <ul class="text-xs text-blue-700 space-y-1">
+            <li>• Campos com fundo verde são obrigatórios (RNF104)</li>
+            <li>• O código do aluno será gerado automaticamente após o cadastro (RNF103)</li>
+            {% if is_create %}
+            <li>• Após cadastrar, você pode completar os dados detalhados (documentação, responsáveis, transporte)</li>
+            <li>• Use "Cadastrar e Completar Dados" para ir direto ao cadastro estendido</li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+
+<script>
+// JavaScript para campos condicionais
+document.addEventListener('DOMContentLoaded', function() {
+    // Desabilitar campos de nome quando checkboxes estão marcados
+    const maeCheckbox = document.getElementById('{{ form.mae_nao_declarada.id_for_label }}');
+    const paiCheckbox = document.getElementById('{{ form.pai_nao_declarado.id_for_label }}');
+    const nomeMae = document.getElementById('{{ form.nome_mae.id_for_label }}');
+    const nomePai = document.getElementById('{{ form.nome_pai.id_for_label }}');
+    
+    function toggleField(checkbox, field) {
+        if (checkbox && field) {
+            checkbox.addEventListener('change', function() {
+                field.disabled = this.checked;
+                if (this.checked) {
+                    field.value = '';
+                    field.classList.add('bg-gray-100');
+                } else {
+                    field.classList.remove('bg-gray-100');
+                }
+            });
+            
+            // Estado inicial
+            if (checkbox.checked) {
+                field.disabled = true;
+                field.classList.add('bg-gray-100');
+            }
+        }
+    }
+    
+    toggleField(maeCheckbox, nomeMae);
+    toggleField(paiCheckbox, nomePai);
+});
+</script>
+{% endblock %}

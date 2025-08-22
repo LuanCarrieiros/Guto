@@ -1,0 +1,450 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ aluno.nome }} - Detalhes do Aluno - GUTO{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/alunos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    
+    <!-- Header com Foto e Dados Básicos -->
+    <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg shadow-lg text-white overflow-hidden">
+        <div class="p-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center space-y-4 md:space-y-0 md:space-x-6">
+                <!-- Foto -->
+                <div class="flex-shrink-0">
+                    {% if aluno.foto %}
+                        <img src="{{ aluno.foto.url }}" alt="{{ aluno.nome }}" 
+                             class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white shadow-lg object-cover">
+                    {% else %}
+                        <div class="w-24 h-24 md:w-32 md:h-32 rounded-full border-4 border-white bg-white bg-opacity-20 flex items-center justify-center">
+                            <i class="fas fa-user text-4xl md:text-5xl text-white"></i>
+                        </div>
+                    {% endif %}
+                </div>
+                
+                <!-- Informações Principais -->
+                <div class="flex-1">
+                    <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+                        <div>
+                            <h1 class="text-2xl md:text-3xl font-bold">{{ aluno.nome }}</h1>
+                            {% if aluno.nome_social %}
+                                <p class="text-blue-100 text-lg">Nome social: {{ aluno.nome_social }}</p>
+                            {% endif %}
+                            <div class="flex flex-wrap items-center gap-3 mt-2">
+                                <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">
+                                    <i class="fas fa-hashtag mr-1"></i>Código: {{ aluno.codigo }}
+                                </span>
+                                <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">
+                                    <i class="fas fa-birthday-cake mr-1"></i>{{ aluno.idade }} anos
+                                </span>
+                                <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm">
+                                    {% if aluno.sexo == 'M' %}
+                                        <i class="fas fa-mars mr-1"></i>Masculino
+                                    {% else %}
+                                        <i class="fas fa-venus mr-1"></i>Feminino
+                                    {% endif %}
+                                </span>
+                                {% if aluno.aluno_gemeo %}
+                                <span class="bg-purple-500 px-3 py-1 rounded-full text-sm">
+                                    <i class="fas fa-users mr-1"></i>Gêmeo
+                                </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <!-- Status -->
+                        <div class="mt-4 md:mt-0">
+                            {% if aluno.tipo_arquivo == 'CORRENTE' %}
+                                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-green-500 text-white">
+                                    <i class="fas fa-check-circle mr-2"></i>Arquivo Corrente
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-4 py-2 rounded-full text-sm font-medium bg-yellow-500 text-white">
+                                    <i class="fas fa-archive mr-2"></i>Arquivo Permanente
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Ações Rápidas -->
+        <div class="bg-black bg-opacity-20 px-6 py-4">
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'alunos:aluno_edit' aluno.pk %}" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    <i class="fas fa-edit mr-2"></i>Editar Dados Básicos
+                </a>
+                <a href="{% url 'alunos:aluno_edit_extended' aluno.pk %}" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    <i class="fas fa-user-edit mr-2"></i>Cadastro Completo
+                </a>
+                <a href="{% url 'alunos:matricula_create' aluno.pk %}" class="bg-green-500 hover:bg-green-600 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    <i class="fas fa-graduation-cap mr-2"></i>Nova Matrícula
+                </a>
+                <a href="{% url 'alunos:aluno_print' aluno.pk %}" target="_blank" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    <i class="fas fa-print mr-2"></i>Imprimir
+                </a>
+                {% if aluno.tipo_arquivo == 'CORRENTE' %}
+                <a href="{% url 'alunos:aluno_move_to_permanent' aluno.pk %}" class="bg-yellow-500 hover:bg-yellow-600 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    <i class="fas fa-archive mr-2"></i>Arquivo Permanente
+                </a>
+                <a href="{% url 'alunos:aluno_delete' aluno.pk %}" class="bg-red-500 hover:bg-red-600 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    <i class="fas fa-trash mr-2"></i>Excluir
+                </a>
+                {% endif %}
+                <a href="{% url 'alunos:aluno_list' %}" class="bg-gray-500 hover:bg-gray-600 px-4 py-2 rounded-lg text-sm font-medium transition-all">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar à Lista
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid Principal -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Coluna Principal -->
+        <div class="lg:col-span-2 space-y-6">
+            
+            <!-- Dados Pessoais -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-user mr-2 text-blue-600"></i>
+                        Dados Pessoais
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Nome Completo</label>
+                            <p class="text-gray-900 mt-1">{{ aluno.nome }}</p>
+                        </div>
+                        {% if aluno.nome_social %}
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Nome Social</label>
+                            <p class="text-gray-900 mt-1">{{ aluno.nome_social }}</p>
+                        </div>
+                        {% endif %}
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Data de Nascimento</label>
+                            <p class="text-gray-900 mt-1">{{ aluno.data_nascimento|date:"d/m/Y" }} ({{ aluno.idade }} anos)</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Sexo</label>
+                            <p class="text-gray-900 mt-1">{{ aluno.get_sexo_display }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Data de Cadastro</label>
+                            <p class="text-gray-900 mt-1">{{ aluno.data_cadastro|date:"d/m/Y H:i" }}</p>
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Última Atualização</label>
+                            <p class="text-gray-900 mt-1">{{ aluno.data_atualizacao|date:"d/m/Y H:i" }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filiação -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-users mr-2 text-green-600"></i>
+                        Filiação
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Nome da Mãe</label>
+                            {% if aluno.mae_nao_declarada %}
+                                <p class="text-yellow-600 mt-1">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Mãe não declarada
+                                </p>
+                            {% else %}
+                                <p class="text-gray-900 mt-1">{{ aluno.nome_mae|default:"Não informado" }}</p>
+                            {% endif %}
+                        </div>
+                        <div>
+                            <label class="text-sm font-medium text-gray-700">Nome do Pai</label>
+                            {% if aluno.pai_nao_declarado %}
+                                <p class="text-yellow-600 mt-1">
+                                    <i class="fas fa-exclamation-triangle mr-1"></i>Pai não declarado
+                                </p>
+                            {% else %}
+                                <p class="text-gray-900 mt-1">{{ aluno.nome_pai|default:"Não informado" }}</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Responsáveis -->
+            {% if responsaveis %}
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-user-friends mr-2 text-purple-600"></i>
+                        Responsáveis Cadastrados
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <div class="space-y-4">
+                        {% for responsavel in responsaveis %}
+                        <div class="border border-gray-200 rounded-lg p-4">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">{{ responsavel.nome }}</h4>
+                                    <p class="text-sm text-gray-600">{{ responsavel.parentesco }}</p>
+                                </div>
+                                <div class="text-right text-sm text-gray-600">
+                                    {% if responsavel.telefone %}
+                                        <p><i class="fas fa-phone mr-1"></i>{{ responsavel.telefone }}</p>
+                                    {% endif %}
+                                    {% if responsavel.email %}
+                                        <p><i class="fas fa-envelope mr-1"></i>{{ responsavel.email }}</p>
+                                    {% endif %}
+                                </div>
+                            </div>
+                            {% if responsavel.endereco %}
+                            <p class="text-sm text-gray-600 mt-2">
+                                <i class="fas fa-map-marker-alt mr-1"></i>{{ responsavel.endereco }}
+                            </p>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Histórico de Matrículas -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-indigo-50 to-blue-50 px-6 py-4 border-b">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                            <i class="fas fa-graduation-cap mr-2 text-indigo-600"></i>
+                            Histórico de Matrículas
+                        </h3>
+                        <a href="{% url 'alunos:matricula_create' aluno.pk %}" class="text-sm bg-indigo-600 text-white px-3 py-1 rounded-lg hover:bg-indigo-700">
+                            <i class="fas fa-plus mr-1"></i>Nova Matrícula
+                        </a>
+                    </div>
+                </div>
+                <div class="p-6">
+                    {% if matriculas %}
+                    <div class="space-y-4">
+                        {% for matricula in matriculas %}
+                        <div class="border border-gray-200 rounded-lg p-4 {% if matricula.status == 'ATIVA' %}border-l-4 border-l-green-500{% endif %}">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">
+                                        {{ matricula.get_tipo_ensino_display }} - {{ matricula.serie_ano }}
+                                    </h4>
+                                    <p class="text-sm text-gray-600">Ano: {{ matricula.ano_administrativo }} | {{ matricula.get_turno_preferencial_display }}</p>
+                                    <p class="text-xs text-gray-500">Matrícula: {{ matricula.data_matricula|date:"d/m/Y" }}</p>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    {% if matricula.status == 'ATIVA' %}
+                                        <span class="badge badge-active">Ativa</span>
+                                    {% elif matricula.status == 'ENCERRADA' %}
+                                        <span class="badge badge-ended">Encerrada</span>
+                                    {% else %}
+                                        <span class="badge badge-inactive">{{ matricula.get_status_display }}</span>
+                                    {% endif %}
+                                    
+                                    <div class="flex space-x-1">
+                                        {% if matricula.status == 'ATIVA' %}
+                                        <a href="{% url 'alunos:matricula_edit' matricula.pk %}" class="text-blue-600 hover:text-blue-800" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </a>
+                                        <a href="{% url 'alunos:matricula_encerrar' matricula.pk %}" class="text-red-600 hover:text-red-800" title="Encerrar">
+                                            <i class="fas fa-times-circle"></i>
+                                        </a>
+                                        {% elif matricula.status == 'ENCERRADA' and aluno.tipo_arquivo == 'CORRENTE' %}
+                                        <a href="{% url 'alunos:matricula_reativar' matricula.pk %}" class="text-green-600 hover:text-green-800" title="Reativar">
+                                            <i class="fas fa-play-circle"></i>
+                                        </a>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% if matricula.data_encerramento %}
+                            <div class="mt-2 text-xs text-red-600">
+                                <i class="fas fa-calendar-times mr-1"></i>
+                                Encerrada em {{ matricula.data_encerramento|date:"d/m/Y" }}
+                                {% if matricula.motivo_encerramento %}
+                                    - {{ matricula.motivo_encerramento }}
+                                {% endif %}
+                            </div>
+                            {% endif %}
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-graduation-cap text-4xl mb-3 block"></i>
+                        <p class="font-medium">Nenhuma matrícula encontrada</p>
+                        <p class="text-sm">Cadastre a primeira matrícula deste aluno</p>
+                        <a href="{% url 'alunos:matricula_create' aluno.pk %}" class="btn-primary mt-3 inline-block">
+                            <i class="fas fa-plus mr-2"></i>Criar Matrícula
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="space-y-6">
+            
+            <!-- Informações Especiais -->
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-orange-50 to-amber-50 px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-star mr-2 text-orange-600"></i>
+                        Informações Especiais
+                    </h3>
+                </div>
+                <div class="p-6 space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700">Aluno Gêmeo</span>
+                        {% if aluno.aluno_gemeo %}
+                            <span class="text-green-600"><i class="fas fa-check-circle"></i></span>
+                        {% else %}
+                            <span class="text-gray-400"><i class="fas fa-times-circle"></i></span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700">Falta Histórico Escolar</span>
+                        {% if aluno.falta_historico_escolar %}
+                            <span class="text-yellow-600"><i class="fas fa-exclamation-triangle"></i></span>
+                        {% else %}
+                            <span class="text-gray-400"><i class="fas fa-times-circle"></i></span>
+                        {% endif %}
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-gray-700">Exclusivo AEE</span>
+                        {% if aluno.aluno_exclusivo_aee %}
+                            <span class="text-blue-600"><i class="fas fa-check-circle"></i></span>
+                        {% else %}
+                            <span class="text-gray-400"><i class="fas fa-times-circle"></i></span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Documentação -->
+            {% if documentacao %}
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-gray-50 to-slate-50 px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-file-alt mr-2 text-gray-600"></i>
+                        Documentação
+                    </h3>
+                </div>
+                <div class="p-6 space-y-3 text-sm">
+                    {% if documentacao.aluno_nao_possui_documentos %}
+                        <p class="text-yellow-600">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Aluno não possui documentos
+                        </p>
+                    {% elif documentacao.escola_nao_recebeu_documentos %}
+                        <p class="text-yellow-600">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Escola não recebeu documentos
+                        </p>
+                    {% else %}
+                        <div class="space-y-2">
+                            {% if documentacao.rg %}
+                                <div class="flex justify-between">
+                                    <span class="text-gray-700">RG:</span>
+                                    <span class="font-mono">{{ documentacao.rg }}</span>
+                                </div>
+                            {% endif %}
+                            {% if documentacao.cpf %}
+                                <div class="flex justify-between">
+                                    <span class="text-gray-700">CPF:</span>
+                                    <span class="font-mono">{{ documentacao.cpf }}</span>
+                                </div>
+                            {% endif %}
+                            {% if documentacao.certidao_nascimento %}
+                                <div class="flex justify-between">
+                                    <span class="text-gray-700">Certidão:</span>
+                                    <span class="font-mono text-xs">{{ documentacao.certidao_nascimento }}</span>
+                                </div>
+                            {% endif %}
+                            {% if not documentacao.rg and not documentacao.cpf and not documentacao.certidao_nascimento %}
+                                <p class="text-gray-500 italic">Documentos não informados</p>
+                            {% endif %}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Transporte -->
+            {% if transporte %}
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-yellow-50 to-orange-50 px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-bus mr-2 text-yellow-600"></i>
+                        Transporte Escolar
+                    </h3>
+                </div>
+                <div class="p-6">
+                    {% if transporte.utiliza_transporte %}
+                        <div class="space-y-2 text-sm">
+                            <div class="flex items-center text-green-600 mb-3">
+                                <i class="fas fa-check-circle mr-2"></i>
+                                <span class="font-medium">Utiliza transporte escolar</span>
+                            </div>
+                            {% if transporte.nome_motorista %}
+                                <div class="flex justify-between">
+                                    <span class="text-gray-700">Motorista:</span>
+                                    <span>{{ transporte.nome_motorista }}</span>
+                                </div>
+                            {% endif %}
+                            {% if transporte.placa_veiculo %}
+                                <div class="flex justify-between">
+                                    <span class="text-gray-700">Placa:</span>
+                                    <span class="font-mono">{{ transporte.placa_veiculo }}</span>
+                                </div>
+                            {% endif %}
+                            {% if transporte.rota %}
+                                <div class="flex justify-between">
+                                    <span class="text-gray-700">Rota:</span>
+                                    <span>{{ transporte.rota }}</span>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="flex items-center text-gray-500">
+                            <i class="fas fa-times-circle mr-2"></i>
+                            <span>Não utiliza transporte escolar</span>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Lembrete -->
+            {% if aluno.lembrete %}
+            <div class="bg-white rounded-lg shadow-lg overflow-hidden">
+                <div class="bg-gradient-to-r from-red-50 to-pink-50 px-6 py-4 border-b">
+                    <h3 class="text-lg font-semibold text-gray-900 flex items-center">
+                        <i class="fas fa-sticky-note mr-2 text-red-600"></i>
+                        Lembrete
+                    </h3>
+                </div>
+                <div class="p-6">
+                    <p class="text-sm text-gray-700">{{ aluno.lembrete }}</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

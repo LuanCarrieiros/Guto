@@ -1,0 +1,266 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lista de Alunos - GUTO{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/alunos.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="h-full flex flex-col space-y-6">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Gestão de Alunos</h1>
+            <p class="text-gray-600 mt-1">Cadastro, pesquisa e gerenciamento de alunos</p>
+        </div>
+        <a href="{% url 'alunos:aluno_create' %}" class="btn-primary inline-flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Novo Aluno
+        </a>
+    </div>
+
+    <!-- Filtros de Pesquisa (RF103) -->
+    <div class="search-filters">
+        <form method="GET" class="space-y-4">
+            <div class="filter-group">
+                <div class="flex-1">
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Buscar por:</label>
+                    <div class="flex space-x-2">
+                        <select name="tipo_busca" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <option value="nome" {% if tipo_busca == 'nome' %}selected{% endif %}>Nome do Aluno</option>
+                            <option value="codigo" {% if tipo_busca == 'codigo' %}selected{% endif %}>Código do Aluno</option>
+                        </select>
+                        <input type="text" name="busca" value="{{ busca|default:'' }}" 
+                               placeholder="Digite para pesquisar..." 
+                               class="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Arquivo:</label>
+                    <select name="arquivo_tipo" class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                        <option value="TODOS" {% if arquivo_tipo == 'TODOS' %}selected{% endif %}>Exibir Todos</option>
+                        <option value="CORRENTE" {% if arquivo_tipo == 'CORRENTE' %}selected{% endif %}>Exibir Arquivo Corrente</option>
+                        <option value="PERMANENTE" {% if arquivo_tipo == 'PERMANENTE' %}selected{% endif %}>Exibir do Arquivo Permanente</option>
+                    </select>
+                </div>
+                
+                <div class="flex items-center">
+                    <input type="checkbox" name="aluno_gemeo" id="aluno_gemeo" value="true" 
+                           {% if aluno_gemeo %}checked{% endif %}
+                           class="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500">
+                    <label for="aluno_gemeo" class="ml-2 text-sm text-gray-700">Aluno Gêmeo</label>
+                </div>
+                
+                <button type="submit" class="btn-primary">
+                    <i class="fas fa-search mr-2"></i>
+                    Pesquisar
+                </button>
+                
+                <a href="{% url 'alunos:aluno_list' %}" class="btn-secondary">
+                    <i class="fas fa-times mr-2"></i>
+                    Limpar
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Estatísticas Rápidas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
+            <div class="flex items-center">
+                <div class="p-2 bg-blue-100 rounded-lg">
+                    <i class="fas fa-users text-blue-600"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-gray-600">Total de Alunos</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ total_alunos }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-4 rounded-lg shadow border-l-4 border-green-500">
+            <div class="flex items-center">
+                <div class="p-2 bg-green-100 rounded-lg">
+                    <i class="fas fa-check-circle text-green-600"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-gray-600">Arquivo Corrente</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ alunos_corrente }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-4 rounded-lg shadow border-l-4 border-yellow-500">
+            <div class="flex items-center">
+                <div class="p-2 bg-yellow-100 rounded-lg">
+                    <i class="fas fa-archive text-yellow-600"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-gray-600">Arquivo Permanente</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ alunos_permanente }}</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white p-4 rounded-lg shadow border-l-4 border-purple-500">
+            <div class="flex items-center">
+                <div class="p-2 bg-purple-100 rounded-lg">
+                    <i class="fas fa-child text-purple-600"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-gray-600">Alunos Gêmeos</p>
+                    <p class="text-xl font-semibold text-gray-900">{{ alunos_gemeos }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Alunos -->
+    <div class="bg-white rounded-lg shadow overflow-hidden flex-1">
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nome</th>
+                        <th>Data de Nascimento</th>
+                        <th>Idade</th>
+                        <th>Sexo</th>
+                        <th>Arquivo</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for aluno in alunos %}
+                    <tr class="hover:bg-gray-50 fade-in">
+                        <td class="font-mono font-medium text-blue-600">{{ aluno.codigo }}</td>
+                        <td>
+                            <div class="flex items-center">
+                                {% if aluno.foto %}
+                                    <img src="{{ aluno.foto.url }}" alt="{{ aluno.nome }}" 
+                                         class="w-8 h-8 rounded-full mr-3">
+                                {% else %}
+                                    <div class="w-8 h-8 bg-gray-300 rounded-full mr-3 flex items-center justify-center">
+                                        <i class="fas fa-user text-gray-600 text-xs"></i>
+                                    </div>
+                                {% endif %}
+                                <div>
+                                    <p class="font-medium text-gray-900">{{ aluno.nome }}</p>
+                                    {% if aluno.nome_social %}
+                                        <p class="text-sm text-gray-500">Nome social: {{ aluno.nome_social }}</p>
+                                    {% endif %}
+                                    {% if aluno.aluno_gemeo %}
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                                            <i class="fas fa-users mr-1"></i>Gêmeo
+                                        </span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td>{{ aluno.data_nascimento|date:"d/m/Y" }}</td>
+                        <td>{{ aluno.idade }} anos</td>
+                        <td>
+                            <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium 
+                                   {% if aluno.sexo == 'M' %}bg-blue-100 text-blue-800{% else %}bg-pink-100 text-pink-800{% endif %}">
+                                {% if aluno.sexo == 'M' %}
+                                    <i class="fas fa-mars mr-1"></i>Masculino
+                                {% else %}
+                                    <i class="fas fa-venus mr-1"></i>Feminino
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            {% if aluno.tipo_arquivo == 'CORRENTE' %}
+                                <span class="badge badge-active">
+                                    <i class="fas fa-check-circle mr-1"></i>Corrente
+                                </span>
+                            {% else %}
+                                <span class="badge badge-inactive">
+                                    <i class="fas fa-archive mr-1"></i>Permanente
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="flex space-x-2">
+                                <a href="{% url 'alunos:aluno_detail' aluno.pk %}" 
+                                   class="text-blue-600 hover:text-blue-800" title="Visualizar">
+                                    <i class="fas fa-eye"></i>
+                                </a>
+                                <a href="{% url 'alunos:aluno_edit' aluno.pk %}" 
+                                   class="text-green-600 hover:text-green-800" title="Editar">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <a href="{% url 'alunos:aluno_print' aluno.pk %}" 
+                                   class="text-purple-600 hover:text-purple-800" title="Imprimir">
+                                    <i class="fas fa-print"></i>
+                                </a>
+                                {% if aluno.tipo_arquivo == 'CORRENTE' %}
+                                <a href="{% url 'alunos:aluno_delete' aluno.pk %}" 
+                                   class="text-red-600 hover:text-red-800" title="Excluir">
+                                    <i class="fas fa-trash"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-12">
+                            <div class="text-gray-500">
+                                <i class="fas fa-user-graduate text-4xl mb-4 block"></i>
+                                <p class="text-lg font-medium">Nenhum aluno encontrado</p>
+                                <p class="text-sm">Tente ajustar os filtros ou cadastre um novo aluno</p>
+                                <a href="{% url 'alunos:aluno_create' %}" class="btn-primary mt-4 inline-block">
+                                    <i class="fas fa-plus mr-2"></i>Cadastrar Primeiro Aluno
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Paginação -->
+        {% if alunos.has_other_pages %}
+        <div class="bg-gray-50 px-6 py-4 border-t">
+            <div class="flex items-center justify-between">
+                <div class="text-sm text-gray-700">
+                    Mostrando 
+                    <span class="font-medium">{{ alunos.start_index }}</span>
+                    a 
+                    <span class="font-medium">{{ alunos.end_index }}</span>
+                    de 
+                    <span class="font-medium">{{ alunos.paginator.count }}</span>
+                    resultados
+                </div>
+                
+                <div class="flex space-x-2">
+                    {% if alunos.has_previous %}
+                        <a href="?page={{ alunos.previous_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if tipo_busca %}&tipo_busca={{ tipo_busca }}{% endif %}{% if arquivo_tipo %}&arquivo_tipo={{ arquivo_tipo }}{% endif %}{% if aluno_gemeo %}&aluno_gemeo={{ aluno_gemeo }}{% endif %}" 
+                           class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                            Anterior
+                        </a>
+                    {% endif %}
+                    
+                    <span class="px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-md">
+                        Página {{ alunos.number }} de {{ alunos.paginator.num_pages }}
+                    </span>
+                    
+                    {% if alunos.has_next %}
+                        <a href="?page={{ alunos.next_page_number }}{% if busca %}&busca={{ busca }}{% endif %}{% if tipo_busca %}&tipo_busca={{ tipo_busca }}{% endif %}{% if arquivo_tipo %}&arquivo_tipo={{ arquivo_tipo }}{% endif %}{% if aluno_gemeo %}&aluno_gemeo={{ aluno_gemeo }}{% endif %}" 
+                           class="px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-md hover:bg-gray-50">
+                            Próxima
+                        </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

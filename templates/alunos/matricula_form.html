@@ -1,0 +1,146 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+            <p class="text-gray-600 mt-1">Aluno: {{ aluno.nome }}</p>
+        </div>
+        <a href="{% url 'alunos:aluno_detail' aluno.pk %}" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+            Voltar ao Aluno
+        </a>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="post">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+            <div class="bg-red-50 border border-red-200 rounded p-4 mb-6">
+                <h4 class="text-red-800 font-medium mb-2">Corrija os erros:</h4>
+                {{ form.errors }}
+            </div>
+            {% endif %}
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Ano Administrativo *
+                    </label>
+                    {{ form.ano_administrativo }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Ensino *
+                    </label>
+                    {{ form.tipo_ensino }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Série/Ano/Módulo *
+                    </label>
+                    {{ form.serie_ano }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Turno Preferencial *
+                    </label>
+                    {{ form.turno_preferencial }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Data da Matrícula *
+                    </label>
+                    {{ form.data_matricula }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Matrícula
+                    </label>
+                    {{ form.tipo_matricula }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Condição Anterior *
+                    </label>
+                    {{ form.condicao_anterior }}
+                </div>
+                
+                <div class="flex items-center">
+                    {{ form.possui_dependencia }}
+                    <label class="ml-2 text-sm text-gray-700">Possui Dependência</label>
+                </div>
+                
+                <div class="flex items-center">
+                    {{ form.condicoes_especiais_avaliacao }}
+                    <label class="ml-2 text-sm text-gray-700">Condições Especiais de Avaliação (LDB Art. 59)</label>
+                </div>
+            </div>
+
+            <!-- Campos de escola de origem (aparecem se for "Novato na Escola") -->
+            <div id="escola-origem" class="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6" style="display: none;">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Escola de Origem
+                    </label>
+                    {{ form.escola_origem }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Tipo de Rede
+                    </label>
+                    {{ form.tipo_rede_origem }}
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        País de Origem
+                    </label>
+                    {{ form.pais_origem }}
+                </div>
+            </div>
+
+            <div class="mt-6 flex space-x-4">
+                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700">
+                    {% if matricula %}Salvar Alterações{% else %}Criar Matrícula{% endif %}
+                </button>
+                <a href="{% url 'alunos:aluno_detail' aluno.pk %}" class="bg-gray-600 text-white px-6 py-2 rounded hover:bg-gray-700">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function toggleEscolaOrigem(value) {
+    const escolaOrigem = document.getElementById('escola-origem');
+    if (value === 'NOVATO_ESCOLA') {
+        escolaOrigem.style.display = 'grid';
+    } else {
+        escolaOrigem.style.display = 'none';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const condicaoSelect = document.getElementById('{{ form.condicao_anterior.id_for_label }}');
+    if (condicaoSelect) {
+        condicaoSelect.addEventListener('change', function() {
+            toggleEscolaOrigem(this.value);
+        });
+        // Estado inicial
+        toggleEscolaOrigem(condicaoSelect.value);
+    }
+});
+</script>
+{% endblock %}

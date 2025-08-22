@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Mover para Arquivo Permanente - {{ aluno.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div class="text-center">
+        <h1 class="text-2xl font-bold text-gray-900">Mover para Arquivo Permanente</h1>
+        <p class="text-gray-600 mt-2">{{ aluno.nome }} será movido para o arquivo permanente</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <form method="post">
+            {% csrf_token %}
+            <p class="mb-4">Tem certeza que deseja mover este aluno para o arquivo permanente?</p>
+            
+            <div class="flex space-x-4">
+                <button type="submit" class="bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">
+                    Sim, Mover
+                </button>
+                <a href="{% url 'alunos:aluno_detail' aluno.pk %}" class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

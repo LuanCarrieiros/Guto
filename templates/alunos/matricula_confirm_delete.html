@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Confirmar Exclusão de Matrícula - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <div class="text-center">
+        <h1 class="text-2xl font-bold text-gray-900">Confirmar Exclusão de Matrícula</h1>
+        <p class="text-gray-600 mt-2">Esta ação não pode ser desfeita</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow p-6">
+        <div class="mb-4">
+            <h3 class="text-lg font-semibold">Matrícula que será excluída:</h3>
+            <div class="mt-2 p-4 bg-gray-50 rounded">
+                <p><strong>Aluno:</strong> {{ matricula.aluno.nome }}</p>
+                <p><strong>Ano:</strong> {{ matricula.ano_administrativo }}</p>
+                <p><strong>Tipo de Ensino:</strong> {{ matricula.get_tipo_ensino_display }}</p>
+                <p><strong>Série:</strong> {{ matricula.serie_ano }}</p>
+                <p><strong>Status:</strong> {{ matricula.get_status_display }}</p>
+            </div>
+        </div>
+
+        <form method="post">
+            {% csrf_token %}
+            <p class="mb-4 text-red-600 font-medium">
+                Tem certeza que deseja excluir esta matrícula?
+            </p>
+            
+            <div class="flex space-x-4">
+                <button type="submit" name="confirmar" value="sim" 
+                        class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">
+                    Sim, Excluir
+                </button>
+                <a href="{% url 'alunos:aluno_detail' matricula.aluno.pk %}" 
+                   class="bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+                    Cancelar
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

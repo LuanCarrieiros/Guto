@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ aluno.nome }} - Ficha do Aluno - GUTO</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+        .section { margin-bottom: 20px; }
+        .section h3 { background: #f0f0f0; padding: 5px; margin: 0 0 10px 0; }
+        .field { margin-bottom: 8px; }
+        .label { font-weight: bold; }
+        @media print { .no-print { display: none; } }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="margin-bottom: 20px;">
+        <button onclick="window.print()" class="btn btn-primary">Imprimir</button>
+        <a href="{% url 'alunos:aluno_detail' aluno.pk %}">Voltar</a>
+    </div>
+
+    <div class="header">
+        <h1>SISTEMA GUTO - Ficha do Aluno</h1>
+        <p>Data de Impressão: {% now "d/m/Y H:i" %}</p>
+    </div>
+
+    <div class="section">
+        <h3>DADOS BÁSICOS</h3>
+        <div class="field"><span class="label">Código:</span> {{ aluno.codigo }}</div>
+        <div class="field"><span class="label">Nome:</span> {{ aluno.nome }}</div>
+        {% if aluno.nome_social %}
+        <div class="field"><span class="label">Nome Social:</span> {{ aluno.nome_social }}</div>
+        {% endif %}
+        <div class="field"><span class="label">Data de Nascimento:</span> {{ aluno.data_nascimento|date:"d/m/Y" }}</div>
+        <div class="field"><span class="label">Idade:</span> {{ aluno.idade }} anos</div>
+        <div class="field"><span class="label">Sexo:</span> {{ aluno.get_sexo_display }}</div>
+    </div>
+
+    <div class="section">
+        <h3>FILIAÇÃO</h3>
+        <div class="field">
+            <span class="label">Nome da Mãe:</span> 
+            {% if aluno.mae_nao_declarada %}Não declarada{% else %}{{ aluno.nome_mae|default:"Não informado" }}{% endif %}
+        </div>
+        <div class="field">
+            <span class="label">Nome do Pai:</span> 
+            {% if aluno.pai_nao_declarado %}Não declarado{% else %}{{ aluno.nome_pai|default:"Não informado" }}{% endif %}
+        </div>
+    </div>
+
+    {% if matriculas %}
+    <div class="section">
+        <h3>MATRÍCULAS</h3>
+        {% for matricula in matriculas %}
+        <div style="border: 1px solid #ccc; padding: 10px; margin-bottom: 10px;">
+            <div class="field"><span class="label">Ano:</span> {{ matricula.ano_administrativo }}</div>
+            <div class="field"><span class="label">Tipo de Ensino:</span> {{ matricula.get_tipo_ensino_display }}</div>
+            <div class="field"><span class="label">Série/Ano:</span> {{ matricula.serie_ano }}</div>
+            <div class="field"><span class="label">Status:</span> {{ matricula.get_status_display }}</div>
+            <div class="field"><span class="label">Data da Matrícula:</span> {{ matricula.data_matricula|date:"d/m/Y" }}</div>
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <div class="section">
+        <h3>DADOS DO SISTEMA</h3>
+        <div class="field"><span class="label">Data de Cadastro:</span> {{ aluno.data_cadastro|date:"d/m/Y H:i" }}</div>
+        <div class="field"><span class="label">Última Atualização:</span> {{ aluno.data_atualizacao|date:"d/m/Y H:i" }}</div>
+        <div class="field"><span class="label">Tipo de Arquivo:</span> {{ aluno.get_tipo_arquivo_display }}</div>
+    </div>
+</body>
+</html>

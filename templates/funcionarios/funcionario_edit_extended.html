@@ -1,0 +1,309 @@
+{% extends 'base.html' %}
+
+{% block title %}Edição Completa - {{ funcionario.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <!-- Header -->
+    <div class="flex justify-between items-center mb-6">
+        <div class="flex items-center space-x-4">
+            {% if funcionario.foto %}
+                <img src="{{ funcionario.foto.url }}" alt="{{ funcionario.nome }}" class="w-16 h-16 rounded-full object-cover border-2 border-purple-200">
+            {% else %}
+                <div class="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center border-2 border-purple-200">
+                    <i class="fas fa-user text-2xl text-purple-600"></i>
+                </div>
+            {% endif %}
+            
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">{{ funcionario.nome }}</h1>
+                <p class="text-gray-600">Edição completa - Todos os dados do funcionário</p>
+            </div>
+        </div>
+        
+        <div class="flex space-x-3">
+            <a href="{% url 'funcionarios:funcionario_detail' funcionario.codigo %}" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar
+            </a>
+            <button id="save-all" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200">
+                <i class="fas fa-save mr-2"></i>Salvar Tudo
+            </button>
+        </div>
+    </div>
+
+    <!-- Progress Bar -->
+    <div class="mb-6">
+        <div class="flex justify-between text-xs text-gray-600 mb-1">
+            <span>Progresso do preenchimento</span>
+            <span id="progress-text">0%</span>
+        </div>
+        <div class="w-full bg-gray-200 rounded-full h-2">
+            <div id="progress-bar" class="bg-gradient-to-r from-purple-600 to-pink-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <div x-data="{ activeTab: 'pessoais', autoSave: true, savedTabs: [] }" class="space-y-6">
+        <!-- Navigation -->
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8 overflow-x-auto">
+                <button @click="activeTab = 'pessoais'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'pessoais', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'pessoais' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-user mr-2"></i>
+                    Dados Pessoais
+                    <span class="ml-2 w-2 h-2 rounded-full bg-green-500" x-show="savedTabs.includes('pessoais')"></span>
+                </button>
+                
+                <button @click="activeTab = 'documentacao'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'documentacao', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'documentacao' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-file-alt mr-2"></i>
+                    Documentação
+                    <span class="ml-2 w-2 h-2 rounded-full bg-green-500" x-show="savedTabs.includes('documentacao')"></span>
+                </button>
+                
+                <button @click="activeTab = 'funcionais'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'funcionais', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'funcionais' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-briefcase mr-2"></i>
+                    Dados Funcionais
+                    <span class="ml-2 w-2 h-2 rounded-full bg-green-500" x-show="savedTabs.includes('funcionais')"></span>
+                </button>
+                
+                <button @click="activeTab = 'habilitacao'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'habilitacao', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'habilitacao' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-certificate mr-2"></i>
+                    Habilitação
+                    <span class="ml-2 w-2 h-2 rounded-full bg-green-500" x-show="savedTabs.includes('habilitacao')"></span>
+                </button>
+                
+                <button @click="activeTab = 'escolaridade'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'escolaridade', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'escolaridade' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-graduation-cap mr-2"></i>
+                    Escolaridade
+                    <span class="ml-2 w-2 h-2 rounded-full bg-green-500" x-show="savedTabs.includes('escolaridade')"></span>
+                </button>
+                
+                <button @click="activeTab = 'disponibilidade'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'disponibilidade', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'disponibilidade' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-clock mr-2"></i>
+                    Disponibilidade
+                    <span class="ml-2 w-2 h-2 rounded-full bg-green-500" x-show="savedTabs.includes('disponibilidade')"></span>
+                </button>
+                
+                <button @click="activeTab = 'disciplinas'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'disciplinas', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'disciplinas' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-book mr-2"></i>
+                    Disciplinas
+                    <span class="ml-2 w-2 h-2 rounded-full bg-green-500" x-show="savedTabs.includes('disciplinas')"></span>
+                </button>
+                
+                <button @click="activeTab = 'deficiencias'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'deficiencias', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'deficiencias' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-universal-access mr-2"></i>
+                    Deficiências
+                    <span class="ml-2 w-2 h-2 rounded-full bg-green-500" x-show="savedTabs.includes('deficiencias')"></span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Auto-save toggle -->
+        <div class="flex justify-between items-center bg-blue-50 rounded-lg p-4">
+            <div class="flex items-center space-x-3">
+                <i class="fas fa-save text-blue-600"></i>
+                <div>
+                    <h3 class="text-sm font-medium text-blue-800">Salvamento Automático</h3>
+                    <p class="text-xs text-blue-600">Salva automaticamente ao trocar de aba (RNF403)</p>
+                </div>
+            </div>
+            <label class="flex items-center">
+                <input type="checkbox" x-model="autoSave" class="sr-only">
+                <div :class="autoSave ? 'bg-blue-600' : 'bg-gray-300'" class="relative inline-flex h-6 w-11 items-center rounded-full transition-colors">
+                    <span :class="autoSave ? 'translate-x-6' : 'translate-x-1'" class="inline-block h-4 w-4 transform rounded-full bg-white transition-transform"></span>
+                </div>
+                <span class="ml-2 text-sm text-blue-800" x-text="autoSave ? 'Ativado' : 'Desativado'"></span>
+            </label>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="mt-6">
+            <!-- Dados Pessoais Tab -->
+            <div x-show="activeTab === 'pessoais'" class="space-y-6">
+                <form id="form-pessoais" class="space-y-6" hx-post="{% url 'funcionarios:funcionario_edit' funcionario.codigo %}" hx-trigger="submit" hx-target="#message-container">
+                    {% csrf_token %}
+                    <input type="hidden" name="tab" value="pessoais">
+                    
+                    <!-- Incluir aqui o conteúdo do formulário de dados pessoais -->
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Informações Pessoais</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <!-- Campos do formulário pessoal aqui -->
+                            <div class="text-center py-8 col-span-full">
+                                <i class="fas fa-cog fa-spin text-4xl text-gray-400 mb-2"></i>
+                                <p class="text-gray-500">Carregando formulário...</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Salvar Dados Pessoais
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Documentação Tab -->
+            <div x-show="activeTab === 'documentacao'" class="space-y-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Documentação do Funcionário</h3>
+                    <div class="text-center py-8">
+                        <i class="fas fa-file-alt text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                        <p class="text-sm text-gray-400">Use a edição básica para alterar dados pessoais</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Dados Funcionais Tab -->
+            <div x-show="activeTab === 'funcionais'" class="space-y-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Dados Funcionais</h3>
+                    <div class="text-center py-8">
+                        <i class="fas fa-briefcase text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Habilitação Tab -->
+            <div x-show="activeTab === 'habilitacao'" class="space-y-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Habilitação Profissional</h3>
+                    <div class="text-center py-8">
+                        <i class="fas fa-certificate text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Escolaridade Tab -->
+            <div x-show="activeTab === 'escolaridade'" class="space-y-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Escolaridade</h3>
+                    <div class="text-center py-8">
+                        <i class="fas fa-graduation-cap text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disponibilidade Tab -->
+            <div x-show="activeTab === 'disponibilidade'" class="space-y-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Disponibilidade de Horários</h3>
+                    <div class="text-center py-8">
+                        <i class="fas fa-clock text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Disciplinas Tab -->
+            <div x-show="activeTab === 'disciplinas'" class="space-y-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Disciplinas que Leciona</h3>
+                    <div class="text-center py-8">
+                        <i class="fas fa-book text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Deficiências Tab -->
+            <div x-show="activeTab === 'deficiencias'" class="space-y-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Deficiências</h3>
+                    <div class="text-center py-8">
+                        <i class="fas fa-universal-access text-4xl text-gray-400 mb-2"></i>
+                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Navigation buttons -->
+        <div class="flex justify-between pt-6 border-t border-gray-200">
+            <button id="prev-tab" class="bg-gray-300 text-gray-700 px-6 py-2 rounded-lg hover:bg-gray-400 transition-colors disabled:opacity-50">
+                <i class="fas fa-arrow-left mr-2"></i>Anterior
+            </button>
+            
+            <div class="text-sm text-gray-500 flex items-center">
+                <i class="fas fa-info-circle mr-2"></i>
+                Use as abas para navegar entre as seções
+            </div>
+            
+            <button id="next-tab" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50">
+                Próximo<i class="fas fa-arrow-right ml-2"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Message Container for HTMX responses -->
+    <div id="message-container" class="mt-4"></div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Simular progresso baseado nas abas preenchidas
+    function updateProgress() {
+        const totalTabs = 8;
+        const filledTabs = 1; // Apenas dados pessoais por enquanto
+        const percentage = (filledTabs / totalTabs) * 100;
+        
+        document.getElementById('progress-bar').style.width = percentage + '%';
+        document.getElementById('progress-text').textContent = Math.round(percentage) + '%';
+    }
+    
+    updateProgress();
+    
+    // Tab navigation
+    const tabs = ['pessoais', 'documentacao', 'funcionais', 'habilitacao', 'escolaridade', 'disponibilidade', 'disciplinas', 'deficiencias'];
+    let currentTabIndex = 0;
+    
+    function updateTabNavigation() {
+        const prevButton = document.getElementById('prev-tab');
+        const nextButton = document.getElementById('next-tab');
+        
+        prevButton.disabled = currentTabIndex === 0;
+        nextButton.disabled = currentTabIndex === tabs.length - 1;
+    }
+    
+    document.getElementById('prev-tab').addEventListener('click', function() {
+        if (currentTabIndex > 0) {
+            currentTabIndex--;
+            // Trigger Alpine.js to change tab
+            document.dispatchEvent(new CustomEvent('change-tab', { detail: { tab: tabs[currentTabIndex] } }));
+            updateTabNavigation();
+        }
+    });
+    
+    document.getElementById('next-tab').addEventListener('click', function() {
+        if (currentTabIndex < tabs.length - 1) {
+            currentTabIndex++;
+            // Trigger Alpine.js to change tab
+            document.dispatchEvent(new CustomEvent('change-tab', { detail: { tab: tabs[currentTabIndex] } }));
+            updateTabNavigation();
+        }
+    });
+    
+    updateTabNavigation();
+});
+</script>
+{% endblock %}

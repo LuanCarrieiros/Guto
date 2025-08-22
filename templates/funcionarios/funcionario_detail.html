@@ -1,0 +1,308 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ funcionario.nome }} - Detalhes do Funcionário - GUTO{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-xl shadow-lg p-6">
+    <!-- Header com foto e informações básicas -->
+    <div class="flex justify-between items-start mb-6">
+        <div class="flex items-center space-x-6">
+            {% if funcionario.foto %}
+                <img src="{{ funcionario.foto.url }}" alt="{{ funcionario.nome }}" class="w-24 h-24 rounded-full object-cover border-4 border-purple-200">
+            {% else %}
+                <div class="w-24 h-24 rounded-full bg-purple-100 flex items-center justify-center border-4 border-purple-200">
+                    <i class="fas fa-user text-3xl text-purple-600"></i>
+                </div>
+            {% endif %}
+            
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">{{ funcionario.nome }}</h1>
+                <div class="flex items-center space-x-4 mt-2">
+                    <span class="text-lg text-purple-600 font-medium">{{ funcionario.cargo }}</span>
+                    <span class="text-gray-400">|</span>
+                    <span class="text-gray-600">Código: {{ funcionario.codigo }}</span>
+                    {% if funcionario.ativo %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                            <i class="fas fa-check-circle mr-1"></i>Ativo
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800">
+                            <i class="fas fa-times-circle mr-1"></i>Inativo
+                        </span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <div class="flex space-x-3">
+            <a href="{% url 'funcionarios:funcionario_list' %}" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar
+            </a>
+            <a href="{% url 'funcionarios:funcionario_edit' funcionario.codigo %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+                <i class="fas fa-edit mr-2"></i>Editar
+            </a>
+            <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.codigo %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                <i class="fas fa-cogs mr-2"></i>Edição Completa
+            </a>
+        </div>
+    </div>
+
+    <!-- Informações organizadas em tabs -->
+    <div x-data="{ activeTab: 'pessoais' }" class="mt-8">
+        <!-- Tab Navigation -->
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+                <button @click="activeTab = 'pessoais'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'pessoais', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'pessoais' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-user mr-2"></i>Dados Pessoais
+                </button>
+                <button @click="activeTab = 'contato'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'contato', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'contato' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-phone mr-2"></i>Contato
+                </button>
+                <button @click="activeTab = 'endereco'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'endereco', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'endereco' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-map-marker-alt mr-2"></i>Endereço
+                </button>
+                <button @click="activeTab = 'funcionais'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'funcionais', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'funcionais' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-briefcase mr-2"></i>Dados Funcionais
+                </button>
+                <button @click="activeTab = 'documentacao'" 
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'documentacao', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'documentacao' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                    <i class="fas fa-file-alt mr-2"></i>Documentação
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Content -->
+        <div class="mt-6">
+            <!-- Dados Pessoais -->
+            <div x-show="activeTab === 'pessoais'" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
+                        <p class="text-gray-900 font-medium">{{ funcionario.nome }}</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Sexo</label>
+                        <p class="text-gray-900">{{ funcionario.get_sexo_display }}</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data de Nascimento</label>
+                        <p class="text-gray-900">{{ funcionario.data_nascimento|date:"d/m/Y" }}</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">CPF</label>
+                        <p class="text-gray-900 font-mono">{{ funcionario.cpf }}</p>
+                    </div>
+                    
+                    {% if funcionario.rg %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">RG</label>
+                        <p class="text-gray-900 font-mono">{{ funcionario.rg }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Contato -->
+            <div x-show="activeTab === 'contato'" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {% if funcionario.telefone %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Telefone</label>
+                        <p class="text-gray-900 font-mono">{{ funcionario.telefone }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if funcionario.celular %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Celular</label>
+                        <p class="text-gray-900 font-mono">{{ funcionario.celular }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if funcionario.email %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">E-mail</label>
+                        <p class="text-gray-900">
+                            <a href="mailto:{{ funcionario.email }}" class="text-purple-600 hover:text-purple-800">{{ funcionario.email }}</a>
+                        </p>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                {% if not funcionario.telefone and not funcionario.celular and not funcionario.email %}
+                <div class="text-center py-8">
+                    <i class="fas fa-phone text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500">Nenhuma informação de contato cadastrada</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Endereço -->
+            <div x-show="activeTab === 'endereco'" class="space-y-6">
+                {% if funcionario.endereco or funcionario.cep or funcionario.cidade %}
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    {% if funcionario.cep %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">CEP</label>
+                        <p class="text-gray-900 font-mono">{{ funcionario.cep }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if funcionario.endereco %}
+                    <div class="bg-gray-50 rounded-lg p-4 lg:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Endereço</label>
+                        <p class="text-gray-900">{{ funcionario.endereco }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if funcionario.numero %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Número</label>
+                        <p class="text-gray-900">{{ funcionario.numero }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if funcionario.complemento %}
+                    <div class="bg-gray-50 rounded-lg p-4 lg:col-span-2">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Complemento</label>
+                        <p class="text-gray-900">{{ funcionario.complemento }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if funcionario.bairro %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bairro</label>
+                        <p class="text-gray-900">{{ funcionario.bairro }}</p>
+                    </div>
+                    {% endif %}
+                    
+                    {% if funcionario.cidade %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cidade</label>
+                        <p class="text-gray-900">{{ funcionario.cidade }}</p>
+                    </div>
+                    {% endif %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-map-marker-alt text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500">Nenhuma informação de endereço cadastrada</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Dados Funcionais -->
+            <div x-show="activeTab === 'funcionais'" class="space-y-6">
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                        <p class="text-gray-900 font-medium">{{ funcionario.cargo }}</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Data de Admissão</label>
+                        <p class="text-gray-900">{{ funcionario.data_admissao|date:"d/m/Y" }}</p>
+                    </div>
+                    
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Arquivo</label>
+                        <p class="text-gray-900">{{ funcionario.get_tipo_arquivo_display }}</p>
+                    </div>
+                </div>
+                
+                {% if funcionario.observacoes %}
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+                    <p class="text-gray-900 whitespace-pre-wrap">{{ funcionario.observacoes }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Documentação -->
+            <div x-show="activeTab === 'documentacao'" class="space-y-6">
+                {% if funcionario.documentacao_set.exists %}
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {% for doc in funcionario.documentacao_set.all %}
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <div class="flex justify-between items-start mb-2">
+                            <h4 class="font-medium text-gray-900">{{ doc.tipo_documento }}</h4>
+                            {% if doc.arquivo %}
+                            <a href="{{ doc.arquivo.url }}" target="_blank" class="text-purple-600 hover:text-purple-800 text-sm">
+                                <i class="fas fa-download mr-1"></i>Download
+                            </a>
+                            {% endif %}
+                        </div>
+                        {% if doc.observacoes %}
+                        <p class="text-gray-600 text-sm">{{ doc.observacoes }}</p>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <i class="fas fa-file-alt text-4xl text-gray-300 mb-2"></i>
+                    <p class="text-gray-500">Nenhum documento cadastrado</p>
+                    <span class="text-gray-500 mt-2 inline-block">
+                        <i class="fas fa-clock mr-1"></i>Funcionalidade em desenvolvimento
+                    </span>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Links rápidos para edição de dados específicos -->
+    <div class="mt-8 border-t border-gray-200 pt-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">Ações Rápidas</h3>
+        <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
+                <i class="fas fa-file-alt text-2xl text-gray-500 mb-2"></i>
+                <p class="text-sm font-medium text-gray-600">Documentação</p>
+                <p class="text-xs text-gray-500">Em desenvolvimento</p>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
+                <i class="fas fa-briefcase text-2xl text-gray-500 mb-2"></i>
+                <p class="text-sm font-medium text-gray-600">Dados Funcionais</p>
+                <p class="text-xs text-gray-500">Em desenvolvimento</p>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
+                <i class="fas fa-certificate text-2xl text-gray-500 mb-2"></i>
+                <p class="text-sm font-medium text-gray-600">Habilitação</p>
+                <p class="text-xs text-gray-500">Em desenvolvimento</p>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
+                <i class="fas fa-graduation-cap text-2xl text-gray-500 mb-2"></i>
+                <p class="text-sm font-medium text-gray-600">Escolaridade</p>
+                <p class="text-xs text-gray-500">Em desenvolvimento</p>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
+                <i class="fas fa-clock text-2xl text-gray-500 mb-2"></i>
+                <p class="text-sm font-medium text-gray-600">Disponibilidade</p>
+                <p class="text-xs text-gray-500">Em desenvolvimento</p>
+            </div>
+            
+            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
+                <i class="fas fa-book text-2xl text-gray-500 mb-2"></i>
+                <p class="text-sm font-medium text-gray-600">Disciplinas</p>
+                <p class="text-xs text-gray-500">Em desenvolvimento</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
