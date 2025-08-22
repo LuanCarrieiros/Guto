@@ -1,0 +1,23 @@
+# Ambiente Virtual
+venv/
+
+# Banco de dados
+db.sqlite3
+
+# Arquivos de Mídia (Uploads)
+media/
+
+# Arquivos Gerados
+PDFs/
+
+# Cache do Python
+__pycache__/
+*.pyc
+
+# Configuração de Ferramentas (Ex: VSCode, Claude)
+.vscode/
+.claude/
+
+# Arquivos de Sistema Operacional
+.DS_Store
+Thumbs.db
