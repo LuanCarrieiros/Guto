@@ -1,8 +1,8 @@
 # Ambiente Virtual
 venv/
 
-# Banco de dados
-db.sqlite3
+# Banco de dados 
+# db.sqlite3
 
 # Arquivos de Mídia (Uploads)
 media/
