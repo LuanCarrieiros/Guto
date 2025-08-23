@@ -9,6 +9,6 @@ urlpatterns = [
     path('create/', views.funcionario_create, name='funcionario_create'),
     path('<int:codigo>/', views.funcionario_detail, name='funcionario_detail'),
     path('<int:codigo>/edit/', views.funcionario_edit, name='funcionario_edit'),
-    path('<int:codigo>/edit-extended/', views.funcionario_edit_extended, name='funcionario_edit_extended'),
+    path('<int:pk>/edit-extended/', views.funcionario_edit_extended, name='funcionario_edit_extended'),
     path('<int:codigo>/delete/', views.funcionario_delete, name='funcionario_delete'),
 ]

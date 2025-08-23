@@ -322,11 +322,85 @@
     </form>
 </div>
 
-<!-- Scripts para auto-preenchimento de CEP -->
+<!-- Scripts para máscaras e validações -->
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // Função para aplicar máscara
+    function aplicarMascara(elemento, mascara) {
+        elemento.addEventListener('input', function(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            let mascaraAplicada = '';
+            let j = 0;
+            
+            for (let i = 0; i < mascara.length && j < valor.length; i++) {
+                if (mascara[i] === '0') {
+                    mascaraAplicada += valor[j++];
+                } else if (j > 0) {
+                    mascaraAplicada += mascara[i];
+                }
+            }
+            
+            e.target.value = mascaraAplicada;
+        });
+    }
+    
+    // Aplicar máscaras
+    const cpfInput = document.querySelector('#id_cpf');
+    if (cpfInput) {
+        aplicarMascara(cpfInput, '000.000.000-00');
+    }
+    
+    const telefoneInput = document.querySelector('#id_telefone');
+    if (telefoneInput) {
+        telefoneInput.addEventListener('input', function(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            
+            // Limitar a 10 dígitos para telefone fixo
+            if (valor.length > 10) {
+                valor = valor.substring(0, 10);
+            }
+            
+            // Aplicar máscara (XX) XXXX-XXXX
+            if (valor.length > 6) {
+                valor = valor.replace(/(\d{2})(\d{4})(\d{4})/, '($1) $2-$3');
+            } else if (valor.length > 2) {
+                valor = valor.replace(/(\d{2})(\d{0,4})/, '($1) $2');
+            } else if (valor.length > 0) {
+                valor = valor.replace(/(\d{0,2})/, '($1');
+            }
+            
+            e.target.value = valor;
+        });
+    }
+    
+    const celularInput = document.querySelector('#id_celular');
+    if (celularInput) {
+        celularInput.addEventListener('input', function(e) {
+            let valor = e.target.value.replace(/\D/g, '');
+            
+            // Limitar a 11 dígitos para celular
+            if (valor.length > 11) {
+                valor = valor.substring(0, 11);
+            }
+            
+            // Aplicar máscara (XX) XXXXX-XXXX
+            if (valor.length > 7) {
+                valor = valor.replace(/(\d{2})(\d{5})(\d{4})/, '($1) $2-$3');
+            } else if (valor.length > 2) {
+                valor = valor.replace(/(\d{2})(\d{0,5})/, '($1) $2');
+            } else if (valor.length > 0) {
+                valor = valor.replace(/(\d{0,2})/, '($1');
+            }
+            
+            e.target.value = valor;
+        });
+    }
+    
     const cepInput = document.querySelector('#id_cep');
     if (cepInput) {
+        aplicarMascara(cepInput, '00000-000');
+        
+        // Auto-preenchimento de CEP
         cepInput.addEventListener('blur', function() {
             const cep = this.value.replace(/\D/g, '');
             if (cep.length === 8) {
@@ -342,6 +416,39 @@ document.addEventListener('DOMContentLoaded', function() {
                     .catch(error => console.log('Erro ao buscar CEP:', error));
             }
         });
+    }
+    
+    // Validação de campos numéricos
+    const numeroInput = document.querySelector('#id_numero');
+    if (numeroInput) {
+        numeroInput.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+    }
+    
+    const matriculaInput = document.querySelector('#id_matricula');
+    if (matriculaInput) {
+        matriculaInput.addEventListener('input', function(e) {
+            e.target.value = e.target.value.replace(/\D/g, '');
+        });
+    }
+    
+    // Manter foto selecionada quando há erro
+    const fotoInput = document.querySelector('#id_foto');
+    if (fotoInput) {
+        let fotoSelecionada = null;
+        fotoInput.addEventListener('change', function(e) {
+            if (e.target.files.length > 0) {
+                fotoSelecionada = e.target.files[0];
+            }
+        });
+        
+        // Restaurar foto após erro de validação
+        if (fotoSelecionada && fotoInput.files.length === 0) {
+            const dt = new DataTransfer();
+            dt.items.add(fotoSelecionada);
+            fotoInput.files = dt.files;
+        }
     }
 });
 </script>

@@ -102,22 +102,23 @@ def funcionario_create(request):
     if request.method == 'POST':
         form = FuncionarioForm(request.POST, request.FILES)
         if form.is_valid():
-            funcionario = form.save(commit=False)
-            funcionario.usuario_cadastro = request.user
-            funcionario.save()
-            
-            # Registrar atividade recente
-            AtividadeRecente.registrar_atividade(
-                usuario=request.user,
-                acao='CRIAR',
-                modulo='FUNCIONARIOS',
-                objeto_nome=funcionario.nome,
-                objeto_id=funcionario.codigo,
-                descricao=f'Novo funcionário cadastrado no sistema'
-            )
-            
-            messages.success(request, 'Funcionário cadastrado com sucesso')
-            return redirect('funcionarios:funcionario_edit_extended', pk=funcionario.pk)
+            try:
+                funcionario = form.save()
+                
+                # Registrar atividade recente
+                AtividadeRecente.registrar_atividade(
+                    usuario=request.user,
+                    acao='CRIAR',
+                    modulo='FUNCIONARIOS',
+                    objeto_nome=funcionario.nome,
+                    objeto_id=funcionario.codigo,
+                    descricao=f'Novo funcionário cadastrado no sistema'
+                )
+                
+                messages.success(request, 'Funcionário cadastrado com sucesso')
+                return redirect('funcionarios:funcionario_edit_extended', pk=funcionario.pk)
+            except Exception as e:
+                messages.error(request, f'Erro ao cadastrar funcionário: {str(e)}')
     else:
         form = FuncionarioForm()
     

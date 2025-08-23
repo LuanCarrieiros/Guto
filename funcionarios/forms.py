@@ -39,7 +39,9 @@ class FuncionarioForm(forms.ModelForm):
                 format='%Y-%m-%d',
                 attrs={
                     'type': 'date',
-                    'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
+                    'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
+                    'min': '1900-01-01',
+                    'max': date.today().strftime('%Y-%m-%d')
                 }
             ),
             'sexo': forms.Select(attrs={
@@ -73,11 +75,13 @@ class FuncionarioForm(forms.ModelForm):
             }),
             'telefone': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
-                'placeholder': '(00) 0000-0000'
+                'placeholder': '(00) 0000-0000',
+                'maxlength': '14'
             }),
             'celular': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
-                'placeholder': '(00) 00000-0000'
+                'placeholder': '(00) 00000-0000',
+                'maxlength': '15'
             }),
             'email': forms.EmailInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
@@ -85,7 +89,9 @@ class FuncionarioForm(forms.ModelForm):
             }),
             'cep': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
-                'placeholder': '00000-000'
+                'placeholder': '00000-000',
+                'data-mask': '00000-000',
+                'maxlength': '9'
             }),
             'endereco': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
@@ -93,7 +99,9 @@ class FuncionarioForm(forms.ModelForm):
             }),
             'numero': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
-                'placeholder': 'Número'
+                'placeholder': 'Número',
+                'pattern': '[0-9]*',
+                'inputmode': 'numeric'
             }),
             'complemento': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
@@ -132,7 +140,9 @@ class FuncionarioForm(forms.ModelForm):
         # Adicionar widgets para os campos customizados
         self.fields['cpf'].widget.attrs.update({
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
-            'placeholder': '000.000.000-00'
+            'placeholder': '000.000.000-00',
+            'data-mask': '000.000.000-00',
+            'maxlength': '14'
         })
         self.fields['rg'].widget.attrs.update({
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
@@ -140,7 +150,9 @@ class FuncionarioForm(forms.ModelForm):
         })
         self.fields['matricula'].widget.attrs.update({
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
-            'placeholder': 'Matrícula do funcionário'
+            'placeholder': 'Matrícula do funcionário',
+            'pattern': '[0-9]*',
+            'inputmode': 'numeric'
         })
         self.fields['funcao'].widget.attrs.update({
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
@@ -179,6 +191,58 @@ class FuncionarioForm(forms.ModelForm):
                 self.fields['observacoes'].initial = dados_funcionais.observacoes
             except DadosFuncionais.DoesNotExist:
                 pass
+    
+    def clean_data_nascimento(self):
+        data_nascimento = self.cleaned_data.get('data_nascimento')
+        if data_nascimento:
+            hoje = date.today()
+            if data_nascimento > hoje:
+                raise ValidationError("A data de nascimento não pode ser futura.")
+            
+            idade = hoje.year - data_nascimento.year - ((hoje.month, hoje.day) < (data_nascimento.month, data_nascimento.day))
+            if idade < 16:
+                raise ValidationError("O funcionário deve ter pelo menos 16 anos.")
+            if idade > 100:
+                raise ValidationError("A data de nascimento parece incorreta. Verifique se foi digitada corretamente.")
+        
+        return data_nascimento
+    
+    def clean_cpf(self):
+        cpf = self.cleaned_data.get('cpf')
+        if cpf:
+            # Remove formatação
+            cpf_numeros = ''.join(filter(str.isdigit, cpf))
+            if len(cpf_numeros) != 11:
+                raise ValidationError("CPF deve conter 11 dígitos.")
+        return cpf
+    
+    def clean_telefone(self):
+        telefone = self.cleaned_data.get('telefone')
+        if telefone:
+            telefone_numeros = ''.join(filter(str.isdigit, telefone))
+            if len(telefone_numeros) != 10:
+                raise ValidationError("Telefone deve ter exatamente 10 dígitos (formato: DDD + 8 dígitos).")
+        return telefone
+    
+    def clean_celular(self):
+        celular = self.cleaned_data.get('celular')
+        if celular:
+            celular_numeros = ''.join(filter(str.isdigit, celular))
+            if len(celular_numeros) != 11:
+                raise ValidationError("Celular deve ter exatamente 11 dígitos (formato: DDD + 9 dígitos).")
+        return celular
+    
+    def clean_matricula(self):
+        matricula = self.cleaned_data.get('matricula')
+        if matricula and not matricula.isdigit():
+            raise ValidationError("Matrícula deve conter apenas números.")
+        return matricula
+    
+    def clean_numero(self):
+        numero = self.cleaned_data.get('numero')
+        if numero and not numero.isdigit():
+            raise ValidationError("Número deve conter apenas dígitos.")
+        return numero
     
     def save(self, commit=True):
         funcionario = super().save(commit=False)
