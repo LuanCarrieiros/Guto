@@ -40,6 +40,7 @@ urlpatterns = [
     path('alunos/', include('alunos.urls')),
     path('funcionarios/', include('funcionarios.urls')),
     path('opcoes/', include('opcoes.urls')),
+    path('utilitarios/', include('utilitarios.urls')),
 ]
 
 # Configuração para servir arquivos de mídia em desenvolvimento

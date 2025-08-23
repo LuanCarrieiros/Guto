@@ -8,13 +8,21 @@ from .models import (
 from datetime import date
 
 class FuncionarioForm(forms.ModelForm):
+    # Campos adicionais que não estão diretamente no modelo Funcionario
+    cpf = forms.CharField(max_length=14, required=True, label="CPF")
+    rg = forms.CharField(max_length=20, required=False, label="RG")
+    cargo = forms.CharField(max_length=100, required=True, label="Cargo")
+    data_admissao = forms.DateField(required=True, label="Data de Admissão")
+    ativo = forms.BooleanField(required=False, initial=True, label="Funcionário Ativo")
+    observacoes = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False, label="Observações")
+
     class Meta:
         model = Funcionario
         fields = [
             'nome', 'nome_social', 'data_nascimento', 'sexo', 'estado_civil', 'cor_raca',
             'nacionalidade', 'naturalidade', 'uf_nascimento', 'nome_mae', 'nome_pai',
             'telefone', 'celular', 'email', 'cep', 'endereco', 'numero', 'complemento',
-            'bairro', 'cidade', 'uf', 'foto'
+            'bairro', 'cidade', 'uf', 'tipo_arquivo', 'foto'
         ]
         widgets = {
             'nome': forms.TextInput(attrs={
@@ -105,8 +113,94 @@ class FuncionarioForm(forms.ModelForm):
             'foto': forms.FileInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
                 'accept': 'image/*'
+            }),
+            'tipo_arquivo': forms.Select(attrs={
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
             })
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Adicionar widgets para os campos customizados
+        self.fields['cpf'].widget.attrs.update({
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
+            'placeholder': '000.000.000-00'
+        })
+        self.fields['rg'].widget.attrs.update({
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'placeholder': 'Número do RG'
+        })
+        self.fields['cargo'].widget.attrs.update({
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
+            'placeholder': 'Cargo/Função'
+        })
+        self.fields['data_admissao'].widget = forms.DateInput(attrs={
+            'type': 'date',
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
+        })
+        self.fields['ativo'].widget.attrs.update({
+            'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
+        })
+        self.fields['observacoes'].widget.attrs.update({
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
+            'placeholder': 'Observações adicionais (opcional)'
+        })
+        
+        # Preencher com dados existentes se estiver editando
+        if self.instance and self.instance.pk:
+            try:
+                documentacao = self.instance.documentacao
+                self.fields['cpf'].initial = documentacao.cpf
+                self.fields['rg'].initial = documentacao.rg
+            except DocumentacaoFuncionario.DoesNotExist:
+                pass
+            
+            try:
+                dados_funcionais = self.instance.dados_funcionais
+                self.fields['cargo'].initial = dados_funcionais.cargo
+                self.fields['data_admissao'].initial = dados_funcionais.data_admissao
+                self.fields['ativo'].initial = dados_funcionais.ativo
+                self.fields['observacoes'].initial = dados_funcionais.observacoes
+            except DadosFuncionais.DoesNotExist:
+                pass
+    
+    def save(self, commit=True):
+        funcionario = super().save(commit=False)
+        
+        if commit:
+            funcionario.save()
+            
+            # Criar ou atualizar documentação
+            documentacao, created = DocumentacaoFuncionario.objects.get_or_create(
+                funcionario=funcionario,
+                defaults={
+                    'cpf': self.cleaned_data['cpf'],
+                    'rg': self.cleaned_data['rg']
+                }
+            )
+            if not created:
+                documentacao.cpf = self.cleaned_data['cpf']
+                documentacao.rg = self.cleaned_data['rg']
+                documentacao.save()
+            
+            # Criar ou atualizar dados funcionais
+            dados_funcionais, created = DadosFuncionais.objects.get_or_create(
+                funcionario=funcionario,
+                defaults={
+                    'cargo': self.cleaned_data['cargo'],
+                    'data_admissao': self.cleaned_data['data_admissao'],
+                    'ativo': self.cleaned_data['ativo'],
+                    'observacoes': self.cleaned_data['observacoes']
+                }
+            )
+            if not created:
+                dados_funcionais.cargo = self.cleaned_data['cargo']
+                dados_funcionais.data_admissao = self.cleaned_data['data_admissao']
+                dados_funcionais.ativo = self.cleaned_data['ativo']
+                dados_funcionais.observacoes = self.cleaned_data['observacoes']
+                dados_funcionais.save()
+        
+        return funcionario
 
 class DocumentacaoFuncionarioForm(forms.ModelForm):
     class Meta:
