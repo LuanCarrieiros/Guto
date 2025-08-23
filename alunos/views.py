@@ -85,13 +85,10 @@ def aluno_create(request):
                 descricao=f'Novo aluno cadastrado no sistema'
             )
             
-            messages.success(request, 'Inclusão do Aluno realizada com sucesso')
+            messages.success(request, 'Inclusão do Aluno realizada com sucesso.')
             
-            # RF104.5: Perguntar se deseja completar cadastro
-            if request.POST.get('completar_cadastro'):
-                return redirect('alunos:aluno_edit_extended', pk=aluno.pk)
-            else:
-                return redirect('alunos:aluno_list')
+            # RF110: Redirecionar com flag para mostrar pop-up
+            return redirect('alunos:aluno_list')
     else:
         form = AlunoForm()
     
