@@ -14,13 +14,19 @@ Sistema de gestão escolar desenvolvido em Django para controle de alunos, funci
 - **Funcionalidades**: Cadastro, edição, pesquisa, matrículas, arquivo permanente, impressão
 - **Atividades Recentes**: Integrado ao dashboard ✅
 
-#### **2. 👨‍🏫 Módulo Funcionários (100% Funcional)**
+#### **2. 👨‍🏫 Módulo Funcionários (95% Funcional)**
 - **Requisitos**: RF403-RF511, RNF401-RNF408 ✅
 - **6 views principais** - CRUD básico operacional
 - **11 models relacionados** - Funcionario, DadosFuncionais, Documentação, etc.
 - **13 formulários** com validações completas
 - **Templates**: 5 templates HTML funcionais
-- **Bug corrigido**: Problema de salvamento resolvido ✅
+- **Bugs corrigidos**: 
+  - ✅ Problema de salvamento resolvido
+  - ✅ Campos obrigatórios adicionados ao formulário
+  - ✅ Máscaras de CPF, telefone e celular implementadas
+  - ✅ Preservação de foto durante validação
+  - ✅ Redirecionamento após cadastro corrigido
+- **Pendente**: Ações rápidas, status padrão, exibição de dados, busca
 - **Atividades Recentes**: Integrado ao dashboard ✅
 
 #### **3. 🔧 Módulo Opções (100% Completo)**

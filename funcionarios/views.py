@@ -22,25 +22,30 @@ def funcionario_list(request):
     """
     Lista funcionários com filtros de pesquisa (RF405)
     """
-    funcionarios = Funcionario.objects.all()
+    funcionarios = Funcionario.objects.select_related('dados_funcionais').all()
     
-    # Filtros de pesquisa (RF405.1 e RF405.2)
-    busca = request.GET.get('busca')
-    tipo_busca = request.GET.get('tipo_busca', 'nome')
-    arquivo_tipo = request.GET.get('arquivo_tipo', 'TODOS')
+    # Filtros de pesquisa
+    search = request.GET.get('search', '')
+    cargo = request.GET.get('cargo', '')
+    ativo = request.GET.get('ativo', '')
     
-    if busca:
-        if tipo_busca == 'codigo':
-            funcionarios = funcionarios.filter(codigo__icontains=busca)
-        else:  # nome
-            funcionarios = funcionarios.filter(nome__icontains=busca)
+    # Aplicar filtros
+    if search:
+        funcionarios = funcionarios.filter(
+            Q(nome__icontains=search) | 
+            Q(codigo__icontains=search) | 
+            Q(dados_funcionais__matricula__icontains=search)
+        )
     
-    # Filtro por tipo de arquivo (RF405.2)
-    if arquivo_tipo == 'CORRENTE':
-        funcionarios = funcionarios.filter(tipo_arquivo='CORRENTE')
-    elif arquivo_tipo == 'PERMANENTE':
-        funcionarios = funcionarios.filter(tipo_arquivo='PERMANENTE')
-    # 'TODOS' não precisa de filtro
+    if cargo:
+        funcionarios = funcionarios.filter(dados_funcionais__funcao=cargo)
+    
+    if ativo:
+        ativo_bool = ativo == 'True'
+        funcionarios = funcionarios.filter(ativo=ativo_bool)
+    
+    # Ordenar por nome
+    funcionarios = funcionarios.order_by('nome')
     
     # Paginação
     paginator = Paginator(funcionarios, 25)
@@ -49,9 +54,6 @@ def funcionario_list(request):
     
     context = {
         'funcionarios': funcionarios_page,
-        'busca': busca or '',
-        'tipo_busca': tipo_busca,
-        'arquivo_tipo': arquivo_tipo,
     }
     
     return render(request, 'funcionarios/funcionario_list.html', context)
@@ -261,7 +263,7 @@ def funcionario_edit_extended(request, pk):
         'duplos_vinculos': funcionario.duplos_vinculos.all(),
     }
     
-    return render(request, 'funcionarios/funcionario_extended.html', context)
+    return render(request, 'funcionarios/funcionario_edit_extended.html', context)
 
 @login_required
 def funcionario_delete(request, pk):

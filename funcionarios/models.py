@@ -63,6 +63,7 @@ class Funcionario(models.Model):
     
     # Controle de arquivo
     tipo_arquivo = models.CharField(max_length=20, choices=TIPO_ARQUIVO_CHOICES, default='CORRENTE', verbose_name="Tipo de Arquivo")
+    ativo = models.BooleanField(default=True, verbose_name="Ativo")
     
     # Foto (RF406.4)
     foto = models.ImageField(upload_to='funcionarios/fotos/', blank=True, null=True, verbose_name="Foto")
@@ -94,7 +95,7 @@ class DocumentacaoFuncionario(models.Model):
     rg_uf = models.CharField(max_length=2, verbose_name="UF do RG")
     rg_data_expedicao = models.DateField(blank=True, null=True, verbose_name="Data de Expedição")
     
-    cpf = models.CharField(max_length=14, verbose_name="CPF")
+    cpf = models.CharField(max_length=14, verbose_name="CPF", unique=True)
     nis_pis_pasep = models.CharField(max_length=20, blank=True, null=True, verbose_name="NIS/PIS/PASEP")
     titulo_eleitor = models.CharField(max_length=20, blank=True, null=True, verbose_name="Título de Eleitor")
     

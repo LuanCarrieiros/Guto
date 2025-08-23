@@ -28,15 +28,14 @@
             </div>
             
             <div class="min-w-[150px]">
-                <label for="cargo" class="block text-sm font-medium text-gray-700 mb-1">Cargo</label>
+                <label for="cargo" class="block text-sm font-medium text-gray-700 mb-1">Função</label>
                 <select id="cargo" name="cargo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                    <option value="">Todos os cargos</option>
-                    <option value="Professor" {% if request.GET.cargo == 'Professor' %}selected{% endif %}>Professor</option>
-                    <option value="Coordenador" {% if request.GET.cargo == 'Coordenador' %}selected{% endif %}>Coordenador</option>
-                    <option value="Diretor" {% if request.GET.cargo == 'Diretor' %}selected{% endif %}>Diretor</option>
-                    <option value="Secretario" {% if request.GET.cargo == 'Secretario' %}selected{% endif %}>Secretário</option>
-                    <option value="Auxiliar" {% if request.GET.cargo == 'Auxiliar' %}selected{% endif %}>Auxiliar</option>
-                    <option value="Outro" {% if request.GET.cargo == 'Outro' %}selected{% endif %}>Outro</option>
+                    <option value="">Todas as funções</option>
+                    <option value="DOCENTE" {% if request.GET.cargo == 'DOCENTE' %}selected{% endif %}>Docente</option>
+                    <option value="DIRETOR" {% if request.GET.cargo == 'DIRETOR' %}selected{% endif %}>Diretor</option>
+                    <option value="COORDENADOR_PEDAGOGICO" {% if request.GET.cargo == 'COORDENADOR_PEDAGOGICO' %}selected{% endif %}>Coordenador Pedagógico</option>
+                    <option value="SECRETARIO_ESCOLAR" {% if request.GET.cargo == 'SECRETARIO_ESCOLAR' %}selected{% endif %}>Secretário Escolar</option>
+                    <option value="AUXILIAR_EDUCACIONAL" {% if request.GET.cargo == 'AUXILIAR_EDUCACIONAL' %}selected{% endif %}>Auxiliar Educacional</option>
                 </select>
             </div>
             
@@ -98,10 +97,22 @@
                             </div>
                         </td>
                         <td class="py-4 px-4">
-                            <span class="text-sm text-gray-700">{{ funcionario.cargo }}</span>
+                            <span class="text-sm text-gray-700">
+                                {% if funcionario.dados_funcionais %}
+                                    {{ funcionario.dados_funcionais.get_funcao_display }}
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </span>
                         </td>
                         <td class="py-4 px-4">
-                            <span class="text-sm text-gray-700">{{ funcionario.data_admissao|date:"d/m/Y" }}</span>
+                            <span class="text-sm text-gray-700">
+                                {% if funcionario.dados_funcionais.data_admissao %}
+                                    {{ funcionario.dados_funcionais.data_admissao|date:"d/m/Y" }}
+                                {% else %}
+                                    <span class="text-gray-400">-</span>
+                                {% endif %}
+                            </span>
                         </td>
                         <td class="py-4 px-4">
                             {% if funcionario.ativo %}
