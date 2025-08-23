@@ -38,10 +38,10 @@
             <a href="{% url 'funcionarios:funcionario_list' %}" class="bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>Voltar
             </a>
-            <a href="{% url 'funcionarios:funcionario_edit' funcionario.codigo %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
+            <a href="{% url 'funcionarios:funcionario_edit' funcionario.pk %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
                 <i class="fas fa-edit mr-2"></i>Editar
             </a>
-            <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.codigo %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+            <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.pk %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
                 <i class="fas fa-cogs mr-2"></i>Edição Completa
             </a>
         </div>
