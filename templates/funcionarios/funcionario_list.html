@@ -115,13 +115,13 @@
                             </span>
                         </td>
                         <td class="py-4 px-4">
-                            {% if funcionario.ativo %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    <i class="fas fa-check-circle mr-1"></i>Ativo
+                            {% if funcionario.tipo_arquivo == 'PERMANENTE' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-archive mr-1"></i>Inativo
                                 </span>
                             {% else %}
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                                    <i class="fas fa-times-circle mr-1"></i>Inativo
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>Ativo
                                 </span>
                             {% endif %}
                         </td>
@@ -142,7 +142,7 @@
                                    title="Edição completa">
                                     <i class="fas fa-cogs"></i>
                                 </a>
-                                {% if funcionario.ativo %}
+                                {% if funcionario.tipo_arquivo == 'CORRENTE' %}
                                     <a href="{% url 'funcionarios:funcionario_delete' funcionario.pk %}" 
                                        class="text-red-600 hover:text-red-900 p-2 rounded-lg hover:bg-red-50 transition-colors" 
                                        title="Excluir">

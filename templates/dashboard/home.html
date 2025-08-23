@@ -198,7 +198,7 @@
                 <span class="mt-1 text-xs font-medium text-gray-900 text-center">Novo Funcionário</span>
             </a>
 
-            <a href="{% url 'opcoes:relatorios_list' %}" class="flex flex-col items-center p-3 rounded-lg hover:bg-purple-50 transition-colors group">
+            <a href="{% url 'opcoes:documentos_home' %}" class="flex flex-col items-center p-3 rounded-lg hover:bg-purple-50 transition-colors group">
                 <div class="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
                     <i class="fas fa-chart-bar text-purple-600 text-lg"></i>
                 </div>
@@ -212,14 +212,14 @@
                 <span class="mt-1 text-xs font-medium text-gray-900 text-center">Transporte</span>
             </a>
 
-            <a href="{% url 'aee:home' %}" class="flex flex-col items-center p-3 rounded-lg hover:bg-red-50 transition-colors group">
+            <a href="{% url 'aee:aee_home' %}" class="flex flex-col items-center p-3 rounded-lg hover:bg-red-50 transition-colors group">
                 <div class="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
                     <i class="fas fa-heart text-red-600 text-lg"></i>
                 </div>
                 <span class="mt-1 text-xs font-medium text-gray-900 text-center">AEE</span>
             </a>
 
-            <a href="#" class="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors group">
+            <a href="{% url 'utilitarios:configuracoes_sistema' %}" class="flex flex-col items-center p-3 rounded-lg hover:bg-gray-50 transition-colors group">
                 <div class="p-2 bg-gray-100 rounded-lg group-hover:bg-gray-200 transition-colors">
                     <i class="fas fa-cog text-gray-600 text-lg"></i>
                 </div>

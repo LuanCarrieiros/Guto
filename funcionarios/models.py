@@ -63,7 +63,6 @@ class Funcionario(models.Model):
     
     # Controle de arquivo
     tipo_arquivo = models.CharField(max_length=20, choices=TIPO_ARQUIVO_CHOICES, default='CORRENTE', verbose_name="Tipo de Arquivo")
-    ativo = models.BooleanField(default=True, verbose_name="Ativo")
     
     # Foto (RF406.4)
     foto = models.ImageField(upload_to='funcionarios/fotos/', blank=True, null=True, verbose_name="Foto")

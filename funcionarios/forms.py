@@ -163,10 +163,13 @@ class FuncionarioForm(forms.ModelForm):
         self.fields['tipo_vinculo'].widget.attrs.update({
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
         })
-        self.fields['data_admissao'].widget = forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
-        })
+        self.fields['data_admissao'].widget = forms.DateInput(
+            format='%Y-%m-%d',
+            attrs={
+                'type': 'date',
+                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
+            }
+        )
         self.fields['observacoes'].widget.attrs.update({
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
             'placeholder': 'Observações adicionais (opcional)'
@@ -187,7 +190,8 @@ class FuncionarioForm(forms.ModelForm):
                 self.fields['funcao'].initial = dados_funcionais.funcao
                 self.fields['situacao_funcional'].initial = dados_funcionais.situacao_funcional
                 self.fields['tipo_vinculo'].initial = dados_funcionais.tipo_vinculo
-                self.fields['data_admissao'].initial = dados_funcionais.data_admissao
+                if dados_funcionais.data_admissao:
+                    self.fields['data_admissao'].initial = dados_funcionais.data_admissao.strftime('%Y-%m-%d')
                 self.fields['observacoes'].initial = dados_funcionais.observacoes
             except DadosFuncionais.DoesNotExist:
                 pass
@@ -254,20 +258,16 @@ class FuncionarioForm(forms.ModelForm):
             funcionario.save()
             
             # Criar ou atualizar documentação
-            documentacao, created = DocumentacaoFuncionario.objects.get_or_create(
+            documentacao, created = DocumentacaoFuncionario.objects.update_or_create(
                 funcionario=funcionario,
                 defaults={
                     'cpf': self.cleaned_data['cpf'],
                     'rg': self.cleaned_data['rg']
                 }
             )
-            if not created:
-                documentacao.cpf = self.cleaned_data['cpf']
-                documentacao.rg = self.cleaned_data['rg']
-                documentacao.save()
             
             # Criar ou atualizar dados funcionais
-            dados_funcionais, created = DadosFuncionais.objects.get_or_create(
+            dados_funcionais, created = DadosFuncionais.objects.update_or_create(
                 funcionario=funcionario,
                 defaults={
                     'matricula': self.cleaned_data['matricula'],
@@ -278,14 +278,6 @@ class FuncionarioForm(forms.ModelForm):
                     'observacoes': self.cleaned_data['observacoes']
                 }
             )
-            if not created:
-                dados_funcionais.matricula = self.cleaned_data['matricula']
-                dados_funcionais.funcao = self.cleaned_data['funcao']
-                dados_funcionais.situacao_funcional = self.cleaned_data['situacao_funcional']
-                dados_funcionais.tipo_vinculo = self.cleaned_data['tipo_vinculo']
-                dados_funcionais.data_admissao = self.cleaned_data['data_admissao']
-                dados_funcionais.observacoes = self.cleaned_data['observacoes']
-                dados_funcionais.save()
         
         return funcionario
 

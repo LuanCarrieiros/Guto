@@ -41,8 +41,12 @@ def funcionario_list(request):
         funcionarios = funcionarios.filter(dados_funcionais__funcao=cargo)
     
     if ativo:
-        ativo_bool = ativo == 'True'
-        funcionarios = funcionarios.filter(ativo=ativo_bool)
+        if ativo == 'True':
+            # Mostrar apenas funcionários ativos (arquivo corrente)
+            funcionarios = funcionarios.filter(tipo_arquivo='CORRENTE')
+        else:
+            # Mostrar apenas funcionários inativos (arquivo permanente)
+            funcionarios = funcionarios.filter(tipo_arquivo='PERMANENTE')
     
     # Ordenar por nome
     funcionarios = funcionarios.order_by('nome')
@@ -200,11 +204,26 @@ def funcionario_edit_extended(request, pk):
     """
     funcionario = get_object_or_404(Funcionario, pk=pk)
     
-    # Criar instâncias relacionadas se não existirem
-    documentacao, created = DocumentacaoFuncionario.objects.get_or_create(funcionario=funcionario)
-    dados_funcionais, created = DadosFuncionais.objects.get_or_create(funcionario=funcionario)
-    escolaridade, created = Escolaridade.objects.get_or_create(funcionario=funcionario)
-    disponibilidade, created = Disponibilidade.objects.get_or_create(funcionario=funcionario)
+    # Obter instâncias relacionadas se existirem
+    try:
+        documentacao = DocumentacaoFuncionario.objects.get(funcionario=funcionario)
+    except DocumentacaoFuncionario.DoesNotExist:
+        documentacao = None
+    
+    try:
+        dados_funcionais = DadosFuncionais.objects.get(funcionario=funcionario)
+    except DadosFuncionais.DoesNotExist:
+        dados_funcionais = None
+    
+    try:
+        escolaridade = Escolaridade.objects.get(funcionario=funcionario)
+    except Escolaridade.DoesNotExist:
+        escolaridade = None
+    
+    try:
+        disponibilidade = Disponibilidade.objects.get(funcionario=funcionario)
+    except Disponibilidade.DoesNotExist:
+        disponibilidade = None
     
     if request.method == 'POST':
         aba_ativa = request.POST.get('aba_ativa', 'dados_pessoais')
@@ -278,23 +297,49 @@ def funcionario_delete(request, pk):
         return redirect('funcionarios:funcionario_detail', pk=funcionario.pk)
     
     if request.method == 'POST':
-        if request.POST.get('confirmar') == 'sim':
+        action = request.POST.get('action')
+        confirmacao = request.POST.get('confirmacao', '').strip()
+        
+        # Verificar se o nome foi digitado corretamente
+        if confirmacao == funcionario.nome and action:
             nome_funcionario = funcionario.nome
             codigo_funcionario = funcionario.codigo
             
-            # Registrar atividade recente antes de deletar
-            AtividadeRecente.registrar_atividade(
-                usuario=request.user,
-                acao='DELETAR',
-                modulo='FUNCIONARIOS',
-                objeto_nome=nome_funcionario,
-                objeto_id=codigo_funcionario,
-                descricao=f'Funcionário removido do sistema'
-            )
-            
-            funcionario.delete()
-            messages.success(request, f'Funcionário {nome_funcionario} excluído com sucesso')
-            return redirect('funcionarios:funcionario_list')
+            if action == 'archive':
+                # Mover para arquivo permanente
+                funcionario.tipo_arquivo = 'PERMANENTE'
+                funcionario.save()
+                
+                # Registrar atividade recente
+                AtividadeRecente.registrar_atividade(
+                    usuario=request.user,
+                    acao='EDITAR',
+                    modulo='FUNCIONARIOS',
+                    objeto_nome=nome_funcionario,
+                    objeto_id=codigo_funcionario,
+                    descricao=f'Funcionário movido para arquivo permanente'
+                )
+                
+                messages.success(request, f'Funcionário {nome_funcionario} movido para arquivo permanente')
+                return redirect('funcionarios:funcionario_list')
+                
+            elif action == 'delete':
+                # Excluir permanentemente
+                # Registrar atividade recente antes de deletar
+                AtividadeRecente.registrar_atividade(
+                    usuario=request.user,
+                    acao='DELETAR',
+                    modulo='FUNCIONARIOS',
+                    objeto_nome=nome_funcionario,
+                    objeto_id=codigo_funcionario,
+                    descricao=f'Funcionário removido permanentemente do sistema'
+                )
+                
+                funcionario.delete()
+                messages.success(request, f'Funcionário {nome_funcionario} excluído permanentemente')
+                return redirect('funcionarios:funcionario_list')
+        else:
+            messages.error(request, 'Nome de confirmação incorreto ou ação não selecionada')
     
     return render(request, 'funcionarios/funcionario_confirm_delete.html', {'funcionario': funcionario})
 
