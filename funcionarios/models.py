@@ -165,7 +165,7 @@ class DadosFuncionais(models.Model):
     
     # Dados do vínculo
     tipo_vinculo = models.CharField(max_length=30, choices=TIPO_VINCULO_CHOICES, verbose_name="Tipo de Vínculo")
-    data_admissao = models.DateField(verbose_name="Data de Admissão")
+    data_admissao = models.DateField(blank=True, null=True, verbose_name="Data de Admissão")
     data_demissao = models.DateField(blank=True, null=True, verbose_name="Data de Demissão")
     data_final_contrato = models.DateField(blank=True, null=True, verbose_name="Data Final do Contrato")
     

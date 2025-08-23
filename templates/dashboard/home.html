@@ -184,21 +184,21 @@
         <h3 class="text-base font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
         <div class="grid grid-cols-3 md:grid-cols-6 gap-3">
             
-            <a href="#" class="flex flex-col items-center p-3 rounded-lg hover:bg-blue-50 transition-colors group">
+            <a href="{% url 'alunos:aluno_create' %}" class="flex flex-col items-center p-3 rounded-lg hover:bg-blue-50 transition-colors group">
                 <div class="p-2 bg-blue-100 rounded-lg group-hover:bg-blue-200 transition-colors">
                     <i class="fas fa-user-plus text-blue-600 text-lg"></i>
                 </div>
                 <span class="mt-1 text-xs font-medium text-gray-900 text-center">Novo Aluno</span>
             </a>
 
-            <a href="#" class="flex flex-col items-center p-3 rounded-lg hover:bg-green-50 transition-colors group">
+            <a href="{% url 'funcionarios:funcionario_create' %}" class="flex flex-col items-center p-3 rounded-lg hover:bg-green-50 transition-colors group">
                 <div class="p-2 bg-green-100 rounded-lg group-hover:bg-green-200 transition-colors">
-                    <i class="fas fa-clipboard-list text-green-600 text-lg"></i>
+                    <i class="fas fa-user-tie text-green-600 text-lg"></i>
                 </div>
-                <span class="mt-1 text-xs font-medium text-gray-900 text-center">Nova Avaliação</span>
+                <span class="mt-1 text-xs font-medium text-gray-900 text-center">Novo Funcionário</span>
             </a>
 
-            <a href="#" class="flex flex-col items-center p-3 rounded-lg hover:bg-purple-50 transition-colors group">
+            <a href="{% url 'opcoes:relatorios_list' %}" class="flex flex-col items-center p-3 rounded-lg hover:bg-purple-50 transition-colors group">
                 <div class="p-2 bg-purple-100 rounded-lg group-hover:bg-purple-200 transition-colors">
                     <i class="fas fa-chart-bar text-purple-600 text-lg"></i>
                 </div>
@@ -212,7 +212,7 @@
                 <span class="mt-1 text-xs font-medium text-gray-900 text-center">Transporte</span>
             </a>
 
-            <a href="#" class="flex flex-col items-center p-3 rounded-lg hover:bg-red-50 transition-colors group">
+            <a href="{% url 'aee:home' %}" class="flex flex-col items-center p-3 rounded-lg hover:bg-red-50 transition-colors group">
                 <div class="p-2 bg-red-100 rounded-lg group-hover:bg-red-200 transition-colors">
                     <i class="fas fa-heart text-red-600 text-lg"></i>
                 </div>
