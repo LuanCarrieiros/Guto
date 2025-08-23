@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Sistema GUTO{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Cabeçalho -->
+    <div class="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-6 mb-8 text-white">
+        <h1 class="text-3xl font-bold mb-2">📅 {{ title }}</h1>
+        <p class="text-blue-100">Visualização do calendário do ano administrativo</p>
+    </div>
+
+    <!-- Controles superiores -->
+    <div class="flex flex-wrap justify-between items-center mb-6 space-y-2 md:space-y-0">
+        <!-- Voltar -->
+        <a href="{% url 'opcoes:opcoes_home' %}" 
+           class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Voltar para Opções
+        </a>
+
+        <!-- Seletor de ano e ações -->
+        <div class="flex items-center space-x-4">
+            <!-- Seletor de Ano -->
+            <div class="flex items-center space-x-2">
+                <label class="text-sm font-medium text-gray-700">Ano:</label>
+                <select onchange="window.location.href='?ano=' + this.value" 
+                        class="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    {% for ano_opcao in anos_disponiveis %}
+                        <option value="{{ ano_opcao }}" {% if ano_opcao == ano %}selected{% endif %}>
+                            {{ ano_opcao }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Botão de Impressão (RF703) -->
+            <a href="?ano={{ ano }}&format=print" target="_blank"
+               class="inline-flex items-center px-4 py-2 bg-green-600 text-white font-medium rounded-lg hover:bg-green-700 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                </svg>
+                Imprimir
+            </a>
+
+            <!-- Botão Novo Calendário -->
+            <a href="{% url 'opcoes:calendario_criar' %}" 
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+                Novo Calendário
+            </a>
+        </div>
+    </div>
+
+    <!-- Informações dos Calendários (RF704) -->
+    {% if calendarios %}
+    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">📋 Calendários Configurados para {{ ano }}</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {% for calendario in calendarios %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div class="flex justify-between items-start mb-2">
+                    <h4 class="font-medium text-gray-800">{{ calendario.get_tipo_ensino_display }}</h4>
+                    <a href="{% url 'opcoes:calendario_detalhe' calendario.pk %}" 
+                       class="text-blue-600 hover:text-blue-800">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                        </svg>
+                    </a>
+                </div>
+                <div class="text-sm text-gray-600 space-y-1">
+                    <p><strong>Série:</strong> {{ calendario.get_serie_display }}</p>
+                    <p><strong>Turno:</strong> {{ calendario.get_turno_display }}</p>
+                    <p><strong>Período:</strong> {{ calendario.data_inicio_letivo|date:"d/m/Y" }} - {{ calendario.data_fim_letivo|date:"d/m/Y" }}</p>
+                    <p><strong>Dias Letivos:</strong> {{ calendario.dias_letivos }}</p>
+                    <p><strong>Dias Escolares:</strong> {{ calendario.dias_escolares }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Calendário Visual -->
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-6 text-center">📅 Calendário {{ ano }}</h3>
+        
+        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for mes_info in meses %}
+            <div class="border border-gray-200 rounded-lg p-4">
+                <h4 class="text-center font-medium text-gray-800 mb-3">{{ mes_info.mes }} {{ ano }}</h4>
+                
+                <!-- Calendário simplificado do mês -->
+                <div class="text-center">
+                    <div class="grid grid-cols-7 gap-1 text-xs mb-2">
+                        <div class="font-semibold text-gray-600 p-1">S</div>
+                        <div class="font-semibold text-gray-600 p-1">T</div>
+                        <div class="font-semibold text-gray-600 p-1">Q</div>
+                        <div class="font-semibold text-gray-600 p-1">Q</div>
+                        <div class="font-semibold text-gray-600 p-1">S</div>
+                        <div class="font-semibold text-gray-600 p-1">S</div>
+                        <div class="font-semibold text-gray-600 p-1">D</div>
+                    </div>
+                    
+                    <!-- Dias do mês (simulado) -->
+                    <div class="grid grid-cols-7 gap-1 text-xs">
+                        {% for dia in "1234567890123456789012345678901234567"  %}
+                            {% if forloop.counter <= 31 %}
+                                <div class="p-1 hover:bg-blue-100 rounded transition-colors cursor-pointer
+                                           {% if forloop.counter == 15 %}bg-green-100 text-green-800{% endif %}
+                                           {% if forloop.counter == 22 %}bg-red-100 text-red-800{% endif %}">
+                                    {{ forloop.counter }}
+                                </div>
+                            {% endif %}
+                        {% endfor %}
+                    </div>
+                </div>
+                
+                <!-- Eventos do mês (simulado) -->
+                <div class="mt-3 text-xs">
+                    <div class="text-green-800">
+                        <span class="inline-block w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                        Dias letivos
+                    </div>
+                    <div class="text-red-800">
+                        <span class="inline-block w-2 h-2 bg-red-500 rounded-full mr-1"></span>
+                        Feriados
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Legenda -->
+    <div class="mt-8 bg-gray-50 rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-800 mb-4">📝 Legenda</h3>
+        <div class="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-green-500 rounded-full mr-2"></span>
+                <span class="text-sm text-gray-700">Dias Letivos</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-red-500 rounded-full mr-2"></span>
+                <span class="text-sm text-gray-700">Feriados</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-yellow-500 rounded-full mr-2"></span>
+                <span class="text-sm text-gray-700">Eventos Especiais</span>
+            </div>
+            <div class="flex items-center">
+                <span class="inline-block w-4 h-4 bg-blue-500 rounded-full mr-2"></span>
+                <span class="text-sm text-gray-700">Reuniões Pedagógicas</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações inferiores -->
+    <div class="mt-8 flex justify-center">
+        <button onclick="window.print()" class="px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors">
+            <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+            </svg>
+            Fechar
+        </button>
+    </div>
+</div>
+{% endblock %}

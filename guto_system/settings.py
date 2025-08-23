@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'dashboard',
     'alunos',
     'funcionarios',
+    'opcoes',
 ]
 
 MIDDLEWARE = [

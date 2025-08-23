@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - Sistema GUTO{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-8">
+    <!-- Cabeçalho -->
+    <div class="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-lg p-6 mb-8 text-white">
+        <h1 class="text-3xl font-bold mb-2">🔍 {{ title }}</h1>
+        <p class="text-blue-100">Configure os filtros para gerar o relatório "{{ tipo_relatorio.get_nome_display }}"</p>
+    </div>
+
+    <!-- Voltar -->
+    <div class="mb-6">
+        <a href="{% url 'opcoes:documentos_home' %}" 
+           class="inline-flex items-center px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Voltar para Documentos
+        </a>
+    </div>
+
+    <!-- Formulário de Filtros (RF607) -->
+    <div class="bg-white rounded-lg shadow-lg p-8">
+        <form method="post" class="space-y-6">
+            {% csrf_token %}
+            
+            <!-- Filtros Obrigatórios -->
+            <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Período Letivo -->
+                <div>
+                    <label for="{{ form.periodo_letivo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.periodo_letivo.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.periodo_letivo }}
+                    {% if form.periodo_letivo.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.periodo_letivo.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Tipo de Ensino -->
+                <div>
+                    <label for="{{ form.tipo_ensino.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.tipo_ensino.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.tipo_ensino }}
+                    {% if form.tipo_ensino.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.tipo_ensino.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Turno -->
+                <div>
+                    <label for="{{ form.turno.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.turno.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.turno }}
+                    {% if form.turno.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.turno.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Status do Diário -->
+                <div>
+                    <label for="{{ form.status_diario.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.status_diario.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.status_diario }}
+                    {% if form.status_diario.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.status_diario.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+
+                <!-- Situação da Turma -->
+                <div>
+                    <label for="{{ form.situacao_turma.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                        {{ form.situacao_turma.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.situacao_turma }}
+                    {% if form.situacao_turma.errors %}
+                        <div class="mt-1 text-sm text-red-600">
+                            {{ form.situacao_turma.errors }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Filtros Opcionais -->
+            <div class="border-t pt-6">
+                <h3 class="text-lg font-medium text-gray-800 mb-4">📋 Filtros Opcionais</h3>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <!-- Ano/Série -->
+                    <div>
+                        <label for="{{ form.ano_serie.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            {{ form.ano_serie.label }}
+                        </label>
+                        {{ form.ano_serie }}
+                        {% if form.ano_serie.errors %}
+                            <div class="mt-1 text-sm text-red-600">
+                                {{ form.ano_serie.errors }}
+                            </div>
+                        {% endif %}
+                        <div class="mt-1 text-sm text-gray-500">
+                            Deixe em branco para incluir todas as séries
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <div class="flex justify-between items-center pt-6 border-t">
+                <div class="text-sm text-gray-600">
+                    <span class="text-red-500">*</span> Campos obrigatórios
+                </div>
+                
+                <div class="flex space-x-4">
+                    <a href="{% url 'opcoes:documentos_home' %}" 
+                       class="px-6 py-3 bg-gray-600 text-white font-medium rounded-lg hover:bg-gray-700 transition-colors">
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="px-8 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                        <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path>
+                        </svg>
+                        Gerar Relatório
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+
+    <!-- Informações sobre o Relatório -->
+    <div class="mt-8 bg-green-50 border border-green-200 rounded-lg p-6">
+        <div class="flex items-start">
+            <svg class="w-6 h-6 text-green-600 mt-1 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+            </svg>
+            <div>
+                <h3 class="text-lg font-medium text-green-800 mb-2">📄 Sobre o Relatório: {{ tipo_relatorio.get_nome_display }}</h3>
+                <div class="text-green-700">
+                    {% if tipo_relatorio.nome == 'FICHA_MATRICULA' %}
+                        <p>Este relatório contém informações completas sobre a matrícula dos alunos, incluindo dados pessoais, responsáveis e documentação.</p>
+                    {% elif tipo_relatorio.nome == 'BOLETIM' %}
+                        <p>Relatório com notas, frequência e conceitos dos alunos por disciplina e período letivo.</p>
+                    {% elif tipo_relatorio.nome == 'FICHA_INDIVIDUAL' %}
+                        <p>Ficha individual completa do aluno com histórico escolar, observações pedagógicas e dados complementares.</p>
+                    {% elif tipo_relatorio.nome == 'DIAGNOSTICO_HABILIDADES' %}
+                        <p>Diagnóstico das habilidades e competências desenvolvidas pelos alunos ao longo do período letivo.</p>
+                    {% endif %}
+                    
+                    {% if tipo_relatorio.descricao %}
+                        <p class="mt-2"><strong>Descrição:</strong> {{ tipo_relatorio.descricao }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Script para melhorar a experiência do usuário
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-submit quando todos os campos obrigatórios estiverem preenchidos
+    const form = document.querySelector('form');
+    const requiredFields = form.querySelectorAll('select[required], input[required]');
+    
+    function checkFormValidity() {
+        let allFilled = true;
+        requiredFields.forEach(field => {
+            if (!field.value) {
+                allFilled = false;
+            }
+        });
+        
+        const submitBtn = document.querySelector('button[type="submit"]');
+        if (allFilled) {
+            submitBtn.classList.add('ring-2', 'ring-blue-500');
+        } else {
+            submitBtn.classList.remove('ring-2', 'ring-blue-500');
+        }
+    }
+    
+    requiredFields.forEach(field => {
+        field.addEventListener('change', checkFormValidity);
+    });
+    
+    // Check initial state
+    checkFormValidity();
+});
+</script>
+{% endblock %}
