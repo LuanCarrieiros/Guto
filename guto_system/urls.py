@@ -43,6 +43,10 @@ urlpatterns = [
     path('aee/', include('aee.urls')),
     path('avaliacao/', include('avaliacao.urls')),
     path('utilitarios/', include('utilitarios.urls')),
+    path('escola/', include('escola.urls')),
+    path('transporte/', include('transporte.urls')),
+    path('programa/', include('programa.urls')),
+    path('censo/', include('censo.urls')),
 ]
 
 # Configuração para servir arquivos de mídia em desenvolvimento

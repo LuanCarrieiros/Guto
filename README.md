@@ -1,8 +1,8 @@
 # Sistema GUTO - Gestão Escolar
 
-Sistema de gestão escolar desenvolvido em Django para controle de alunos, funcionários, matrículas, opções, AEE e avaliações educacionais.
+Sistema de gestão escolar desenvolvido em Django para controle completo de alunos, funcionários, escola, transporte, programas pedagógicos e demais módulos educacionais.
 
-## 🚀 **STATUS ATUAL: Sistema Operacional com 6 Módulos Funcionais**
+## 🚀 **STATUS ATUAL: Sistema Operacional com 9 Módulos Funcionais**
 
 ### ✅ **MÓDULOS IMPLEMENTADOS E FUNCIONAIS**
 
@@ -66,6 +66,42 @@ Sistema de gestão escolar desenvolvido em Django para controle de alunos, funci
 - **Templates**: Interface moderna para gerenciamento do sistema
 - **Status**: Navegável via menu lateral ✅
 
+#### **7. 🏫 Módulo Escola - Itinerários Formativos (100% Completo)**
+- **Requisitos**: Módulo 7 - Itinerários Formativos ✅
+- **4 models**: ItinerarioFormativo, UnidadeCurricular, AssociacaoItinerarioUnidade, EnturmacaoItinerario
+- **10 views**: CRUD completo de itinerários, unidades curriculares e enturmação
+- **Templates**: Interface completa com dashboard, listas e formulários
+- **Funcionalidades**: 
+  - Gestão de itinerários formativos por área de conhecimento
+  - Unidades curriculares com ementa e habilidades
+  - Sistema de enturmação de alunos em itinerários
+  - Controle de vagas e associações
+- **Status**: Totalmente implementado e funcional ✅
+
+#### **8. 🚌 Módulo Transporte Escolar (Models Implementados)**
+- **Requisitos**: Módulo 12 - Transporte Escolar ✅
+- **7 models**: Motorista, Veiculo, Rota, PontoParada, AlunoTransporte, RegistroViagem, ManutencaoVeiculo
+- **Funcionalidades Modeladas**:
+  - Cadastro completo de motoristas com CNH e contratos
+  - Gestão de veículos com documentação e manutenção
+  - Sistema de rotas com pontos de parada e horários
+  - Controle de alunos por rota e ponto de embarque/desembarque
+  - Registro de viagens e quilometragem
+  - Controle de manutenções preventivas e corretivas
+- **Status**: Models prontos, views e templates aguardando implementação 🔄
+
+#### **9. 📖 Módulo Programa Pedagógico (Models Implementados)**
+- **Requisitos**: Módulo 10 - Programa Pedagógico ✅
+- **7 models**: ProgramaPedagogico, ModuloPrograma, ParticipantePrograma, AulaPrograma, FrequenciaPrograma, AvaliacaoPrograma, NotaPrograma
+- **Funcionalidades Modeladas**:
+  - Gestão completa de programas pedagógicos por modalidade
+  - Sistema modular com aulas e cronogramas
+  - Controle de participantes e inscrições
+  - Registro de frequência por aula
+  - Sistema de avaliações e notas por módulo
+  - Relatórios de desempenho e certificação
+- **Status**: Models prontos, views e templates aguardando implementação 🔄
+
 ### 📋 **REQUISITOS FUNCIONAIS - STATUS DETALHADO**
 
 #### ✅ **CONCLUÍDOS**
@@ -97,16 +133,16 @@ Sistema de gestão escolar desenvolvido em Django para controle de alunos, funci
 
 #### ⏳ **PRÓXIMOS PASSOS**
 - Completar Views e Templates dos módulos AEE e Avaliação
-- Implementar Módulo Enturmação
-- Implementar Módulo Transporte 
-- Implementar Módulo Utilitários
+- Implementar Views e Templates para Transporte Escolar
+- Implementar Views e Templates para Programa Pedagógico
+- Implementar demais módulos conforme especificações
 
 ### 🏗️ **Arquitetura Técnica**
 
 #### **Backend**
 - **Framework**: Django 5.2.5
 - **Database**: SQLite (operacional com dados)
-- **Apps**: dashboard, alunos, funcionarios, opcoes, aee
+- **Apps**: dashboard, alunos, funcionarios, opcoes, aee, avaliacao, utilitarios, escola, transporte, programa
 - **API**: Django REST Framework configurado
 
 #### **3. App Alunos - Backend Completo**
@@ -184,13 +220,12 @@ Sistema de gestão escolar desenvolvido em Django para controle de alunos, funci
 - [x] **Bug URLs**: Funcionários dava erro 404 → Corrigido removendo URLs inexistentes
 - [x] **Sistema estável**: Ambos módulos funcionando perfeitamente
 
-#### **5. Próximos Módulos (Em Preparação)**
+#### **5. Novos Módulos Implementados**
+- [x] **Módulo Escola** - Itinerários Formativos (100% completo com views e templates)
+- [x] **Módulo Transporte** - Models completos para gestão de transporte escolar  
+- [x] **Módulo Programa Pedagógico** - Models completos para programas educacionais
 - [ ] **Módulo de Enturmação** (RF301-RF310) - Requisitos sendo organizados
-- [ ] **Módulo de Avaliações** - Sistema de provas e notas
-- [ ] **Módulo de Transporte** - Gestão de rotas e veículos
-- [ ] **Módulo AEE** - Atendimento Educacional Especializado
 - [ ] **Módulo Censo** - Dados estatísticos e relatórios
-- [ ] **Módulo Utilitários** - Ferramentas auxiliares
 - [ ] **Módulo Suporte** - Sistema de ajuda e tickets
 
 ### 📝 **Status Atual dos Requisitos**
@@ -233,19 +268,46 @@ funcionarios/
 ├── DeficienciaFuncionario (1:N)
 ├── AssociacaoProfessor (1:N)
 └── AssociacaoOutrosProfissionais (1:N)
+
+escola/
+├── ItinerarioFormativo (tabela principal)
+├── UnidadeCurricular (1:N)
+├── AssociacaoItinerarioUnidade (M:N)
+└── EnturmacaoItinerario (M:N com Aluno)
+
+transporte/
+├── Motorista (tabela principal)
+├── Veiculo (tabela principal)
+├── Rota (1:1 com Veiculo e Motorista)
+├── PontoParada (1:N com Rota)
+├── AlunoTransporte (M:N com Aluno e Rota)
+├── RegistroViagem (1:N com Rota)
+└── ManutencaoVeiculo (1:N com Veiculo)
+
+programa/
+├── ProgramaPedagogico (tabela principal)
+├── ModuloPrograma (1:N com Programa)
+├── ParticipantePrograma (M:N com Aluno)
+├── AulaPrograma (1:N com Modulo)
+├── FrequenciaPrograma (M:N)
+├── AvaliacaoPrograma (1:N com Modulo)
+└── NotaPrograma (M:N)
 ```
 
 ### **Views**
 - **Alunos**: 16 views completas (CRUD + matrículas + relatórios)
 - **Funcionários**: 6 views principais (CRUD básico funcional)
+- **Escola**: 10 views completas (CRUD itinerários + unidades + enturmação)
+- **Transporte**: Models prontos, views aguardando implementação
+- **Programa**: Models prontos, views aguardando implementação
 - Decorador `@login_required` em todas as views
 - Mensagens de sucesso/erro conforme RNF105
 - Validações de regras de negócio implementadas
 - Busca e filtros avançados funcionando
 
 ### **URLs**
-- Estrutura RESTful para ambos módulos
-- Namespaces organizados (`alunos:aluno_list`, `funcionarios:funcionario_list`)
+- Estrutura RESTful para todos os módulos
+- Namespaces organizados (`alunos:aluno_list`, `funcionarios:funcionario_list`, `escola:escola_home`)
 - URLs para CRUD completo + ações especiais
 - Integração completa na sidebar principal
 
@@ -367,11 +429,18 @@ Projeto Guto/
 ### **✅ Módulos Funcionando:**
 - **Alunos**: CRUD completo, matrículas, validações, relatórios
 - **Funcionários**: CRUD básico, filtros, validações
+- **Escola**: CRUD itinerários formativos, unidades curriculares, enturmação
+- **AEE/Avaliação/Utilitários**: Interfaces navegáveis e models implementados
+- **Transporte/Programa**: Models completos aguardando implementação de views
 
 ### **🎯 URLs Funcionais:**
 - http://127.0.0.1:8000/ - Dashboard principal
 - http://127.0.0.1:8000/alunos/ - Gestão de alunos
 - http://127.0.0.1:8000/funcionarios/ - Gestão de funcionários
+- http://127.0.0.1:8000/escola/ - Itinerários formativos
+- http://127.0.0.1:8000/aee/ - Atividades complementares
+- http://127.0.0.1:8000/avaliacao/ - Sistema de avaliação
+- http://127.0.0.1:8000/utilitarios/ - Ferramentas do sistema
 - http://127.0.0.1:8000/admin/ - Interface admin Django
 
 ### **🔧 Para Continuar:**

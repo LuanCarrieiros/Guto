@@ -45,6 +45,10 @@ INSTALLED_APPS = [
     'aee',
     'avaliacao',
     'utilitarios',
+    'escola',
+    'transporte',
+    'programa',
+    'censo',
 ]
 
 MIDDLEWARE = [

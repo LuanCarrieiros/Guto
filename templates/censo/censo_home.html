@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Censo Escolar - GUTO{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">📊 Censo Escolar {{ ano_atual }}</h1>
+            <p class="text-gray-600 mt-1">
+                Dados estatísticos, relatórios e informações do censo escolar
+            </p>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-users text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total de Alunos</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_alunos }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user-tie text-green-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total de Funcionários</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_funcionarios }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-graduation-cap text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Matrículas Ativas</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_matriculas }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-calendar text-orange-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Ano Letivo</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ ano_atual }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações Rápidas -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+            <h3 class="text-lg font-semibold text-gray-900">Censo e Relatórios</h3>
+            <p class="text-sm text-gray-600 mt-1">Acesse as principais funcionalidades de censo e estatísticas</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <a href="{% url 'censo:censo_escolar' %}" class="action-card group">
+                    <div class="action-card-icon bg-blue-100 group-hover:bg-blue-200">
+                        <i class="fas fa-chart-bar text-blue-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Censo Escolar</h4>
+                        <p class="action-card-description">Dados do censo atual</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'censo:relatorio_matriculas' %}" class="action-card group">
+                    <div class="action-card-icon bg-green-100 group-hover:bg-green-200">
+                        <i class="fas fa-graduation-cap text-green-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Rel. Matrículas</h4>
+                        <p class="action-card-description">Relatório de matrículas</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'censo:relatorio_funcionarios' %}" class="action-card group">
+                    <div class="action-card-icon bg-purple-100 group-hover:bg-purple-200">
+                        <i class="fas fa-user-tie text-purple-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Rel. Funcionários</h4>
+                        <p class="action-card-description">Relatório de funcionários</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'censo:relatorio_estatisticas' %}" class="action-card group">
+                    <div class="action-card-icon bg-orange-100 group-hover:bg-orange-200">
+                        <i class="fas fa-chart-pie text-orange-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Estatísticas</h4>
+                        <p class="action-card-description">Estatísticas gerais</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Exportação de Dados -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b">
+            <h3 class="text-lg font-semibold text-gray-900">Exportação de Dados</h3>
+            <p class="text-sm text-gray-600 mt-1">Exporte dados para análise externa ou backup</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex items-center p-4 bg-blue-50 rounded-lg">
+                    <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-download text-blue-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900">Dados de Matrículas</h4>
+                        <p class="text-sm text-gray-600">Exportar todas as matrículas</p>
+                    </div>
+                    <a href="{% url 'censo:exportar_dados' 'matriculas' %}" 
+                       class="ml-4 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700">
+                        Exportar
+                    </a>
+                </div>
+
+                <div class="flex items-center p-4 bg-green-50 rounded-lg">
+                    <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-download text-green-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900">Dados de Funcionários</h4>
+                        <p class="text-sm text-gray-600">Exportar todos os funcionários</p>
+                    </div>
+                    <a href="{% url 'censo:exportar_dados' 'funcionarios' %}" 
+                       class="ml-4 bg-green-600 text-white px-3 py-1 rounded text-sm hover:bg-green-700">
+                        Exportar
+                    </a>
+                </div>
+
+                <div class="flex items-center p-4 bg-purple-50 rounded-lg">
+                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
+                        <i class="fas fa-download text-purple-600"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="font-semibold text-gray-900">Censo Completo</h4>
+                        <p class="text-sm text-gray-600">Exportar dados completos</p>
+                    </div>
+                    <a href="{% url 'censo:exportar_dados' 'completo' %}" 
+                       class="ml-4 bg-purple-600 text-white px-3 py-1 rounded text-sm hover:bg-purple-700">
+                        Exportar
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações Importantes -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-400 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">
+                    Informações sobre o Censo Escolar
+                </h3>
+                <div class="mt-2 text-sm text-blue-700">
+                    <p>O censo escolar é uma pesquisa estatística anual que tem como objetivo coletar informações sobre a educação básica brasileira.</p>
+                    <ul class="list-disc pl-5 mt-2">
+                        <li>Dados atualizados automaticamente do sistema</li>
+                        <li>Relatórios organizados por ano letivo</li>
+                        <li>Estatísticas por modalidade de ensino</li>
+                        <li>Exportação de dados em formato JSON</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

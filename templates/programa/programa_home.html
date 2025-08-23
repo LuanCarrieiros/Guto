@@ -1,0 +1,159 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Programa Pedagógico - GUTO{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">📖 Programa Pedagógico</h1>
+            <p class="text-gray-600 mt-1">
+                Sistema completo de gestão de programas educacionais modulares
+            </p>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-book text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Programas Ativos</p>
+                    <p class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-puzzle-piece text-green-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Módulos</p>
+                    <p class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-users text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Participantes</p>
+                    <p class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-chalkboard-teacher text-orange-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Aulas Realizadas</p>
+                    <p class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações Rápidas -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+            <h3 class="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
+            <p class="text-sm text-gray-600 mt-1">Acesse as principais funcionalidades dos programas pedagógicos</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div class="action-card group cursor-not-allowed">
+                    <div class="action-card-icon bg-blue-100 group-hover:bg-blue-200">
+                        <i class="fas fa-book text-blue-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Programas</h4>
+                        <p class="action-card-description">Gerenciar programas</p>
+                    </div>
+                </div>
+
+                <div class="action-card group cursor-not-allowed">
+                    <div class="action-card-icon bg-green-100 group-hover:bg-green-200">
+                        <i class="fas fa-puzzle-piece text-green-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Módulos</h4>
+                        <p class="action-card-description">Gerenciar módulos</p>
+                    </div>
+                </div>
+
+                <div class="action-card group cursor-not-allowed">
+                    <div class="action-card-icon bg-purple-100 group-hover:bg-purple-200">
+                        <i class="fas fa-users text-purple-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Participantes</h4>
+                        <p class="action-card-description">Gerenciar participantes</p>
+                    </div>
+                </div>
+
+                <div class="action-card group cursor-not-allowed">
+                    <div class="action-card-icon bg-orange-100 group-hover:bg-orange-200">
+                        <i class="fas fa-chalkboard-teacher text-orange-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Aulas</h4>
+                        <p class="action-card-description">Gerenciar aulas</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo em Desenvolvimento -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">
+                    Módulo em Desenvolvimento
+                </h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                    <p>Este módulo está sendo desenvolvido. As funcionalidades completas serão implementadas em breve:</p>
+                    <ul class="list-disc pl-5 mt-1">
+                        <li>Gestão completa de programas pedagógicos por modalidade</li>
+                        <li>Sistema modular com aulas e cronogramas</li>
+                        <li>Controle de participantes e inscrições</li>
+                        <li>Registro de frequência por aula</li>
+                        <li>Sistema de avaliações e notas por módulo</li>
+                        <li>Relatórios de desempenho e certificação</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

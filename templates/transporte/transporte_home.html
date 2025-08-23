@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Transporte Escolar - GUTO{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">🚌 Transporte Escolar</h1>
+            <p class="text-gray-600 mt-1">
+                Sistema completo de gestão de transporte escolar, motoristas, veículos e rotas
+            </p>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-bus text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Veículos Ativos</p>
+                    <p class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-green-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Motoristas</p>
+                    <p class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-route text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Rotas Ativas</p>
+                    <p class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-users text-orange-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Alunos Transportados</p>
+                    <p class="text-2xl font-bold text-gray-900">0</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações Rápidas -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+            <h3 class="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
+            <p class="text-sm text-gray-600 mt-1">Acesse as principais funcionalidades do sistema de transporte</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <a href="{% url 'transporte:motorista_list' %}" class="action-card group">
+                    <div class="action-card-icon bg-green-100 group-hover:bg-green-200">
+                        <i class="fas fa-user text-green-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Motoristas</h4>
+                        <p class="action-card-description">Gerenciar motoristas</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'transporte:veiculo_list' %}" class="action-card group">
+                    <div class="action-card-icon bg-blue-100 group-hover:bg-blue-200">
+                        <i class="fas fa-bus text-blue-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Veículos</h4>
+                        <p class="action-card-description">Gerenciar veículos</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'transporte:rota_list' %}" class="action-card group">
+                    <div class="action-card-icon bg-purple-100 group-hover:bg-purple-200">
+                        <i class="fas fa-route text-purple-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Rotas</h4>
+                        <p class="action-card-description">Gerenciar rotas e pontos</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'dashboard:home' %}" class="action-card group">
+                    <div class="action-card-icon bg-gray-100 group-hover:bg-gray-200">
+                        <i class="fas fa-chart-bar text-gray-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Relatórios</h4>
+                        <p class="action-card-description">Relatórios de transporte</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Módulo em Desenvolvimento -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-yellow-800">
+                    Módulo em Desenvolvimento
+                </h3>
+                <div class="mt-2 text-sm text-yellow-700">
+                    <p>Este módulo está sendo desenvolvido. As funcionalidades completas serão implementadas em breve:</p>
+                    <ul class="list-disc pl-5 mt-1">
+                        <li>Cadastro completo de motoristas com CNH e contratos</li>
+                        <li>Gestão de veículos com documentação e manutenção</li>
+                        <li>Sistema de rotas com pontos de parada e horários</li>
+                        <li>Controle de alunos por rota</li>
+                        <li>Registro de viagens e relatórios</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

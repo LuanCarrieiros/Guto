@@ -1,0 +1,204 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Escola - Itinerários Formativos - GUTO{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Escola - Itinerários Formativos</h1>
+            <p class="text-gray-600 mt-1">
+                Gestão de itinerários formativos, unidades curriculares e enturmação de alunos
+            </p>
+        </div>
+        <div class="flex space-x-3">
+            <a href="{% url 'escola:itinerario_create' %}" class="btn-primary">
+                <i class="fas fa-plus mr-2"></i>
+                Novo Itinerário
+            </a>
+            <a href="{% url 'escola:unidade_create' %}" class="btn-secondary">
+                <i class="fas fa-plus mr-2"></i>
+                Nova Unidade
+            </a>
+        </div>
+    </div>
+
+    <!-- Cards de Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-route text-blue-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total de Itinerários</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_itinerarios }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-book text-green-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Unidades Curriculares</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_unidades }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-users text-purple-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Total de Enturmações</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ total_enturmacoes }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+            <div class="flex items-center">
+                <div class="flex-shrink-0">
+                    <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                        <i class="fas fa-chart-line text-orange-600"></i>
+                    </div>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-600">Taxa de Ocupação</p>
+                    <p class="text-2xl font-bold text-gray-900">
+                        {% if total_itinerarios > 0 %}85%{% else %}0%{% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Ações Rápidas -->
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
+            <h3 class="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
+            <p class="text-sm text-gray-600 mt-1">Acesse as principais funcionalidades do módulo</p>
+        </div>
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <a href="{% url 'escola:itinerario_list' %}" class="action-card group">
+                    <div class="action-card-icon bg-blue-100 group-hover:bg-blue-200">
+                        <i class="fas fa-route text-blue-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Itinerários Formativos</h4>
+                        <p class="action-card-description">Gerenciar itinerários formativos</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'escola:unidade_list' %}" class="action-card group">
+                    <div class="action-card-icon bg-green-100 group-hover:bg-green-200">
+                        <i class="fas fa-book text-green-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Unidades Curriculares</h4>
+                        <p class="action-card-description">Gerenciar unidades curriculares</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'alunos:aluno_list' %}" class="action-card group">
+                    <div class="action-card-icon bg-purple-100 group-hover:bg-purple-200">
+                        <i class="fas fa-users text-purple-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Enturmar Alunos</h4>
+                        <p class="action-card-description">Gerenciar enturmações</p>
+                    </div>
+                </a>
+
+                <a href="{% url 'dashboard:home' %}" class="action-card group">
+                    <div class="action-card-icon bg-gray-100 group-hover:bg-gray-200">
+                        <i class="fas fa-chart-bar text-gray-600"></i>
+                    </div>
+                    <div class="action-card-content">
+                        <h4 class="action-card-title">Relatórios</h4>
+                        <p class="action-card-description">Visualizar relatórios</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Itinerários Recentes -->
+    {% if itinerarios_recentes %}
+    <div class="bg-white rounded-lg shadow-md overflow-hidden">
+        <div class="px-6 py-4 bg-gradient-to-r from-green-50 to-emerald-50 border-b">
+            <h3 class="text-lg font-semibold text-gray-900">Itinerários Recentes</h3>
+            <p class="text-sm text-gray-600 mt-1">Últimos itinerários cadastrados</p>
+        </div>
+        <div class="p-6">
+            <div class="space-y-4">
+                {% for itinerario in itinerarios_recentes %}
+                <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                            <i class="fas fa-route text-blue-600"></i>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold text-gray-900">{{ itinerario.nome }}</h4>
+                            <p class="text-sm text-gray-600">
+                                {{ itinerario.get_areas_conhecimento_display }} • 
+                                {{ itinerario.carga_horaria_total }}h •
+                                {{ itinerario.vagas_disponiveis }} vagas
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2">
+                        <a href="{% url 'escola:itinerario_detail' itinerario.pk %}" 
+                           class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-eye"></i>
+                        </a>
+                        <a href="{% url 'escola:itinerario_edit' itinerario.pk %}" 
+                           class="text-green-600 hover:text-green-800">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            <div class="mt-4 text-center">
+                <a href="{% url 'escola:itinerario_list' %}" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Ver todos os itinerários →
+                </a>
+            </div>
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-lg shadow-md p-8 text-center">
+        <div class="w-16 h-16 bg-gray-100 rounded-full mx-auto flex items-center justify-center mb-4">
+            <i class="fas fa-route text-gray-400 text-xl"></i>
+        </div>
+        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nenhum itinerário cadastrado</h3>
+        <p class="text-gray-600 mb-6">Comece criando seu primeiro itinerário formativo</p>
+        <a href="{% url 'escola:itinerario_create' %}" class="btn-primary inline-flex items-center">
+            <i class="fas fa-plus mr-2"></i>
+            Criar Primeiro Itinerário
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}
