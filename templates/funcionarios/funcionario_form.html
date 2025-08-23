@@ -28,6 +28,25 @@
         </a>
     </div>
 
+    <!-- Debug: Mostrar erros de validação -->
+    {% if form.errors %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+            <h3 class="text-red-800 font-semibold mb-2">
+                <i class="fas fa-exclamation-triangle mr-2"></i>Erros de Validação
+            </h3>
+            {% for field, errors in form.errors.items %}
+                <div class="mb-2">
+                    <strong class="text-red-700">{{ field }}:</strong>
+                    <ul class="list-disc list-inside text-red-600 text-sm">
+                        {% for error in errors %}
+                            <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <form method="post" enctype="multipart/form-data" class="space-y-6">
         {% csrf_token %}
         
@@ -85,6 +104,86 @@
                     {{ form.rg }}
                     {% if form.rg.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.rg.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.estado_civil.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.estado_civil.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.estado_civil }}
+                    {% if form.estado_civil.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.estado_civil.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.cor_raca.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.cor_raca.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.cor_raca }}
+                    {% if form.cor_raca.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.cor_raca.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.nacionalidade.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.nacionalidade.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.nacionalidade }}
+                    {% if form.nacionalidade.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.nacionalidade.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.naturalidade.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.naturalidade.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.naturalidade }}
+                    {% if form.naturalidade.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.naturalidade.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.uf_nascimento.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.uf_nascimento.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.uf_nascimento }}
+                    {% if form.uf_nascimento.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.uf_nascimento.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.nome_mae.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.nome_mae.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.nome_mae }}
+                    {% if form.nome_mae.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.nome_mae.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.nome_pai.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.nome_pai.label }}
+                    </label>
+                    {{ form.nome_pai }}
+                    {% if form.nome_pai.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.nome_pai.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.nome_social.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.nome_social.label }}
+                    </label>
+                    {{ form.nome_social }}
+                    {% if form.nome_social.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.nome_social.errors.0 }}</p>
                     {% endif %}
                 </div>
                 
@@ -206,6 +305,16 @@
                     {{ form.cidade }}
                     {% if form.cidade.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.cidade.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.uf.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.uf.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.uf }}
+                    {% if form.uf.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.uf.errors.0 }}</p>
                     {% endif %}
                 </div>
             </div>
@@ -437,18 +546,55 @@ document.addEventListener('DOMContentLoaded', function() {
     const fotoInput = document.querySelector('#id_foto');
     if (fotoInput) {
         let fotoSelecionada = null;
+        
+        // Armazenar foto selecionada
         fotoInput.addEventListener('change', function(e) {
             if (e.target.files.length > 0) {
                 fotoSelecionada = e.target.files[0];
+                // Armazenar no sessionStorage como backup
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    sessionStorage.setItem('fotoBackup', e.target.result);
+                    sessionStorage.setItem('fotoName', fotoSelecionada.name);
+                    sessionStorage.setItem('fotoType', fotoSelecionada.type);
+                };
+                reader.readAsDataURL(fotoSelecionada);
             }
         });
         
-        // Restaurar foto após erro de validação
-        if (fotoSelecionada && fotoInput.files.length === 0) {
-            const dt = new DataTransfer();
-            dt.items.add(fotoSelecionada);
-            fotoInput.files = dt.files;
+        // Restaurar foto se houver backup e campo estiver vazio
+        if (fotoInput.files.length === 0 && sessionStorage.getItem('fotoBackup')) {
+            const fotoBackup = sessionStorage.getItem('fotoBackup');
+            const fotoName = sessionStorage.getItem('fotoName');
+            const fotoType = sessionStorage.getItem('fotoType');
+            
+            if (fotoBackup && fotoName) {
+                // Converter base64 de volta para File
+                fetch(fotoBackup)
+                    .then(res => res.blob())
+                    .then(blob => {
+                        const file = new File([blob], fotoName, { type: fotoType });
+                        const dt = new DataTransfer();
+                        dt.items.add(file);
+                        fotoInput.files = dt.files;
+                    });
+            }
         }
+        
+        // Limpar backup após sucesso
+        document.querySelector('form').addEventListener('submit', function() {
+            // Só limpar se não houver erros (será feito via redirect)
+            setTimeout(() => {
+                if (window.location.href.includes('create')) {
+                    // Ainda na página de criação, manter backup
+                } else {
+                    // Sucesso, limpar backup
+                    sessionStorage.removeItem('fotoBackup');
+                    sessionStorage.removeItem('fotoName');
+                    sessionStorage.removeItem('fotoType');
+                }
+            }, 100);
+        });
     }
 });
 </script>

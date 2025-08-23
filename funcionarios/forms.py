@@ -244,8 +244,11 @@ class FuncionarioForm(forms.ModelForm):
             raise ValidationError("Número deve conter apenas dígitos.")
         return numero
     
-    def save(self, commit=True):
+    def save(self, commit=True, user=None):
         funcionario = super().save(commit=False)
+        
+        if user:
+            funcionario.usuario_cadastro = user
         
         if commit:
             funcionario.save()

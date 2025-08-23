@@ -103,7 +103,7 @@ def funcionario_create(request):
         form = FuncionarioForm(request.POST, request.FILES)
         if form.is_valid():
             try:
-                funcionario = form.save()
+                funcionario = form.save(user=request.user)
                 
                 # Registrar atividade recente
                 AtividadeRecente.registrar_atividade(
@@ -116,9 +116,14 @@ def funcionario_create(request):
                 )
                 
                 messages.success(request, 'Funcionário cadastrado com sucesso')
-                return redirect('funcionarios:funcionario_edit_extended', pk=funcionario.pk)
+                return redirect('funcionarios:funcionario_list')
             except Exception as e:
                 messages.error(request, f'Erro ao cadastrar funcionário: {str(e)}')
+        else:
+            # Exibir erros de validação para o usuário
+            for field, errors in form.errors.items():
+                for error in errors:
+                    messages.error(request, f'{field}: {error}')
     else:
         form = FuncionarioForm()
     

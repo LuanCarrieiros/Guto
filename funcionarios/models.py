@@ -94,7 +94,7 @@ class DocumentacaoFuncionario(models.Model):
     rg_uf = models.CharField(max_length=2, verbose_name="UF do RG")
     rg_data_expedicao = models.DateField(blank=True, null=True, verbose_name="Data de Expedição")
     
-    cpf = models.CharField(max_length=14, verbose_name="CPF", unique=True)
+    cpf = models.CharField(max_length=14, verbose_name="CPF")
     nis_pis_pasep = models.CharField(max_length=20, blank=True, null=True, verbose_name="NIS/PIS/PASEP")
     titulo_eleitor = models.CharField(max_length=20, blank=True, null=True, verbose_name="Título de Eleitor")
     
