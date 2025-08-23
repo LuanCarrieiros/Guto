@@ -2,6 +2,9 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count
 from django.contrib.auth.models import User
+from .models import AtividadeRecente
+from alunos.models import Aluno
+from funcionarios.models import Funcionario
 import datetime
 import locale
 
@@ -32,17 +35,23 @@ def home(request):
     }
     dia_semana = dias_semana[hoje.weekday()]
     
-    # Dados fictícios para demonstração (depois virão do banco de dados real)
+    # Dados reais do banco de dados
+    total_alunos = Aluno.objects.count()
+    total_funcionarios = Funcionario.objects.count()
+    
+    # Buscar atividades recentes reais
+    atividades_recentes = AtividadeRecente.objects.select_related('usuario')[:10]
+    
     context = {
-        'total_alunos': 1250,
-        'total_funcionarios': 85,
-        'avaliacoes_pendentes': 23,
-        'transportes_ativos': 12,
+        'total_alunos': total_alunos,
+        'total_funcionarios': total_funcionarios,
+        'avaliacoes_pendentes': 23,  # Será implementado quando o módulo avaliação estiver completo
+        'transportes_ativos': 12,    # Será implementado quando o módulo transporte for criado
         'escola_nome': 'Sistema GUTO',
         'data_atual': hoje,
         'dia_semana': dia_semana,
         
-        # Dados para gráficos (simulados)
+        # Dados para gráficos (simulados - será implementado com dados reais)
         'alunos_por_serie': [
             {'serie': '1º Ano', 'quantidade': 180},
             {'serie': '2º Ano', 'quantidade': 165},
@@ -51,33 +60,8 @@ def home(request):
             {'serie': '5º Ano', 'quantidade': 135},
         ],
         
-        # Atividades recentes
-        'atividades_recentes': [
-            {
-                'tipo': 'Avaliação',
-                'descricao': 'Prova de Matemática - 5º Ano',
-                'data': '2025-01-20',
-                'status': 'Concluída',
-                'icon': 'fas fa-clipboard-list',
-                'color': 'green'
-            },
-            {
-                'tipo': 'Aluno',
-                'descricao': 'Novo aluno matriculado: João Silva',
-                'data': '2025-01-19',
-                'status': 'Ativo',
-                'icon': 'fas fa-user-plus',
-                'color': 'blue'
-            },
-            {
-                'tipo': 'Transporte',
-                'descricao': 'Rota 03 - Manutenção programada',
-                'data': '2025-01-18',
-                'status': 'Agendado',
-                'icon': 'fas fa-bus',
-                'color': 'yellow'
-            },
-        ]
+        # Atividades recentes reais
+        'atividades_recentes': atividades_recentes,
     }
     
     return render(request, 'dashboard/home.html', context)

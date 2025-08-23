@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
 from django.core.paginator import Paginator
+from dashboard.models import AtividadeRecente
 from .models import (
     Funcionario, DocumentacaoFuncionario, DadosFuncionais, DuploVinculo,
     Habilitacao, Escolaridade, FormacaoSuperior, Disponibilidade,
@@ -105,6 +106,16 @@ def funcionario_create(request):
             funcionario.usuario_cadastro = request.user
             funcionario.save()
             
+            # Registrar atividade recente
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='CRIAR',
+                modulo='FUNCIONARIOS',
+                objeto_nome=funcionario.nome,
+                objeto_id=funcionario.codigo,
+                descricao=f'Novo funcionário cadastrado no sistema'
+            )
+            
             messages.success(request, 'Funcionário cadastrado com sucesso')
             return redirect('funcionarios:funcionario_edit_extended', pk=funcionario.pk)
     else:
@@ -127,6 +138,17 @@ def funcionario_edit(request, pk):
         form = FuncionarioForm(request.POST, request.FILES, instance=funcionario)
         if form.is_valid():
             form.save()
+            
+            # Registrar atividade recente
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='EDITAR',
+                modulo='FUNCIONARIOS',
+                objeto_nome=funcionario.nome,
+                objeto_id=funcionario.codigo,
+                descricao=f'Dados do funcionário atualizados'
+            )
+            
             messages.success(request, 'Dados alterados com sucesso')
             return redirect('funcionarios:funcionario_detail', pk=funcionario.pk)
     else:
@@ -250,6 +272,18 @@ def funcionario_delete(request, pk):
     if request.method == 'POST':
         if request.POST.get('confirmar') == 'sim':
             nome_funcionario = funcionario.nome
+            codigo_funcionario = funcionario.codigo
+            
+            # Registrar atividade recente antes de deletar
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='DELETAR',
+                modulo='FUNCIONARIOS',
+                objeto_nome=nome_funcionario,
+                objeto_id=codigo_funcionario,
+                descricao=f'Funcionário removido do sistema'
+            )
+            
             funcionario.delete()
             messages.success(request, f'Funcionário {nome_funcionario} excluído com sucesso')
             return redirect('funcionarios:funcionario_list')

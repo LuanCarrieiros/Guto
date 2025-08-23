@@ -11,9 +11,11 @@ class FuncionarioForm(forms.ModelForm):
     # Campos adicionais que não estão diretamente no modelo Funcionario
     cpf = forms.CharField(max_length=14, required=True, label="CPF")
     rg = forms.CharField(max_length=20, required=False, label="RG")
-    cargo = forms.CharField(max_length=100, required=True, label="Cargo")
+    matricula = forms.CharField(max_length=20, required=True, label="Matrícula")
+    funcao = forms.ChoiceField(required=True, label="Função")
+    situacao_funcional = forms.ChoiceField(required=True, label="Situação Funcional")
+    tipo_vinculo = forms.ChoiceField(required=True, label="Tipo de Vínculo")
     data_admissao = forms.DateField(required=True, label="Data de Admissão")
-    ativo = forms.BooleanField(required=False, initial=True, label="Funcionário Ativo")
     observacoes = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), required=False, label="Observações")
 
     class Meta:
@@ -121,6 +123,12 @@ class FuncionarioForm(forms.ModelForm):
     
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        
+        # Definir choices para os campos de DadosFuncionais
+        self.fields['funcao'].choices = DadosFuncionais.FUNCAO_CHOICES
+        self.fields['situacao_funcional'].choices = DadosFuncionais.SITUACAO_CHOICES
+        self.fields['tipo_vinculo'].choices = DadosFuncionais.TIPO_VINCULO_CHOICES
+        
         # Adicionar widgets para os campos customizados
         self.fields['cpf'].widget.attrs.update({
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
@@ -130,16 +138,22 @@ class FuncionarioForm(forms.ModelForm):
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
             'placeholder': 'Número do RG'
         })
-        self.fields['cargo'].widget.attrs.update({
+        self.fields['matricula'].widget.attrs.update({
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
-            'placeholder': 'Cargo/Função'
+            'placeholder': 'Matrícula do funcionário'
+        })
+        self.fields['funcao'].widget.attrs.update({
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
+        })
+        self.fields['situacao_funcional'].widget.attrs.update({
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
+        })
+        self.fields['tipo_vinculo'].widget.attrs.update({
+            'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
         })
         self.fields['data_admissao'].widget = forms.DateInput(attrs={
             'type': 'date',
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
-        })
-        self.fields['ativo'].widget.attrs.update({
-            'class': 'h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded'
         })
         self.fields['observacoes'].widget.attrs.update({
             'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
@@ -157,9 +171,11 @@ class FuncionarioForm(forms.ModelForm):
             
             try:
                 dados_funcionais = self.instance.dados_funcionais
-                self.fields['cargo'].initial = dados_funcionais.cargo
+                self.fields['matricula'].initial = dados_funcionais.matricula
+                self.fields['funcao'].initial = dados_funcionais.funcao
+                self.fields['situacao_funcional'].initial = dados_funcionais.situacao_funcional
+                self.fields['tipo_vinculo'].initial = dados_funcionais.tipo_vinculo
                 self.fields['data_admissao'].initial = dados_funcionais.data_admissao
-                self.fields['ativo'].initial = dados_funcionais.ativo
                 self.fields['observacoes'].initial = dados_funcionais.observacoes
             except DadosFuncionais.DoesNotExist:
                 pass
@@ -187,16 +203,20 @@ class FuncionarioForm(forms.ModelForm):
             dados_funcionais, created = DadosFuncionais.objects.get_or_create(
                 funcionario=funcionario,
                 defaults={
-                    'cargo': self.cleaned_data['cargo'],
+                    'matricula': self.cleaned_data['matricula'],
+                    'funcao': self.cleaned_data['funcao'],
+                    'situacao_funcional': self.cleaned_data['situacao_funcional'],
+                    'tipo_vinculo': self.cleaned_data['tipo_vinculo'],
                     'data_admissao': self.cleaned_data['data_admissao'],
-                    'ativo': self.cleaned_data['ativo'],
                     'observacoes': self.cleaned_data['observacoes']
                 }
             )
             if not created:
-                dados_funcionais.cargo = self.cleaned_data['cargo']
+                dados_funcionais.matricula = self.cleaned_data['matricula']
+                dados_funcionais.funcao = self.cleaned_data['funcao']
+                dados_funcionais.situacao_funcional = self.cleaned_data['situacao_funcional']
+                dados_funcionais.tipo_vinculo = self.cleaned_data['tipo_vinculo']
                 dados_funcionais.data_admissao = self.cleaned_data['data_admissao']
-                dados_funcionais.ativo = self.cleaned_data['ativo']
                 dados_funcionais.observacoes = self.cleaned_data['observacoes']
                 dados_funcionais.save()
         

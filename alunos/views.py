@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db.models import Q
 from django.http import JsonResponse
 from django.core.paginator import Paginator
+from dashboard.models import AtividadeRecente
 from .models import Aluno, DocumentacaoAluno, Responsavel, TransporteAluno, Matricula
 from .forms import AlunoForm, DocumentacaoAlunoForm, ResponsavelForm, TransporteAlunoForm, MatriculaForm
 
@@ -74,6 +75,16 @@ def aluno_create(request):
             aluno.usuario_cadastro = request.user
             aluno.save()
             
+            # Registrar atividade recente
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='CRIAR',
+                modulo='ALUNOS',
+                objeto_nome=aluno.nome,
+                objeto_id=aluno.codigo,
+                descricao=f'Novo aluno cadastrado no sistema'
+            )
+            
             messages.success(request, 'Inclusão do Aluno realizada com sucesso')
             
             # RF104.5: Perguntar se deseja completar cadastro
@@ -101,6 +112,17 @@ def aluno_edit(request, pk):
         form = AlunoForm(request.POST, request.FILES, instance=aluno)
         if form.is_valid():
             form.save()
+            
+            # Registrar atividade recente
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='EDITAR',
+                modulo='ALUNOS',
+                objeto_nome=aluno.nome,
+                objeto_id=aluno.codigo,
+                descricao=f'Dados básicos do aluno atualizados'
+            )
+            
             messages.success(request, 'Alteração do Aluno realizada com sucesso')
             return redirect('alunos:aluno_detail', pk=aluno.pk)
     else:
@@ -119,6 +141,16 @@ def aluno_detail(request, pk):
     Visualização detalhada do aluno (RF106 - Consultar)
     """
     aluno = get_object_or_404(Aluno, pk=pk)
+    
+    # Registrar atividade recente de visualização
+    AtividadeRecente.registrar_atividade(
+        usuario=request.user,
+        acao='VISUALIZAR',
+        modulo='ALUNOS',
+        objeto_nome=aluno.nome,
+        objeto_id=aluno.codigo,
+        descricao=f'Visualizou detalhes do aluno'
+    )
     
     context = {
         'aluno': aluno,
@@ -194,6 +226,18 @@ def aluno_delete(request, pk):
     if request.method == 'POST':
         if request.POST.get('confirmar') == 'sim':
             nome_aluno = aluno.nome
+            codigo_aluno = aluno.codigo
+            
+            # Registrar atividade recente antes de deletar
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='DELETAR',
+                modulo='ALUNOS',
+                objeto_nome=nome_aluno,
+                objeto_id=codigo_aluno,
+                descricao=f'Aluno removido do sistema'
+            )
+            
             aluno.delete()
             messages.success(request, f'Aluno {nome_aluno} excluído com sucesso')
             return redirect('alunos:aluno_list')

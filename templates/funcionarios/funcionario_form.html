@@ -219,12 +219,42 @@
             
             <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <div>
-                    <label for="{{ form.cargo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-                        {{ form.cargo.label }} <span class="text-red-500">*</span>
+                    <label for="{{ form.matricula.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.matricula.label }} <span class="text-red-500">*</span>
                     </label>
-                    {{ form.cargo }}
-                    {% if form.cargo.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.cargo.errors.0 }}</p>
+                    {{ form.matricula }}
+                    {% if form.matricula.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.matricula.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.funcao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.funcao.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.funcao }}
+                    {% if form.funcao.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.funcao.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.situacao_funcional.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.situacao_funcional.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.situacao_funcional }}
+                    {% if form.situacao_funcional.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.situacao_funcional.errors.0 }}</p>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <label for="{{ form.tipo_vinculo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
+                        {{ form.tipo_vinculo.label }} <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.tipo_vinculo }}
+                    {% if form.tipo_vinculo.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.tipo_vinculo.errors.0 }}</p>
                     {% endif %}
                 </div>
                 
@@ -245,18 +275,6 @@
                     {{ form.tipo_arquivo }}
                     {% if form.tipo_arquivo.errors %}
                         <p class="mt-1 text-sm text-red-600">{{ form.tipo_arquivo.errors.0 }}</p>
-                    {% endif %}
-                </div>
-                
-                <div class="lg:col-span-3">
-                    <div class="flex items-center">
-                        {{ form.ativo }}
-                        <label for="{{ form.ativo.id_for_label }}" class="ml-2 text-sm font-medium text-gray-700">
-                            {{ form.ativo.label }}
-                        </label>
-                    </div>
-                    {% if form.ativo.errors %}
-                        <p class="mt-1 text-sm text-red-600">{{ form.ativo.errors.0 }}</p>
                     {% endif %}
                 </div>
             </div>
