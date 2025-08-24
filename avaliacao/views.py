@@ -388,10 +388,10 @@ def enturmar_alunos(request, pk):
     # Alunos disponíveis (não enturmados nesta turma)
     alunos_enturmados_ids = Enturmacao.objects.filter(
         turma=turma, ativo=True
-    ).values_list('aluno_id', flat=True)
+    ).values_list('aluno', flat=True)
     
     alunos_disponiveis = Aluno.objects.exclude(
-        id__in=alunos_enturmados_ids
+        codigo__in=alunos_enturmados_ids
     ).order_by('nome')
     
     if request.method == 'POST':
@@ -409,8 +409,8 @@ def enturmar_alunos(request, pk):
                 return redirect('avaliacao:enturmar_alunos', pk=pk)
             
             # Enturmar os alunos selecionados
-            for aluno_id in alunos_selecionados:
-                aluno = get_object_or_404(Aluno, id=aluno_id)
+            for aluno_codigo in alunos_selecionados:
+                aluno = get_object_or_404(Aluno, codigo=aluno_codigo)
                 
                 Enturmacao.objects.create(
                     turma=turma,
@@ -451,7 +451,7 @@ def desenturmar_aluno(request, pk, aluno_id):
     View para desenturmar um aluno de uma turma
     """
     turma = get_object_or_404(Turma, pk=pk)
-    aluno = get_object_or_404(Aluno, id=aluno_id)
+    aluno = get_object_or_404(Aluno, codigo=aluno_id)
     
     # Buscar a enturmação ativa
     enturmacao = get_object_or_404(

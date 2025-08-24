@@ -83,3 +83,19 @@ def configuracoes(request):
         'page_title': 'Configurações',
     }
     return render(request, 'dashboard/configuracoes.html', context)
+
+
+def em_desenvolvimento(request):
+    """
+    View para páginas em desenvolvimento
+    """
+    # Obter parâmetros da URL
+    funcionalidade = request.GET.get('funcionalidade', '')
+    progresso = request.GET.get('progresso', '75')
+    
+    context = {
+        'funcionalidade': funcionalidade,
+        'progresso': progresso,
+    }
+    
+    return render(request, 'em_desenvolvimento.html', context)

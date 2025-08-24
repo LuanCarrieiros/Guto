@@ -175,12 +175,12 @@
                             </td>
                             <td class="py-4 px-6">
                                 <div class="flex items-center space-x-2">
-                                    <a href="{% url 'alunos:aluno_detail' enturmacao.aluno.pk %}" 
+                                    <a href="{% url 'alunos:aluno_detail' enturmacao.aluno.codigo %}" 
                                        class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors" 
                                        title="Ver aluno">
                                         <i class="fas fa-eye text-sm"></i>
                                     </a>
-                                    <a href="{% url 'avaliacao:desenturmar_aluno' turma.pk enturmacao.aluno.pk %}" 
+                                    <a href="{% url 'avaliacao:desenturmar_aluno' turma.pk enturmacao.aluno.codigo %}" 
                                        class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors" 
                                        title="Desenturmar">
                                         <i class="fas fa-user-times text-sm"></i>

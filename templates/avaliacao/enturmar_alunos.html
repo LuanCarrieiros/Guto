@@ -85,7 +85,7 @@
                     <div class="space-y-2">
                         {% for aluno in alunos_disponiveis %}
                         <label class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors aluno-item">
-                            <input type="checkbox" name="alunos" value="{{ aluno.id }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 aluno-checkbox">
+                            <input type="checkbox" name="alunos" value="{{ aluno.codigo }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 aluno-checkbox">
                             <div class="ml-3 flex-1">
                                 <div class="flex items-center space-x-3">
                                     {% if aluno.foto %}
