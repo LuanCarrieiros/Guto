@@ -20,28 +20,28 @@
     <!-- Filtros e Busca -->
     <div class="bg-gray-50 rounded-lg p-4 mb-6">
         <form method="GET" class="flex flex-wrap gap-4 items-end">
-            <div class="flex-1 min-w-[300px]">
+            <div class="flex-1 min-w-[250px]">
                 <label for="search" class="block text-sm font-medium text-gray-700 mb-1">Buscar</label>
                 <input type="text" id="search" name="search" value="{{ request.GET.search }}" 
                        placeholder="Nome, código ou matrícula..."
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
             </div>
             
-            <div class="min-w-[150px]">
+            <div class="min-w-[140px]">
                 <label for="cargo" class="block text-sm font-medium text-gray-700 mb-1">Função</label>
-                <select id="cargo" name="cargo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                    <option value="">Todas as funções</option>
+                <select id="cargo" name="cargo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">Todas</option>
                     <option value="DOCENTE" {% if request.GET.cargo == 'DOCENTE' %}selected{% endif %}>Docente</option>
                     <option value="DIRETOR" {% if request.GET.cargo == 'DIRETOR' %}selected{% endif %}>Diretor</option>
-                    <option value="COORDENADOR_PEDAGOGICO" {% if request.GET.cargo == 'COORDENADOR_PEDAGOGICO' %}selected{% endif %}>Coordenador Pedagógico</option>
-                    <option value="SECRETARIO_ESCOLAR" {% if request.GET.cargo == 'SECRETARIO_ESCOLAR' %}selected{% endif %}>Secretário Escolar</option>
-                    <option value="AUXILIAR_EDUCACIONAL" {% if request.GET.cargo == 'AUXILIAR_EDUCACIONAL' %}selected{% endif %}>Auxiliar Educacional</option>
+                    <option value="COORDENADOR_PEDAGOGICO" {% if request.GET.cargo == 'COORDENADOR_PEDAGOGICO' %}selected{% endif %}>Coord. Ped.</option>
+                    <option value="SECRETARIO_ESCOLAR" {% if request.GET.cargo == 'SECRETARIO_ESCOLAR' %}selected{% endif %}>Secretário</option>
+                    <option value="AUXILIAR_EDUCACIONAL" {% if request.GET.cargo == 'AUXILIAR_EDUCACIONAL' %}selected{% endif %}>Aux. Educ.</option>
                 </select>
             </div>
             
-            <div class="min-w-[120px]">
+            <div class="min-w-[100px]">
                 <label for="ativo" class="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                <select id="ativo" name="ativo" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                <select id="ativo" name="ativo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                     <option value="">Todos</option>
                     <option value="True" {% if request.GET.ativo == 'True' %}selected{% endif %}>Ativos</option>
                     <option value="False" {% if request.GET.ativo == 'False' %}selected{% endif %}>Inativos</option>

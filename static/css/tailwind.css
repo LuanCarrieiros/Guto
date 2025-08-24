@@ -8,6 +8,10 @@
     @apply bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200 ease-in-out transform hover:scale-105;
   }
   
+  .btn-secondary {
+    @apply bg-gray-600 hover:bg-gray-700 text-white font-semibold py-2 px-4 rounded-lg transition duration-200;
+  }
+  
   .card {
     @apply bg-white rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 border border-gray-100;
   }
@@ -18,6 +22,53 @@
   
   .sidebar-item.active {
     @apply bg-blue-100 text-blue-700 border-r-4 border-blue-600;
+  }
+  
+  /* Responsividade para tabelas */
+  .table-responsive {
+    @apply overflow-x-auto;
+  }
+  
+  .table {
+    @apply min-w-full divide-y divide-gray-200;
+  }
+  
+  .table th {
+    @apply px-3 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider bg-gray-50;
+  }
+  
+  .table td {
+    @apply px-3 py-4 whitespace-nowrap text-sm text-gray-900;
+  }
+  
+  /* Mobile responsive adjustments */
+  @media (max-width: 640px) {
+    .table th,
+    .table td {
+      @apply px-2 py-2 text-xs;
+    }
+  }
+  
+  /* Filter group responsive */
+  .filter-group {
+    @apply flex flex-col sm:flex-row sm:items-end gap-4;
+  }
+  
+  .search-filters {
+    @apply bg-white p-4 rounded-lg shadow-sm border;
+  }
+  
+  /* Badge styles */
+  .badge {
+    @apply inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium;
+  }
+  
+  .badge-active {
+    @apply bg-green-100 text-green-800;
+  }
+  
+  .badge-inactive {
+    @apply bg-yellow-100 text-yellow-800;
   }
 }
 

@@ -44,8 +44,8 @@ def aluno_list(request):
     alunos_permanente = Aluno.objects.filter(tipo_arquivo='PERMANENTE').count()
     alunos_gemeos = Aluno.objects.filter(aluno_gemeo=True).count()
     
-    # Paginação
-    paginator = Paginator(alunos, 25)
+    # Paginação - aumentando para 50 registros por página
+    paginator = Paginator(alunos, 50)
     page_number = request.GET.get('page')
     alunos_page = paginator.get_page(page_number)
     
