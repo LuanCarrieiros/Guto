@@ -7,8 +7,14 @@ urlpatterns = [
     # Dashboard principal da Avaliação
     path('', views.avaliacao_home, name='avaliacao_home'),
     
-    # Turmas e Disciplinas
+    # Turmas
     path('turmas/', views.turmas_list, name='turmas_list'),
+    path('turmas/criar/', views.turma_create, name='turma_create'),
+    path('turmas/<int:pk>/', views.turma_detail, name='turma_detail'),
+    path('turmas/<int:pk>/editar/', views.turma_edit, name='turma_edit'),
+    path('turmas/<int:pk>/excluir/', views.turma_delete, name='turma_delete'),
+    
+    # Disciplinas
     path('disciplinas/', views.disciplinas_list, name='disciplinas_list'),
     
     # Lançamento de Notas

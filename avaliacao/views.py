@@ -3,11 +3,17 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Count, Avg
 from django.db import models
+from django.core.paginator import Paginator
+from django.http import JsonResponse
 from .models import (
     Conceito, Turma, Disciplina, LancamentoNota, AtestadoMedico,
     MediaGlobalConceito, RecuperacaoEspecial, ParecerDescritivo,
-    AvaliacaoDescritiva, PendenciaAvaliacao, DiarioOnline, ConteudoAula
+    AvaliacaoDescritiva, PendenciaAvaliacao, DiarioOnline, ConteudoAula,
+    Enturmacao
 )
+from .forms import TurmaForm, DisciplinaForm, EnturmacaoForm
+from alunos.models import Aluno
+from dashboard.models import AtividadeRecente
 
 
 @login_required
@@ -44,24 +50,170 @@ def turmas_list(request):
     """
     Lista todas as turmas para avaliação
     """
-    turmas = Turma.objects.all().order_by('ano', 'nome')
+    turmas = Turma.objects.all()
     
     # Filtros
-    ano = request.GET.get('ano', '')
+    busca = request.GET.get('busca', '')
     periodo_letivo = request.GET.get('periodo_letivo', '')
+    tipo_ensino = request.GET.get('tipo_ensino', '')
+    turno = request.GET.get('turno', '')
     
-    if ano:
-        turmas = turmas.filter(ano=ano)
+    if busca:
+        turmas = turmas.filter(nome__icontains=busca)
     if periodo_letivo:
         turmas = turmas.filter(periodo_letivo=periodo_letivo)
+    if tipo_ensino:
+        turmas = turmas.filter(tipo_ensino=tipo_ensino)
+    if turno:
+        turmas = turmas.filter(turno=turno)
+    
+    # Paginação
+    paginator = Paginator(turmas, 25)
+    page_number = request.GET.get('page')
+    turmas_page = paginator.get_page(page_number)
+    
+    # Estatísticas
+    total_turmas = Turma.objects.count()
+    total_alunos_enturmados = Enturmacao.objects.filter(ativo=True).count()
     
     context = {
-        'turmas': turmas,
-        'ano': ano,
+        'turmas': turmas_page,
+        'busca': busca,
         'periodo_letivo': periodo_letivo,
+        'tipo_ensino': tipo_ensino,
+        'turno': turno,
+        'total_turmas': total_turmas,
+        'total_alunos_enturmados': total_alunos_enturmados,
+        'tipo_ensino_choices': Turma.TIPO_ENSINO_CHOICES,
+        'turno_choices': Turma.TURNO_CHOICES,
     }
     
     return render(request, 'avaliacao/turmas_list.html', context)
+
+
+@login_required
+def turma_create(request):
+    """
+    Criar nova turma
+    """
+    if request.method == 'POST':
+        form = TurmaForm(request.POST)
+        if form.is_valid():
+            turma = form.save(commit=False)
+            turma.usuario_criacao = request.user
+            turma.save()
+            
+            # Registrar atividade recente
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='CRIAR',
+                modulo='AVALIACAO',
+                objeto_nome=turma.nome,
+                objeto_id=turma.id,
+                descricao=f'Nova turma criada: {turma.nome}'
+            )
+            
+            messages.success(request, 'Turma criada com sucesso!')
+            return redirect('avaliacao:turmas_list')
+    else:
+        form = TurmaForm()
+    
+    return render(request, 'avaliacao/turma_form.html', {
+        'form': form,
+        'title': 'Criar Nova Turma',
+        'is_create': True
+    })
+
+
+@login_required
+def turma_edit(request, pk):
+    """
+    Editar turma
+    """
+    turma = get_object_or_404(Turma, pk=pk)
+    
+    if request.method == 'POST':
+        form = TurmaForm(request.POST, instance=turma)
+        if form.is_valid():
+            form.save()
+            
+            # Registrar atividade recente
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='EDITAR',
+                modulo='AVALIACAO',
+                objeto_nome=turma.nome,
+                objeto_id=turma.id,
+                descricao=f'Turma editada: {turma.nome}'
+            )
+            
+            messages.success(request, 'Turma editada com sucesso!')
+            return redirect('avaliacao:turma_detail', pk=turma.pk)
+    else:
+        form = TurmaForm(instance=turma)
+    
+    return render(request, 'avaliacao/turma_form.html', {
+        'form': form,
+        'turma': turma,
+        'title': f'Editar Turma - {turma.nome}',
+        'is_create': False
+    })
+
+
+@login_required
+def turma_detail(request, pk):
+    """
+    Visualizar detalhes da turma
+    """
+    turma = get_object_or_404(Turma, pk=pk)
+    
+    # Alunos enturmados
+    enturmacoes = Enturmacao.objects.filter(turma=turma, ativo=True).select_related('aluno')
+    
+    # Estatísticas
+    total_enturmados = enturmacoes.count()
+    vagas_disponiveis = turma.vagas_total - total_enturmados
+    
+    context = {
+        'turma': turma,
+        'enturmacoes': enturmacoes,
+        'total_enturmados': total_enturmados,
+        'vagas_disponiveis': vagas_disponiveis,
+    }
+    
+    return render(request, 'avaliacao/turma_detail.html', context)
+
+
+@login_required
+def turma_delete(request, pk):
+    """
+    Excluir turma
+    """
+    turma = get_object_or_404(Turma, pk=pk)
+    
+    # Verificar se há alunos enturmados
+    if turma.enturmacoes.filter(ativo=True).exists():
+        messages.error(request, 'Não é possível excluir uma turma que possui alunos enturmados.')
+        return redirect('avaliacao:turma_detail', pk=turma.pk)
+    
+    if request.method == 'POST':
+        nome_turma = turma.nome
+        turma.delete()
+        
+        # Registrar atividade recente
+        AtividadeRecente.registrar_atividade(
+            usuario=request.user,
+            acao='DELETAR',
+            modulo='AVALIACAO',
+            objeto_nome=nome_turma,
+            objeto_id=pk,
+            descricao=f'Turma excluída: {nome_turma}'
+        )
+        
+        messages.success(request, f'Turma {nome_turma} excluída com sucesso!')
+        return redirect('avaliacao:turmas_list')
+    
+    return render(request, 'avaliacao/turma_confirm_delete.html', {'turma': turma})
 
 
 @login_required
