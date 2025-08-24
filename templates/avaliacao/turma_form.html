@@ -17,8 +17,8 @@
             <!-- Informações Básicas -->
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Informações Básicas</h3>
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
+                <div class="grid grid-cols-12 gap-4">
+                    <div class="col-span-12 lg:col-span-8">
                         <label for="{{ form.nome.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                             Nome da Turma *
                         </label>
@@ -28,7 +28,7 @@
                         {% endif %}
                     </div>
                     
-                    <div>
+                    <div class="col-span-12 lg:col-span-4">
                         <label for="{{ form.periodo_letivo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                             Período Letivo *
                         </label>
@@ -43,8 +43,8 @@
             <!-- Classificação -->
             <div>
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Classificação</h3>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div>
+                <div class="grid grid-cols-12 gap-4">
+                    <div class="col-span-12 lg:col-span-5">
                         <label for="{{ form.tipo_ensino.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                             Tipo de Ensino *
                         </label>
@@ -54,7 +54,7 @@
                         {% endif %}
                     </div>
                     
-                    <div>
+                    <div class="col-span-12 lg:col-span-4">
                         <label for="{{ form.ano_serie.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                             Ano/Série *
                         </label>
@@ -64,7 +64,7 @@
                         {% endif %}
                     </div>
                     
-                    <div>
+                    <div class="col-span-12 lg:col-span-3">
                         <label for="{{ form.turno.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                             Turno *
                         </label>
