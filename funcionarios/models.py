@@ -5,8 +5,8 @@ from datetime import date
 
 class Funcionario(models.Model):
     SEXO_CHOICES = [
-        ('M', 'Masculino'),
-        ('F', 'Feminino'),
+        ('M', 'M'),
+        ('F', 'F'),
     ]
     
     TIPO_ARQUIVO_CHOICES = [
