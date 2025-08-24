@@ -13,6 +13,8 @@ urlpatterns = [
     path('turmas/<int:pk>/', views.turma_detail, name='turma_detail'),
     path('turmas/<int:pk>/editar/', views.turma_edit, name='turma_edit'),
     path('turmas/<int:pk>/excluir/', views.turma_delete, name='turma_delete'),
+    path('turmas/<int:pk>/enturmar/', views.enturmar_alunos, name='enturmar_alunos'),
+    path('turmas/<int:pk>/desenturmar/<int:aluno_id>/', views.desenturmar_aluno, name='desenturmar_aluno'),
     
     # Disciplinas
     path('disciplinas/', views.disciplinas_list, name='disciplinas_list'),

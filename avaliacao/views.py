@@ -5,6 +5,7 @@ from django.db.models import Count, Avg
 from django.db import models
 from django.core.paginator import Paginator
 from django.http import JsonResponse
+from datetime import date
 from .models import (
     Conceito, Turma, Disciplina, LancamentoNota, AtestadoMedico,
     MediaGlobalConceito, RecuperacaoEspecial, ParecerDescritivo,
@@ -375,3 +376,118 @@ def diario_online(request):
     }
     
     return render(request, 'avaliacao/diario_online.html', context)
+
+
+@login_required
+def enturmar_alunos(request, pk):
+    """
+    View para enturmar alunos em uma turma
+    """
+    turma = get_object_or_404(Turma, pk=pk)
+    
+    # Alunos disponíveis (não enturmados nesta turma)
+    alunos_enturmados_ids = Enturmacao.objects.filter(
+        turma=turma, ativo=True
+    ).values_list('aluno_id', flat=True)
+    
+    alunos_disponiveis = Aluno.objects.exclude(
+        id__in=alunos_enturmados_ids
+    ).order_by('nome')
+    
+    if request.method == 'POST':
+        alunos_selecionados = request.POST.getlist('alunos')
+        
+        if alunos_selecionados:
+            # Verificar se ainda há vagas
+            vagas_restantes = turma.get_vagas_disponiveis()
+            
+            if len(alunos_selecionados) > vagas_restantes:
+                messages.error(
+                    request, 
+                    f'Você selecionou {len(alunos_selecionados)} alunos, mas há apenas {vagas_restantes} vagas disponíveis.'
+                )
+                return redirect('avaliacao:enturmar_alunos', pk=pk)
+            
+            # Enturmar os alunos selecionados
+            for aluno_id in alunos_selecionados:
+                aluno = get_object_or_404(Aluno, id=aluno_id)
+                
+                Enturmacao.objects.create(
+                    turma=turma,
+                    aluno=aluno,
+                    usuario_enturmacao=request.user
+                )
+            
+            # Registrar atividade
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='ENTURMAR',
+                modulo='AVALIACAO',
+                objeto_nome=turma.nome,
+                objeto_id=turma.id,
+                descricao=f'{len(alunos_selecionados)} aluno(s) enturmado(s) em {turma.nome}'
+            )
+            
+            messages.success(
+                request, 
+                f'{len(alunos_selecionados)} aluno(s) enturmado(s) com sucesso!'
+            )
+            return redirect('avaliacao:turma_detail', pk=pk)
+        else:
+            messages.warning(request, 'Nenhum aluno foi selecionado.')
+    
+    context = {
+        'turma': turma,
+        'alunos_disponiveis': alunos_disponiveis,
+        'vagas_disponiveis': turma.get_vagas_disponiveis(),
+    }
+    
+    return render(request, 'avaliacao/enturmar_alunos.html', context)
+
+
+@login_required 
+def desenturmar_aluno(request, pk, aluno_id):
+    """
+    View para desenturmar um aluno de uma turma
+    """
+    turma = get_object_or_404(Turma, pk=pk)
+    aluno = get_object_or_404(Aluno, id=aluno_id)
+    
+    # Buscar a enturmação ativa
+    enturmacao = get_object_or_404(
+        Enturmacao, 
+        turma=turma, 
+        aluno=aluno, 
+        ativo=True
+    )
+    
+    if request.method == 'POST':
+        motivo = request.POST.get('motivo', '')
+        
+        # Desenturmar o aluno
+        enturmacao.ativo = False
+        enturmacao.data_desenturmacao = date.today()
+        enturmacao.motivo_desenturmacao = motivo
+        enturmacao.usuario_desenturmacao = request.user
+        enturmacao.save()
+        
+        # Registrar atividade
+        AtividadeRecente.registrar_atividade(
+            usuario=request.user,
+            acao='DESENTURMAR',
+            modulo='AVALIACAO',
+            objeto_nome=turma.nome,
+            objeto_id=turma.id,
+            descricao=f'{aluno.nome} desenturmado(a) de {turma.nome}'
+        )
+        
+        messages.success(request, f'{aluno.nome} foi desenturmado(a) com sucesso!')
+        return redirect('avaliacao:turma_detail', pk=pk)
+    
+    context = {
+        'turma': turma,
+        'aluno': aluno,
+        'enturmacao': enturmacao,
+    }
+    
+    return render(request, 'avaliacao/confirmar_desenturmacao.html', context)

@@ -91,10 +91,10 @@
                     <div class="pt-2">
                         <div class="flex items-center justify-between mb-2">
                             <span class="text-sm font-medium text-gray-600">Ocupação</span>
-                            <span class="text-sm font-medium text-gray-900">{{ total_enturmados|mul:100|div:turma.vagas_total|floatformat:0 }}%</span>
+                            <span class="text-sm font-medium text-gray-900">{{ turma.get_percentual_ocupacao }}%</span>
                         </div>
                         <div class="w-full bg-gray-200 rounded-full h-3">
-                            <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width: {{ total_enturmados|mul:100|div:turma.vagas_total }}%"></div>
+                            <div class="bg-blue-600 h-3 rounded-full transition-all duration-500" style="width: {{ turma.get_percentual_ocupacao }}%"></div>
                         </div>
                     </div>
                 </div>
@@ -104,7 +104,7 @@
             <div class="bg-white rounded-lg shadow p-6">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Ações Rápidas</h3>
                 <div class="space-y-3">
-                    <a href="#" class="w-full flex items-center justify-center px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
+                    <a href="{% url 'avaliacao:enturmar_alunos' turma.pk %}" class="w-full flex items-center justify-center px-4 py-3 bg-blue-50 text-blue-700 rounded-lg hover:bg-blue-100 transition-colors">
                         <i class="fas fa-user-plus mr-2"></i>
                         Enturmar Alunos
                     </a>
@@ -126,9 +126,9 @@
         <div class="px-6 py-4 border-b border-gray-200">
             <div class="flex items-center justify-between">
                 <h2 class="text-xl font-semibold text-gray-900">Alunos Enturmados</h2>
-                <button class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
+                <a href="{% url 'avaliacao:enturmar_alunos' turma.pk %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
                     <i class="fas fa-user-plus mr-2"></i>Enturmar Aluno
-                </button>
+                </a>
             </div>
         </div>
         
@@ -180,10 +180,11 @@
                                        title="Ver aluno">
                                         <i class="fas fa-eye text-sm"></i>
                                     </a>
-                                    <button class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors" 
-                                            title="Desenturmar">
+                                    <a href="{% url 'avaliacao:desenturmar_aluno' turma.pk enturmacao.aluno.pk %}" 
+                                       class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors" 
+                                       title="Desenturmar">
                                         <i class="fas fa-user-times text-sm"></i>
-                                    </button>
+                                    </a>
                                 </div>
                             </td>
                         </tr>
@@ -196,9 +197,9 @@
                 <i class="fas fa-user-graduate text-gray-400 text-4xl mb-4"></i>
                 <h3 class="text-lg font-medium text-gray-700 mb-2">Nenhum aluno enturmado</h3>
                 <p class="text-gray-500 mb-6">Esta turma ainda não possui alunos. Comece enturmando alguns alunos.</p>
-                <button class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                <a href="{% url 'avaliacao:enturmar_alunos' turma.pk %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-block">
                     <i class="fas fa-user-plus mr-2"></i>Enturmar Primeiro Aluno
-                </button>
+                </a>
             </div>
         {% endif %}
     </div>
