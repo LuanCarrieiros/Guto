@@ -160,7 +160,7 @@
                             <div class="flex items-center space-x-2">
                                 <span class="text-sm text-gray-700">{{ turma.get_vagas_disponiveis }}/{{ turma.vagas_total }}</span>
                                 <div class="w-16 bg-gray-200 rounded-full h-2">
-                                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ turma.get_total_alunos|mul:100|div:turma.vagas_total }}%"></div>
+                                    <div class="bg-blue-600 h-2 rounded-full" style="width: {{ turma.get_percentual_ocupacao }}%"></div>
                                 </div>
                             </div>
                         </td>

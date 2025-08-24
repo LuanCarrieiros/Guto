@@ -115,6 +115,12 @@ class Turma(models.Model):
             enturmacoes__turma=self,
             enturmacoes__ativo=True
         )
+    
+    def get_percentual_ocupacao(self):
+        """Retorna o percentual de ocupação da turma"""
+        if self.vagas_total == 0:
+            return 0
+        return round((self.get_total_alunos() * 100) / self.vagas_total)
 
 class Disciplina(models.Model):
     """Model para Disciplinas"""
