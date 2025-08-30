@@ -259,8 +259,7 @@ sequenceDiagram
 | **RF117** |    Média   | Na alteração, deve ser possível mover aluno para Arquivo Permanente                                                                            |
 | **RF118** |    Alta    | O sistema deve permitir Excluir um aluno com confirmação: "Deseja realmente excluir?"                                                          |
 | **RF119** |    Média   | O sistema deve permitir Imprimir relatório simples com Código, Nome e Data de Nascimento                                                       |
-| **RF112** |    Alta    | Cadastro Estendido com abas: Identificação do Aluno, Identificação do Responsável, Documentação do Aluno, Documentação do Pai, Documentação da |
-                         | Mãe, Dados de Saúde, Informações Adicionais, Necessidades Educacionais Especiais e Transporte                                                  |
+| **RF112** |    Alta    | Cadastro Estendido com abas: Identificação do Aluno, Identificação do Responsável, Documentação do Aluno, Documentação do Pai, Documentação da Mãe, Dados de Saúde, Informações Adicionais, Necessidades Educacionais Especiais e Transporte                                                  |
 
 ##### Requisitos Não Funcionais (RNF)
 
@@ -289,8 +288,7 @@ sequenceDiagram
 | **RF206** |    Média   | Formulário deve ter seção Condição anterior do aluno com campos como Novato                                |
 | **RF207** |    Alta    | O sistema deve permitir Encerrar matrícula preenchendo Data de Encerramento e Motivo                       |
 | **RF208** |    Alta    | O sistema deve permitir Reativar matrícula com confirmação sobre perda de dados                            |
-| **RF203** |    Alta    | Ao Incluir matrícula, formulário deve conter: Ano administrativo, Tipo de ensino, Ano/Série/Módulo/Etapa,  |
-                         | Turno Preferencial, Data da Matrícula e Possui Dependência                                                 |
+| **RF203** |    Alta    | Ao Incluir matrícula, formulário deve conter: Ano administrativo, Tipo de ensino, Ano/Série/Módulo/Etapa, Turno Preferencial, Data da Matrícula e Possui Dependência                                                 |
 
 ##### Requisitos Não Funcionais (RNF)
 
@@ -339,8 +337,7 @@ sequenceDiagram
 | **RF405** |    Média   | A aba Dados Funcionais deve permitir registro de duplo vínculo                                  |
 | **RF406** |    Média   | O sistema deve permitir mover funcionário para Arquivo Permanente                               |
 | **RF407** |    Baixa   | Gerar dois tipos de relatório: Lista Simples e Folha de Frequência Mensal                       |
-| **RF404** |    Alta    | Formulário dividido em abas: Dados Pessoais, Documentação, Dados Funcionais, Habilitação, Dados |
-                         | de Escolaridade, Formação Superior, Disponibilidade, Disciplinas e Deficiência                  |
+| **RF404** |    Alta    | Formulário dividido em abas: Dados Pessoais, Documentação, Dados Funcionais, Habilitação, Dados de Escolaridade, Formação Superior, Disponibilidade, Disciplinas e Deficiência |
 
 ##### Requisitos Não Funcionais (RNF)
 
