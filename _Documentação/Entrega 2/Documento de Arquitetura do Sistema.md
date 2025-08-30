@@ -700,22 +700,16 @@ gantt
 
 ### 10.3 Recursos Necessários
 
-#### **Equipe de Desenvolvimento:**
-- **1 Arquiteto de Software** (part-time)
-- **2-3 Desenvolvedores Python/Django** (full-time)
-- **1 Desenvolvedor Frontend** (part-time)
-- **1 Analista de Qualidade** (part-time)
-
 #### **Infraestrutura:**
 - **Ambiente de Desenvolvimento**: Local com SQLite
-- **Ambiente de Homologação**: Servidor com PostgreSQL
-- **Ambiente de Produção**: Servidor dedicado/cloud
+- **Ambiente de Homologação**    : Servidor com PostgreSQL
+- **Ambiente de Produção**       : Servidor dedicado/cloud
 
 #### **Ferramentas:**
 - **Controle de Versão**: Git + GitHub/GitLab
-- **Gestão de Projeto**: Jira/Trello
-- **Comunicação**: Slack/Teams
-- **Documentação**: Confluence/Notion
+- **Gestão de Projeto** : Jira/Trello
+- **Comunicação**       : Slack/Teams
+- **Documentação**      : Confluence/Notion
 
 ---
 
