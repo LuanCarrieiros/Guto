@@ -506,16 +506,6 @@ Projeto Guto/
 - **AEE/Avaliação/Utilitários**: Interfaces navegáveis e models implementados
 - **Transporte/Programa**      : Models completos aguardando implementação de views
 
-### **🎯 URLs Funcionais:**
-- http://127.0.0.1:8000/              - Dashboard principal
-- http://127.0.0.1:8000/alunos/       - Gestão de alunos
-- http://127.0.0.1:8000/funcionarios/ - Gestão de funcionários
-- http://127.0.0.1:8000/escola/       - Itinerários formativos
-- http://127.0.0.1:8000/aee/          - Atividades complementares
-- http://127.0.0.1:8000/avaliacao/    - Sistema de avaliação
-- http://127.0.0.1:8000/utilitarios/  - Ferramentas do sistema
-- http://127.0.0.1:8000/admin/        - Interface admin Django
-
 ### **🔧 Status Operacional:**
 - ✅ **Sistema RODANDO**     - Servidor Django operacional
 - ✅ **Base de Dados**       - SQLite configurado + 20 alunos teste
