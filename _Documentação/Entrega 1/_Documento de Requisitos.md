@@ -3,10 +3,10 @@
 
 **Autores:** 
 
-Luan Barbosa Rosa Carrieiros
-Diego Moreira Rocha
-Arthur Clemente Machado
-Bernardo Ferreira Temponi
+Luan Barbosa Rosa Carrieiros 
+Diego Moreira Rocha 
+Arthur Clemente Machado 
+Bernardo Ferreira Temponi 
 Arthur Gonçalves de Moraes
 
 
