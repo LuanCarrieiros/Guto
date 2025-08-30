@@ -680,7 +680,7 @@ gantt
     title Cronograma de Desenvolvimento Sistema GUTO
     dateFormat  YYYY-MM-DD
     section Fase 1 - Core
-    Dashboard          :done, dashboard, 2024-08-01, 2024-08-15
+    Dashboard           :done, dashboard, 2024-08-01, 2024-08-15
     Alunos             :done, alunos, 2024-08-15, 2024-09-15
     Funcionários       :done, funcionarios, 2024-09-15, 2024-10-15
     Autenticação       :done, auth, 2024-08-01, 2024-08-30
