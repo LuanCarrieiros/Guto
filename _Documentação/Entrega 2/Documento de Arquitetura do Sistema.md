@@ -3,11 +3,11 @@
 
 **Autores:** 
 
-Luan Barbosa Rosa Carrieiros
-Diego Moreira Rocha
-Arthur Clemente Machado
-Bernardo Ferreira Temponi
-Arthur Gonçalves de Moraes
+- Luan Barbosa Rosa Carrieiros
+- Diego Moreira Rocha
+- Arthur Clemente Machado
+- Bernardo Ferreira Temponi
+- Arthur Gonçalves de Moraes
   
 
 **Data:** Agosto de 2024  
