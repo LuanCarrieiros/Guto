@@ -138,14 +138,14 @@ Sistema de gestão escolar desenvolvido em Django para controle completo de alun
 ## 📊 **ANÁLISE DETALHADA DE IMPLEMENTAÇÃO**
 
 ### **📈 Estatísticas do Projeto**
-+------------------------+--------------+-------+------------+
+
 |      COMPONENTE        | IMPLEMENTADO | TOTAL | % COMPLETO |
 |------------------------|--------------|-------|------------|
 |       **Models**       |      80+     |  80+  |    100%    |
 | **Views Funcionais**   |      65+     |  120+ |    54%     |
 | **Templates Completos**|      35+     |  80+  |    44%     |
 | **Módulos Funcionais** |      4       |  11   |    36%     |
-+------------------------+--------------+-------+------------+
+
 
 ### 🎯 **PRIORIDADES DE DESENVOLVIMENTO**
 
@@ -353,7 +353,6 @@ programa/
 
 ### **Views Implementadas por Módulo**
 
-+------------------+-------------+--------------+-----------------------------------+
 |      MÓDULO      |     VIEWS   |    STATUS    |        FUNCIONALIDADES            |
 |------------------|-------------|--------------|-----------------------------------|
 |    **Alunos**    |      16     | ✅ Completo | CRUD + matrículas + relatórios    |
