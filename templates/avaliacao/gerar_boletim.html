@@ -1,0 +1,528 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Boletim Escolar - {{ aluno.nome }} - GUTO{% endblock %}
+
+{% block extra_css %}
+<style>
+    @media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        body { 
+            background: white !important; 
+            font-size: 12px !important;
+            line-height: 1.4 !important;
+        }
+        .boletim-container {
+            box-shadow: none !important;
+            border: 2px solid #000 !important;
+            page-break-inside: avoid;
+        }
+        .page-break { page-break-before: always; }
+    }
+    
+    .boletim-container {
+        background: white;
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.05);
+        border: 1px solid #E5E7EB;
+        max-width: 210mm; /* A4 width */
+        margin: 0 auto;
+    }
+    
+    .school-header {
+        background: linear-gradient(135deg, #1E40AF, #3B82F6);
+        color: white;
+        text-align: center;
+        padding: 20px;
+        border-bottom: 3px solid #1D4ED8;
+    }
+    
+    .student-info {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 20px;
+        padding: 20px;
+        background: #F8FAFC;
+        border-bottom: 2px solid #E2E8F0;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px 0;
+        border-bottom: 1px dotted #CBD5E1;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #374151;
+    }
+    
+    .info-value {
+        color: #1F2937;
+        font-weight: 500;
+    }
+    
+    .grades-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin: 20px 0;
+    }
+    
+    .grades-table th {
+        background: #1E40AF;
+        color: white;
+        padding: 12px 8px;
+        text-align: center;
+        font-weight: 600;
+        border: 1px solid #1D4ED8;
+        font-size: 11px;
+    }
+    
+    .grades-table td {
+        padding: 10px 8px;
+        text-align: center;
+        border: 1px solid #D1D5DB;
+        font-size: 12px;
+        vertical-align: middle;
+    }
+    
+    .subject-name {
+        text-align: left !important;
+        font-weight: 600;
+        color: #374151;
+        padding-left: 12px !important;
+    }
+    
+    .grade-excellent { background-color: #DCFCE7; color: #166534; font-weight: bold; }
+    .grade-good { background-color: #DBEAFE; color: #1D4ED8; font-weight: bold; }
+    .grade-regular { background-color: #FEF3C7; color: #92400E; font-weight: bold; }
+    .grade-poor { background-color: #FEE2E2; color: #DC2626; font-weight: bold; }
+    
+    .frequency-excellent { background-color: #DCFCE7; color: #166534; }
+    .frequency-good { background-color: #DBEAFE; color: #1D4ED8; }
+    .frequency-warning { background-color: #FEF3C7; color: #92400E; }
+    .frequency-danger { background-color: #FEE2E2; color: #DC2626; }
+    
+    .summary-section {
+        padding: 20px;
+        background: #F1F5F9;
+        border-top: 2px solid #E2E8F0;
+    }
+    
+    .summary-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 20px;
+    }
+    
+    .summary-card {
+        background: white;
+        padding: 15px;
+        border-radius: 8px;
+        border: 1px solid #E5E7EB;
+        text-align: center;
+    }
+    
+    .summary-value {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    
+    .summary-label {
+        font-size: 12px;
+        color: #6B7280;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    .comments-section {
+        margin-top: 20px;
+        padding: 15px;
+        background: white;
+        border: 1px solid #E5E7EB;
+        border-radius: 8px;
+    }
+    
+    .signature-section {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 40px;
+        margin-top: 40px;
+        padding-top: 20px;
+        border-top: 1px solid #E5E7EB;
+    }
+    
+    .signature-box {
+        text-align: center;
+        border-top: 2px solid #374151;
+        padding-top: 10px;
+        font-size: 11px;
+        color: #6B7280;
+    }
+    
+    .school-logo {
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+    }
+    
+    .watermark {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-45deg);
+        font-size: 72px;
+        color: rgba(0, 0, 0, 0.03);
+        font-weight: bold;
+        z-index: 1;
+        pointer-events: none;
+    }
+    
+    .floating-element {
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px); }
+        50% { transform: translateY(-10px); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-full mx-auto">
+    
+    <!-- Control Panel -->
+    <div class="no-print mb-8 bg-white rounded-2xl shadow-lg border border-gray-100 p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">Boletim Escolar</h1>
+                <p class="text-gray-600">{{ aluno.nome }} - {{ aluno.turma|default:"Turma não definida" }}</p>
+            </div>
+            
+            <div class="flex space-x-4">
+                <button onclick="window.print()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors duration-200 floating-element">
+                    <i class="fas fa-print mr-2"></i>Imprimir Boletim
+                </button>
+                <button id="download-pdf" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors duration-200 floating-element">
+                    <i class="fas fa-download mr-2"></i>Download PDF
+                </button>
+                <a href="{% url 'avaliacao:relatorios' %}" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Boletim Container -->
+    <div class="boletim-container relative">
+        
+        <!-- Watermark -->
+        <div class="watermark print-only">GUTO</div>
+        
+        <!-- School Header -->
+        <div class="school-header">
+            <div class="school-logo">
+                <i class="fas fa-graduation-cap text-blue-600 text-3xl"></i>
+            </div>
+            <h1 class="text-3xl font-bold mb-2">{{ escola_nome|default:"SISTEMA GUTO" }}</h1>
+            <p class="text-lg">{{ escola_endereco|default:"Sistema de Gestão Educacional" }}</p>
+            <p class="text-sm mt-2">{{ escola_telefone|default:"" }} | {{ escola_email|default:"contato@guto.edu.br" }}</p>
+        </div>
+
+        <!-- Document Title -->
+        <div class="text-center py-6 bg-gray-50 border-b-2 border-gray-200">
+            <h2 class="text-2xl font-bold text-gray-900">BOLETIM ESCOLAR</h2>
+            <p class="text-gray-600 mt-1">{{ ano_letivo|default:"2025" }} - {{ periodo|default:"Ano Letivo Completo" }}</p>
+        </div>
+
+        <!-- Student Information -->
+        <div class="student-info">
+            <div>
+                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b-2 border-blue-600 pb-2">DADOS DO ALUNO</h3>
+                
+                <div class="info-item">
+                    <span class="info-label">Nome Completo:</span>
+                    <span class="info-value">{{ aluno.nome|upper }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Data de Nascimento:</span>
+                    <span class="info-value">{{ aluno.data_nascimento|date:"d/m/Y"|default:"--" }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">CPF:</span>
+                    <span class="info-value">{{ aluno.cpf|default:"--" }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Matrícula:</span>
+                    <span class="info-value">{{ aluno.matricula_numero|default:aluno.id|stringformat:"06d" }}</span>
+                </div>
+            </div>
+            
+            <div>
+                <h3 class="text-lg font-bold text-gray-900 mb-4 border-b-2 border-blue-600 pb-2">DADOS ACADÊMICOS</h3>
+                
+                <div class="info-item">
+                    <span class="info-label">Turma:</span>
+                    <span class="info-value">{{ turma.nome|default:"--" }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Série/Ano:</span>
+                    <span class="info-value">{{ turma.serie|default:"--" }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Turno:</span>
+                    <span class="info-value">{{ turma.turno|default:"--" }}</span>
+                </div>
+                
+                <div class="info-item">
+                    <span class="info-label">Ano Letivo:</span>
+                    <span class="info-value">{{ ano_letivo|default:"2025" }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grades Table -->
+        <div class="p-6">
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-chart-bar text-blue-600 mr-2"></i>
+                DESEMPENHO ACADÊMICO
+            </h3>
+            
+            <table class="grades-table">
+                <thead>
+                    <tr>
+                        <th rowspan="2" style="width: 25%;">DISCIPLINA</th>
+                        <th colspan="4">NOTAS POR PERÍODO</th>
+                        <th rowspan="2">MÉDIA<br>FINAL</th>
+                        <th rowspan="2">FREQ.<br>(%)</th>
+                        <th rowspan="2">SITUAÇÃO</th>
+                    </tr>
+                    <tr>
+                        <th>1º BIM</th>
+                        <th>2º BIM</th>
+                        <th>3º BIM</th>
+                        <th>4º BIM</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for disciplina in notas_disciplinas %}
+                    <tr>
+                        <td class="subject-name">{{ disciplina.nome }}</td>
+                        <td class="{% if disciplina.nota_1bim >= 9 %}grade-excellent{% elif disciplina.nota_1bim >= 7 %}grade-good{% elif disciplina.nota_1bim >= 5 %}grade-regular{% else %}grade-poor{% endif %}">
+                            {{ disciplina.nota_1bim|default:"--"|floatformat:1 }}
+                        </td>
+                        <td class="{% if disciplina.nota_2bim >= 9 %}grade-excellent{% elif disciplina.nota_2bim >= 7 %}grade-good{% elif disciplina.nota_2bim >= 5 %}grade-regular{% else %}grade-poor{% endif %}">
+                            {{ disciplina.nota_2bim|default:"--"|floatformat:1 }}
+                        </td>
+                        <td class="{% if disciplina.nota_3bim >= 9 %}grade-excellent{% elif disciplina.nota_3bim >= 7 %}grade-good{% elif disciplina.nota_3bim >= 5 %}grade-regular{% else %}grade-poor{% endif %}">
+                            {{ disciplina.nota_3bim|default:"--"|floatformat:1 }}
+                        </td>
+                        <td class="{% if disciplina.nota_4bim >= 9 %}grade-excellent{% elif disciplina.nota_4bim >= 7 %}grade-good{% elif disciplina.nota_4bim >= 5 %}grade-regular{% else %}grade-poor{% endif %}">
+                            {{ disciplina.nota_4bim|default:"--"|floatformat:1 }}
+                        </td>
+                        <td class="{% if disciplina.media_final >= 9 %}grade-excellent{% elif disciplina.media_final >= 7 %}grade-good{% elif disciplina.media_final >= 5 %}grade-regular{% else %}grade-poor{% endif %}">
+                            <strong>{{ disciplina.media_final|default:"--"|floatformat:1 }}</strong>
+                        </td>
+                        <td class="{% if disciplina.frequencia >= 90 %}frequency-excellent{% elif disciplina.frequencia >= 75 %}frequency-good{% elif disciplina.frequencia >= 60 %}frequency-warning{% else %}frequency-danger{% endif %}">
+                            {{ disciplina.frequencia|default:"--"|floatformat:1 }}%
+                        </td>
+                        <td class="{% if disciplina.situacao == 'Aprovado' %}grade-excellent{% elif disciplina.situacao == 'Recuperação' %}grade-regular{% else %}grade-poor{% endif %}">
+                            <strong>{{ disciplina.situacao|default:"--" }}</strong>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center text-gray-500 py-8">
+                            Nenhuma nota lançada para este aluno no período selecionado.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Summary Section -->
+        <div class="summary-section">
+            <h3 class="text-xl font-bold text-gray-900 mb-4 flex items-center">
+                <i class="fas fa-calculator text-green-600 mr-2"></i>
+                RESUMO GERAL
+            </h3>
+            
+            <div class="summary-grid">
+                <div class="summary-card">
+                    <div class="summary-value text-blue-600">{{ media_geral|default:"--"|floatformat:1 }}</div>
+                    <div class="summary-label">Média Geral</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-value text-green-600">{{ frequencia_geral|default:"--"|floatformat:1 }}%</div>
+                    <div class="summary-label">Frequência Geral</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-value text-purple-600">{{ total_disciplinas|default:0 }}</div>
+                    <div class="summary-label">Total de Disciplinas</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-value {% if disciplinas_aprovadas == total_disciplinas %}text-green-600{% elif disciplinas_aprovadas > 0 %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ disciplinas_aprovadas|default:0 }}/{{ total_disciplinas|default:0 }}
+                    </div>
+                    <div class="summary-label">Disciplinas Aprovadas</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-value text-orange-600">{{ faltas_totais|default:0 }}</div>
+                    <div class="summary-label">Total de Faltas</div>
+                </div>
+                
+                <div class="summary-card">
+                    <div class="summary-value {% if situacao_final == 'Aprovado' %}text-green-600{% elif situacao_final == 'Recuperação' %}text-yellow-600{% else %}text-red-600{% endif %}">
+                        {{ situacao_final|default:"Em Análise" }}
+                    </div>
+                    <div class="summary-label">Situação Final</div>
+                </div>
+            </div>
+
+            <!-- Legend -->
+            <div class="mt-6 p-4 bg-white rounded-lg border border-gray-200">
+                <h4 class="text-sm font-bold text-gray-900 mb-3">LEGENDA DE CORES:</h4>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 grade-excellent rounded mr-2"></div>
+                        <span>Excelente (9,0 - 10,0)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 grade-good rounded mr-2"></div>
+                        <span>Bom (7,0 - 8,9)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 grade-regular rounded mr-2"></div>
+                        <span>Regular (5,0 - 6,9)</span>
+                    </div>
+                    <div class="flex items-center">
+                        <div class="w-4 h-4 grade-poor rounded mr-2"></div>
+                        <span>Insuficiente (0,0 - 4,9)</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Comments Section -->
+            <div class="comments-section">
+                <h4 class="text-sm font-bold text-gray-900 mb-3">OBSERVAÇÕES GERAIS:</h4>
+                <div class="min-h-[80px] text-sm text-gray-700 leading-relaxed">
+                    {% if observacoes %}
+                        {{ observacoes|linebreaksbr }}
+                    {% else %}
+                        {{ aluno.nome }} demonstrou {% if media_geral >= 7 %}excelente{% elif media_geral >= 5 %}bom{% else %}desenvolvimento em progresso{% endif %} desempenho acadêmico durante o período analisado.
+                        {% if frequencia_geral >= 90 %}
+                        Apresentou frequência exemplar às aulas.
+                        {% elif frequencia_geral >= 75 %}
+                        Apresentou boa frequência às aulas.
+                        {% else %}
+                        Recomenda-se maior assiduidade às aulas.
+                        {% endif %}
+                        {% if media_geral >= 7 %}
+                        Continue assim! Parabéns pelo excelente desempenho.
+                        {% elif media_geral >= 5 %}
+                        Com dedicação e esforço, poderá alcançar resultados ainda melhores.
+                        {% else %}
+                        É importante buscar apoio pedagógico para melhorar o desempenho.
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Signatures -->
+            <div class="signature-section">
+                <div class="signature-box">
+                    <div class="font-semibold">DIREÇÃO</div>
+                    <div>{{ diretor_nome|default:"________________" }}</div>
+                </div>
+                
+                <div class="signature-box">
+                    <div class="font-semibold">COORDENAÇÃO PEDAGÓGICA</div>
+                    <div>{{ coordenador_nome|default:"________________" }}</div>
+                </div>
+                
+                <div class="signature-box">
+                    <div class="font-semibold">RESPONSÁVEL PELO ALUNO</div>
+                    <div>________________</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="text-center py-4 bg-gray-100 border-t-2 border-gray-300">
+            <p class="text-xs text-gray-600">
+                Este documento foi gerado automaticamente pelo Sistema GUTO em {{ "now"|date:"d/m/Y \à\s H:i" }}.
+                <br>
+                Para verificar a autenticidade, acesse: {{ escola_site|default:"www.guto.edu.br" }}
+            </p>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Download PDF functionality
+    document.getElementById('download-pdf').addEventListener('click', function() {
+        // For now, use the print dialog which allows saving as PDF
+        window.print();
+    });
+
+    // Add print styles when printing
+    window.addEventListener('beforeprint', function() {
+        document.title = 'Boletim - {{ aluno.nome }} - {{ ano_letivo|default:"2025" }}';
+    });
+
+    // Animate elements on load
+    const animateElements = document.querySelectorAll('.floating-element');
+    animateElements.forEach((element, index) => {
+        element.style.opacity = '0';
+        element.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            element.style.transition = 'all 0.5s ease';
+            element.style.opacity = '1';
+            element.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+
+    // Grade color animation
+    const gradesCells = document.querySelectorAll('.grades-table td');
+    gradesCells.forEach(cell => {
+        if (cell.classList.contains('grade-excellent') || 
+            cell.classList.contains('grade-good') || 
+            cell.classList.contains('grade-regular') || 
+            cell.classList.contains('grade-poor')) {
+            cell.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.05)';
+                this.style.zIndex = '10';
+                this.style.boxShadow = '0 4px 8px rgba(0,0,0,0.2)';
+            });
+            
+            cell.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.zIndex = '1';
+                this.style.boxShadow = 'none';
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
