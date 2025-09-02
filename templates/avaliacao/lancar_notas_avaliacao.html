@@ -1,0 +1,660 @@
+{% extends 'base.html' %}
+
+{% block title %}Lançar Notas - {{ avaliacao.nome }} - GUTO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .student-row:hover {
+        background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+        transform: translateX(4px);
+    }
+    
+    .nota-input {
+        transition: all 0.2s ease;
+        border: 2px solid #e5e7eb;
+    }
+    
+    .nota-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        transform: scale(1.02);
+    }
+    
+    .nota-input.excelente {
+        border-color: #10b981;
+        background-color: #d1fae5;
+    }
+    
+    .nota-input.bom {
+        border-color: #3b82f6;
+        background-color: #dbeafe;
+    }
+    
+    .nota-input.regular {
+        border-color: #f59e0b;
+        background-color: #fef3c7;
+    }
+    
+    .nota-input.ruim {
+        border-color: #ef4444;
+        background-color: #fee2e2;
+    }
+    
+    .status-checkbox {
+        appearance: none;
+        width: 1.25rem;
+        height: 1.25rem;
+        border: 2px solid #d1d5db;
+        border-radius: 0.375rem;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    
+    .status-checkbox:checked {
+        background-color: #3b82f6;
+        border-color: #3b82f6;
+    }
+    
+    .status-checkbox:checked::before {
+        content: '✓';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        color: white;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    
+    .ausente-checkbox:checked {
+        background-color: #ef4444;
+        border-color: #ef4444;
+    }
+    
+    .dispensado-checkbox:checked {
+        background-color: #8b5cf6;
+        border-color: #8b5cf6;
+    }
+    
+    .stats-card {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    }
+    
+    .progress-ring {
+        transform: rotate(-90deg);
+    }
+    
+    .progress-ring-circle {
+        fill: transparent;
+        stroke-dasharray: 251.2; /* 2 * π * r onde r = 40 */
+        stroke-dashoffset: 251.2;
+        transition: stroke-dashoffset 0.5s ease-in-out;
+    }
+    
+    @media (max-width: 768px) {
+        .student-row {
+            padding: 0.75rem;
+        }
+        .nota-input {
+            font-size: 0.875rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header da Avaliação -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-purple-600 via-pink-600 to-red-600 rounded-2xl p-8 text-white shadow-xl">
+            <nav class="text-sm text-purple-100 mb-3">
+                <a href="{% url 'avaliacao:diario_dashboard' %}" class="hover:text-white">Diário Eletrônico</a>
+                <span class="mx-2">/</span>
+                <a href="{% url 'avaliacao:turma_diario' avaliacao.turma.id %}" class="hover:text-white">{{ avaliacao.turma.nome }}</a>
+                <span class="mx-2">/</span>
+                <span>Lançar Notas</span>
+            </nav>
+            
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-4xl font-bold mb-4 flex items-center">
+                        <i class="fas fa-edit mr-4"></i>
+                        Lançar Notas
+                    </h1>
+                    
+                    <div class="bg-white bg-opacity-20 rounded-xl p-4 mb-4">
+                        <h2 class="text-2xl font-semibold mb-2">{{ avaliacao.nome }}</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-pink-100">
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-chalkboard"></i>
+                                <div>
+                                    <div class="text-xs opacity-80">Disciplina</div>
+                                    <div class="font-medium">{{ avaliacao.disciplina.nome }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-calendar-alt"></i>
+                                <div>
+                                    <div class="text-xs opacity-80">Data</div>
+                                    <div class="font-medium">{{ avaliacao.data_aplicacao|date:"d/m/Y" }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-star"></i>
+                                <div>
+                                    <div class="text-xs opacity-80">Tipo</div>
+                                    <div class="font-medium">{{ avaliacao.tipo_avaliacao.nome }}</div>
+                                </div>
+                            </div>
+                            
+                            <div class="flex items-center space-x-2">
+                                <i class="fas fa-trophy"></i>
+                                <div>
+                                    <div class="text-xs opacity-80">Valor Máximo</div>
+                                    <div class="font-medium">{{ avaliacao.valor_maximo }} 
+                                        {% if usa_conceitos %}conceitos{% else %}pontos{% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hidden lg:block text-center">
+                    <div class="text-4xl font-bold">{{ notas|length }}</div>
+                    <div class="text-pink-200">Aluno{{ notas|length|pluralize }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" id="notasForm" class="space-y-6">
+        {% csrf_token %}
+        
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- Lista de Alunos e Notas -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
+                    <!-- Header da Lista -->
+                    <div class="bg-gradient-to-r from-gray-50 to-purple-50 px-6 py-4 border-b border-gray-200">
+                        <div class="flex items-center justify-between">
+                            <h2 class="text-xl font-bold text-gray-800 flex items-center">
+                                <i class="fas fa-list-ol text-purple-500 mr-3"></i>
+                                Lançamento de Notas
+                            </h2>
+                            
+                            <div class="flex items-center space-x-4">
+                                <div class="bg-white px-4 py-2 rounded-lg shadow-sm border">
+                                    <span class="text-sm text-gray-600">Sistema:</span>
+                                    <span class="font-semibold text-purple-600">
+                                        {% if usa_conceitos %}
+                                            <i class="fas fa-star ml-1"></i> Conceitos
+                                        {% else %}
+                                            <i class="fas fa-sort-numeric-up ml-1"></i> Notas (0-{{ avaliacao.valor_maximo }})
+                                        {% endif %}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Cabeçalho da Tabela -->
+                    <div class="bg-gray-50 px-6 py-3 border-b border-gray-100">
+                        <div class="grid grid-cols-12 gap-4 items-center text-sm font-medium text-gray-700">
+                            <div class="col-span-1">#</div>
+                            <div class="col-span-4">Aluno</div>
+                            <div class="col-span-3">
+                                {% if usa_conceitos %}
+                                    Conceito
+                                {% else %}
+                                    Nota
+                                {% endif %}
+                            </div>
+                            <div class="col-span-2">Status</div>
+                            <div class="col-span-2">Observações</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Lista de Alunos -->
+                    <div class="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+                        {% for nota in notas %}
+                            <div class="student-row px-6 py-4 transition-all duration-300" data-student-id="{{ nota.aluno.id }}">
+                                <div class="grid grid-cols-12 gap-4 items-center">
+                                    <!-- Número -->
+                                    <div class="col-span-1">
+                                        <div class="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+                                            {{ forloop.counter }}
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Informações do Aluno -->
+                                    <div class="col-span-4">
+                                        <div>
+                                            <h3 class="font-semibold text-gray-800">{{ nota.aluno.nome }}</h3>
+                                            <p class="text-gray-600 text-sm">{{ nota.aluno.codigo }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Campo de Nota/Conceito -->
+                                    <div class="col-span-3">
+                                        {% if usa_conceitos %}
+                                            <select name="conceito_{{ nota.id }}" 
+                                                    class="w-full px-3 py-2 border-2 border-gray-200 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors"
+                                                    onchange="updateNotaClass(this)">
+                                                <option value="">Selecione o conceito...</option>
+                                                {% for conceito in conceitos %}
+                                                    <option value="{{ conceito.id }}" 
+                                                            {% if nota.conceito.id == conceito.id %}selected{% endif %}
+                                                            data-valor="{{ conceito.valor_numerico }}">
+                                                        {{ conceito.nome }} - {{ conceito.descricao }}
+                                                    </option>
+                                                {% endfor %}
+                                            </select>
+                                        {% else %}
+                                            <input type="number" 
+                                                   name="nota_{{ nota.id }}" 
+                                                   value="{{ nota.nota|default:'' }}"
+                                                   min="0" 
+                                                   max="{{ avaliacao.valor_maximo }}" 
+                                                   step="0.01"
+                                                   placeholder="0.00"
+                                                   class="nota-input w-full px-3 py-2 rounded-lg text-center font-semibold text-lg"
+                                                   onchange="updateNotaClass(this)"
+                                                   oninput="updateNotaClass(this)">
+                                        {% endif %}
+                                    </div>
+                                    
+                                    <!-- Status (Ausente/Dispensado) -->
+                                    <div class="col-span-2">
+                                        <div class="flex items-center space-x-3">
+                                            <label class="flex items-center space-x-1 cursor-pointer" title="Ausente">
+                                                <input type="checkbox" 
+                                                       name="ausente_{{ nota.id }}" 
+                                                       class="status-checkbox ausente-checkbox"
+                                                       {% if nota.ausente %}checked{% endif %}
+                                                       onchange="toggleStatus(this, 'ausente')">
+                                                <span class="text-xs text-red-600 font-medium">Ausente</span>
+                                            </label>
+                                            
+                                            <label class="flex items-center space-x-1 cursor-pointer" title="Dispensado">
+                                                <input type="checkbox" 
+                                                       name="dispensado_{{ nota.id }}" 
+                                                       class="status-checkbox dispensado-checkbox"
+                                                       {% if nota.dispensado %}checked{% endif %}
+                                                       onchange="toggleStatus(this, 'dispensado')">
+                                                <span class="text-xs text-purple-600 font-medium">Disp.</span>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Observações -->
+                                    <div class="col-span-2">
+                                        <input type="text" 
+                                               name="observacoes_{{ nota.id }}" 
+                                               value="{{ nota.observacoes|default:'' }}"
+                                               placeholder="Observações..."
+                                               class="w-full px-2 py-1 border border-gray-200 rounded focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-colors text-sm">
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Painel de Estatísticas e Ações -->
+            <div class="lg:col-span-1">
+                <div class="sticky top-6 space-y-6">
+                    <!-- Estatísticas -->
+                    <div class="stats-card rounded-2xl p-6 text-white">
+                        <h3 class="text-lg font-bold mb-4 flex items-center">
+                            <i class="fas fa-chart-pie mr-2"></i>
+                            Estatísticas
+                        </h3>
+                        
+                        <!-- Gráfico Circular de Progresso -->
+                        <div class="flex items-center justify-center mb-6">
+                            <div class="relative">
+                                <svg class="progress-ring w-24 h-24">
+                                    <circle class="progress-ring-circle stroke-white stroke-opacity-30"
+                                            cx="48" cy="48" r="40" stroke-width="8"/>
+                                    <circle class="progress-ring-circle stroke-white"
+                                            cx="48" cy="48" r="40" stroke-width="8"
+                                            id="progressCircle"/>
+                                </svg>
+                                <div class="absolute inset-0 flex items-center justify-center">
+                                    <div class="text-center">
+                                        <div class="text-2xl font-bold" id="progressPercent">0%</div>
+                                        <div class="text-xs opacity-80">Completo</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-purple-100 text-sm">Lançadas:</span>
+                                <span id="notasLancadas" class="font-bold">0</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-purple-100 text-sm">Pendentes:</span>
+                                <span id="notasPendentes" class="font-bold">{{ notas|length }}</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-purple-100 text-sm">Ausentes:</span>
+                                <span id="ausentes" class="font-bold">0</span>
+                            </div>
+                            
+                            <div class="flex items-center justify-between">
+                                <span class="text-purple-100 text-sm">Dispensados:</span>
+                                <span id="dispensados" class="font-bold">0</span>
+                            </div>
+                            
+                            <div class="pt-3 border-t border-white border-opacity-20">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-purple-100 text-sm">Média Geral:</span>
+                                    <span id="mediaGeral" class="font-bold text-xl">-</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Ações Rápidas -->
+                    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                        <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                            <i class="fas fa-bolt text-yellow-500 mr-2"></i>
+                            Ações Rápidas
+                        </h3>
+                        
+                        <div class="space-y-3">
+                            {% if not usa_conceitos %}
+                                <button type="button" onclick="preencherNotas({{ avaliacao.valor_maximo }})" 
+                                        class="w-full bg-green-100 hover:bg-green-200 text-green-800 py-2 px-3 rounded-lg transition-colors text-sm font-medium">
+                                    <i class="fas fa-star mr-1"></i>
+                                    Nota Máxima Todos
+                                </button>
+                                
+                                <button type="button" onclick="preencherNotas(6)" 
+                                        class="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 py-2 px-3 rounded-lg transition-colors text-sm font-medium">
+                                    <i class="fas fa-thumbs-up mr-1"></i>
+                                    Nota 6 para Todos
+                                </button>
+                            {% endif %}
+                            
+                            <button type="button" onclick="marcarTodosAusentes()" 
+                                    class="w-full bg-red-100 hover:bg-red-200 text-red-800 py-2 px-3 rounded-lg transition-colors text-sm font-medium">
+                                <i class="fas fa-user-times mr-1"></i>
+                                Marcar Ausentes
+                            </button>
+                            
+                            <button type="button" onclick="limparTudo()" 
+                                    class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-2 px-3 rounded-lg transition-colors text-sm font-medium">
+                                <i class="fas fa-eraser mr-1"></i>
+                                Limpar Tudo
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="bg-white rounded-2xl shadow-xl border border-gray-100 p-6">
+                        <div class="space-y-3">
+                            <button type="submit" 
+                                    class="w-full bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white py-4 px-6 rounded-xl font-semibold text-lg transition-all duration-300 transform hover:scale-105">
+                                <i class="fas fa-save mr-2"></i>
+                                Salvar Notas
+                            </button>
+                            
+                            <a href="{% url 'avaliacao:turma_diario' avaliacao.turma.id %}" 
+                               class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-lg transition-colors font-medium flex items-center justify-center space-x-2">
+                                <i class="fas fa-arrow-left"></i>
+                                <span>Voltar</span>
+                            </a>
+                        </div>
+                        
+                        {% if avaliacao.notas_lancadas %}
+                            <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                                <div class="flex items-center space-x-2 text-blue-800 text-sm">
+                                    <i class="fas fa-info-circle"></i>
+                                    <span>Esta avaliação já possui notas lançadas. Os dados serão atualizados.</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const totalAlunos = {{ notas|length }};
+    const valorMaximo = {{ avaliacao.valor_maximo }};
+    const usaConceitos = {{ usa_conceitos|yesno:"true,false" }};
+    
+    function updateNotaClass(element) {
+        const valor = parseFloat(element.value) || 0;
+        
+        // Remove todas as classes de cor
+        element.classList.remove('excelente', 'bom', 'regular', 'ruim');
+        
+        if (!usaConceitos) {
+            const percentual = (valor / valorMaximo) * 100;
+            
+            if (percentual >= 85) {
+                element.classList.add('excelente');
+            } else if (percentual >= 70) {
+                element.classList.add('bom');
+            } else if (percentual >= 50) {
+                element.classList.add('regular');
+            } else if (valor > 0) {
+                element.classList.add('ruim');
+            }
+        }
+        
+        updateStats();
+    }
+    
+    function toggleStatus(checkbox, type) {
+        const studentRow = checkbox.closest('[data-student-id]');
+        const studentId = studentRow.getAttribute('data-student-id');
+        
+        if (type === 'ausente' && checkbox.checked) {
+            // Se marcar como ausente, desmarcar dispensado
+            const dispensadoCheckbox = studentRow.querySelector('input[name*="dispensado"]');
+            dispensadoCheckbox.checked = false;
+            
+            // Limpar nota
+            const notaInput = studentRow.querySelector('input[name*="nota"], select[name*="conceito"]');
+            if (notaInput) {
+                notaInput.value = '';
+                updateNotaClass(notaInput);
+            }
+        } else if (type === 'dispensado' && checkbox.checked) {
+            // Se marcar como dispensado, desmarcar ausente
+            const ausenteCheckbox = studentRow.querySelector('input[name*="ausente"]');
+            ausenteCheckbox.checked = false;
+        }
+        
+        updateStats();
+    }
+    
+    function updateStats() {
+        let notasLancadas = 0;
+        let ausentes = 0;
+        let dispensados = 0;
+        let somaNotas = 0;
+        let notasValidas = 0;
+        
+        document.querySelectorAll('[data-student-id]').forEach(row => {
+            const ausenteCheck = row.querySelector('input[name*="ausente"]').checked;
+            const dispensadoCheck = row.querySelector('input[name*="dispensado"]').checked;
+            const notaInput = row.querySelector('input[name*="nota"], select[name*="conceito"]');
+            
+            if (ausenteCheck) {
+                ausentes++;
+            } else if (dispensadoCheck) {
+                dispensados++;
+            } else if (notaInput && notaInput.value !== '') {
+                notasLancadas++;
+                
+                if (!usaConceitos) {
+                    const valor = parseFloat(notaInput.value);
+                    if (!isNaN(valor)) {
+                        somaNotas += valor;
+                        notasValidas++;
+                    }
+                }
+            }
+        });
+        
+        const notasPendentes = totalAlunos - notasLancadas - ausentes - dispensados;
+        const progressoPercent = Math.round(((notasLancadas + ausentes + dispensados) / totalAlunos) * 100);
+        
+        // Atualizar contadores
+        document.getElementById('notasLancadas').textContent = notasLancadas;
+        document.getElementById('notasPendentes').textContent = notasPendentes;
+        document.getElementById('ausentes').textContent = ausentes;
+        document.getElementById('dispensados').textContent = dispensados;
+        document.getElementById('progressPercent').textContent = progressoPercent + '%';
+        
+        // Atualizar média
+        if (notasValidas > 0 && !usaConceitos) {
+            const media = (somaNotas / notasValidas).toFixed(1);
+            document.getElementById('mediaGeral').textContent = media;
+        } else {
+            document.getElementById('mediaGeral').textContent = '-';
+        }
+        
+        // Atualizar círculo de progresso
+        const circle = document.getElementById('progressCircle');
+        const offset = 251.2 - (251.2 * progressoPercent / 100);
+        circle.style.strokeDashoffset = offset;
+    }
+    
+    function preencherNotas(valor) {
+        if (confirm(`Preencher nota ${valor} para todos os alunos não ausentes/dispensados?`)) {
+            document.querySelectorAll('[data-student-id]').forEach(row => {
+                const ausenteCheck = row.querySelector('input[name*="ausente"]').checked;
+                const dispensadoCheck = row.querySelector('input[name*="dispensado"]').checked;
+                
+                if (!ausenteCheck && !dispensadoCheck) {
+                    const notaInput = row.querySelector('input[name*="nota"]');
+                    if (notaInput) {
+                        notaInput.value = valor;
+                        updateNotaClass(notaInput);
+                    }
+                }
+            });
+            updateStats();
+        }
+    }
+    
+    function marcarTodosAusentes() {
+        if (confirm('Marcar todos os alunos como ausentes? Isso irá limpar as notas já lançadas.')) {
+            document.querySelectorAll('[data-student-id]').forEach(row => {
+                const ausenteCheck = row.querySelector('input[name*="ausente"]');
+                const dispensadoCheck = row.querySelector('input[name*="dispensado"]');
+                const notaInput = row.querySelector('input[name*="nota"], select[name*="conceito"]');
+                
+                ausenteCheck.checked = true;
+                dispensadoCheck.checked = false;
+                
+                if (notaInput) {
+                    notaInput.value = '';
+                    updateNotaClass(notaInput);
+                }
+            });
+            updateStats();
+        }
+    }
+    
+    function limparTudo() {
+        if (confirm('Limpar todas as notas, conceitos e status? Esta ação não pode ser desfeita.')) {
+            document.querySelectorAll('[data-student-id]').forEach(row => {
+                const ausenteCheck = row.querySelector('input[name*="ausente"]');
+                const dispensadoCheck = row.querySelector('input[name*="dispensado"]');
+                const notaInput = row.querySelector('input[name*="nota"], select[name*="conceito"]');
+                const obsInput = row.querySelector('input[name*="observacoes"]');
+                
+                ausenteCheck.checked = false;
+                dispensadoCheck.checked = false;
+                
+                if (notaInput) {
+                    notaInput.value = '';
+                    updateNotaClass(notaInput);
+                }
+                
+                if (obsInput) {
+                    obsInput.value = '';
+                }
+            });
+            updateStats();
+        }
+    }
+    
+    // Inicialização
+    document.addEventListener('DOMContentLoaded', function() {
+        // Aplicar classes iniciais baseadas nos valores existentes
+        document.querySelectorAll('input[name*="nota"], select[name*="conceito"]').forEach(input => {
+            if (input.value) {
+                updateNotaClass(input);
+            }
+        });
+        
+        updateStats();
+        
+        // Auto-save a cada 30 segundos
+        setInterval(function() {
+            console.log('Auto-save executado...');
+            // Implementar auto-save local se necessário
+        }, 30000);
+    });
+    
+    // Atalhos de teclado
+    document.addEventListener('keydown', function(e) {
+        if (e.altKey) {
+            switch(e.key) {
+                case '1':
+                    e.preventDefault();
+                    if (!usaConceitos) preencherNotas(valorMaximo);
+                    break;
+                case '2':
+                    e.preventDefault();
+                    if (!usaConceitos) preencherNotas(6);
+                    break;
+                case '3':
+                    e.preventDefault();
+                    marcarTodosAusentes();
+                    break;
+                case '0':
+                    e.preventDefault();
+                    limparTudo();
+                    break;
+            }
+        }
+    });
+    
+    // Validação antes de enviar
+    document.getElementById('notasForm').addEventListener('submit', function(e) {
+        const pendentes = parseInt(document.getElementById('notasPendentes').textContent);
+        
+        if (pendentes > 0) {
+            if (!confirm(`Ainda há ${pendentes} nota(s) pendente(s). Deseja continuar mesmo assim?`)) {
+                e.preventDefault();
+            }
+        }
+    });
+</script>
+
+<script>
+document.body.setAttribute('data-page', 'notas');
+</script>
+{% include 'avaliacao/diario_scripts.html' %}
+{% endblock %}
