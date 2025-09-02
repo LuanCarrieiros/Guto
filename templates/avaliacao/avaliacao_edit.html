@@ -1,0 +1,419 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Editar Avaliação - GUTO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .form-section {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    .form-section:hover {
+        border-left-color: #8B5CF6;
+        background-color: #F9FAFB;
+        transform: translateX(4px);
+    }
+    
+    .form-field {
+        transition: all 0.2s ease;
+    }
+    .form-field:focus-within {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -8px rgba(139, 92, 246, 0.3);
+    }
+    
+    .floating-label {
+        transition: all 0.2s ease;
+        pointer-events: none;
+    }
+    
+    .form-input:focus + .floating-label,
+    .form-input:not(:placeholder-shown) + .floating-label {
+        transform: translateY(-1.5rem) scale(0.85);
+        color: #8B5CF6;
+    }
+    
+    .floating-element {
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        33% { transform: translateY(-10px) rotate(1deg); }
+        66% { transform: translateY(-5px) rotate(-1deg); }
+    }
+    
+    .preview-card {
+        transition: all 0.3s ease;
+        border: 2px dashed #E5E7EB;
+    }
+    .preview-card:hover {
+        border-color: #8B5CF6;
+        background-color: #F3F4F6;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-5xl mx-auto">
+    
+    <!-- Page Header -->
+    <div class="relative mb-8 overflow-hidden rounded-3xl">
+        <div class="absolute inset-0 bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-600 opacity-90"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-white bg-opacity-10 rounded-full -translate-y-48 translate-x-48 floating-element"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 bg-white bg-opacity-5 rounded-full translate-y-32 -translate-x-32 floating-element" style="animation-delay: -2s;"></div>
+        
+        <div class="relative p-8 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <div class="flex items-center mb-4">
+                        <div class="p-4 bg-white bg-opacity-20 rounded-2xl mr-4">
+                            <i class="fas fa-edit text-3xl"></i>
+                        </div>
+                        <div>
+                            <h1 class="text-4xl font-bold mb-1">Editar Avaliação</h1>
+                            <p class="text-xl text-white text-opacity-90">Modifique os dados da avaliação</p>
+                        </div>
+                    </div>
+                    
+                    {% if form.instance.pk %}
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-yellow-400 rounded-full animate-pulse"></span>
+                        <span class="text-sm">Editando: {{ form.instance.nome }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="hidden lg:block">
+                    <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-2xl p-6 floating-element">
+                        <i class="fas fa-clipboard-check text-4xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="post" class="space-y-8">
+        {% csrf_token %}
+        
+        <!-- Informações Básicas -->
+        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-purple-50 px-6 py-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-info-circle text-purple-600 mr-3"></i>
+                    Informações Básicas
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Dados principais da avaliação</p>
+            </div>
+            
+            <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Nome -->
+                    <div class="form-field">
+                        <div class="relative">
+                            <input type="text" id="{{ form.nome.id_for_label }}" name="{{ form.nome.name }}" 
+                                   value="{{ form.nome.value|default:'' }}" placeholder=" "
+                                   class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-200">
+                            <label for="{{ form.nome.id_for_label }}" class="floating-label absolute left-4 top-3 text-gray-500 text-sm">
+                                Nome da Avaliação *
+                            </label>
+                        </div>
+                        {% if form.nome.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.nome.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Tipo -->
+                    <div class="form-field">
+                        <label for="{{ form.tipo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Tipo de Avaliação
+                        </label>
+                        <select id="{{ form.tipo.id_for_label }}" name="{{ form.tipo.name }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <option value="">Selecione o tipo</option>
+                            {% for choice in form.tipo.field.queryset %}
+                                <option value="{{ choice.pk }}" {% if form.tipo.value == choice.pk %}selected{% endif %}>{{ choice.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.tipo.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.tipo.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Data de Aplicação -->
+                    <div class="form-field">
+                        <label for="{{ form.data_aplicacao.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Data de Aplicação *
+                        </label>
+                        <input type="date" id="{{ form.data_aplicacao.id_for_label }}" name="{{ form.data_aplicacao.name }}" 
+                               value="{{ form.data_aplicacao.value|date:'Y-m-d'|default:'' }}"
+                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                        {% if form.data_aplicacao.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.data_aplicacao.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Peso -->
+                    <div class="form-field">
+                        <div class="relative">
+                            <input type="number" id="{{ form.peso.id_for_label }}" name="{{ form.peso.name }}" 
+                                   value="{{ form.peso.value|default:'' }}" placeholder=" " step="0.1" min="0" max="10"
+                                   class="form-input w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent">
+                            <label for="{{ form.peso.id_for_label }}" class="floating-label absolute left-4 top-3 text-gray-500 text-sm">
+                                Peso da Avaliação
+                            </label>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500">Valor entre 0 e 10</p>
+                        {% if form.peso.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.peso.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Vinculação -->
+        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-link text-blue-600 mr-3"></i>
+                    Vinculação
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Associe a avaliação à turma e disciplina</p>
+            </div>
+            
+            <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    
+                    <!-- Turma -->
+                    <div class="form-field">
+                        <label for="{{ form.turma.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Turma *
+                        </label>
+                        <select id="{{ form.turma.id_for_label }}" name="{{ form.turma.name }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Selecione a turma</option>
+                            {% for choice in form.turma.field.queryset %}
+                                <option value="{{ choice.pk }}" {% if form.turma.value == choice.pk %}selected{% endif %}>{{ choice.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.turma.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.turma.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Disciplina -->
+                    <div class="form-field">
+                        <label for="{{ form.disciplina.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Disciplina *
+                        </label>
+                        <select id="{{ form.disciplina.id_for_label }}" name="{{ form.disciplina.name }}"
+                                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            <option value="">Selecione a disciplina</option>
+                            {% for choice in form.disciplina.field.queryset %}
+                                <option value="{{ choice.pk }}" {% if form.disciplina.value == choice.pk %}selected{% endif %}>{{ choice.nome }}</option>
+                            {% endfor %}
+                        </select>
+                        {% if form.disciplina.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.disciplina.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Descrição -->
+        <div class="form-section bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-green-50 px-6 py-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-comment-alt text-green-600 mr-3"></i>
+                    Descrição
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Detalhes adicionais sobre a avaliação</p>
+            </div>
+            
+            <div class="p-8">
+                <div class="form-field">
+                    <textarea id="{{ form.descricao.id_for_label }}" name="{{ form.descricao.name }}" rows="5" 
+                              placeholder="Descreva os objetivos, conteúdos ou instruções da avaliação..."
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none">{{ form.descricao.value|default:'' }}</textarea>
+                    <div class="mt-2 flex justify-between text-xs text-gray-500">
+                        <span>Opcional - Descreva detalhes importantes sobre a avaliação</span>
+                        <span id="char-count">0 caracteres</span>
+                    </div>
+                    {% if form.descricao.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.descricao.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="preview-card bg-white rounded-2xl shadow-lg border-2 p-8">
+            <h3 class="text-xl font-bold text-gray-900 mb-6 flex items-center">
+                <i class="fas fa-eye text-indigo-600 mr-3"></i>
+                Pré-visualização
+            </h3>
+            
+            <div id="preview-content" class="bg-gray-50 rounded-lg p-6 min-h-[100px]">
+                <div class="text-center text-gray-500">
+                    <i class="fas fa-clipboard-check text-4xl mb-4 opacity-50"></i>
+                    <p>Preencha os campos acima para ver uma pré-visualização da avaliação</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex items-center justify-between bg-white rounded-2xl shadow-lg border border-gray-100 p-8">
+            <div class="flex items-center space-x-4">
+                <a href="{% url 'avaliacao:avaliacoes_list' %}" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                </a>
+            </div>
+            
+            <div class="flex items-center space-x-4">
+                <button type="button" id="preview-btn" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    <i class="fas fa-eye mr-2"></i>Pré-visualizar
+                </button>
+                <button type="submit" class="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                    <i class="fas fa-save mr-2"></i>Salvar Alterações
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Character counter for description
+    const descricaoField = document.getElementById('{{ form.descricao.id_for_label }}');
+    const charCount = document.getElementById('char-count');
+    
+    function updateCharCount() {
+        const count = descricaoField.value.length;
+        charCount.textContent = count + ' caracteres';
+        charCount.className = count > 500 ? 'text-red-500' : 'text-gray-500';
+    }
+    
+    descricaoField.addEventListener('input', updateCharCount);
+    updateCharCount();
+
+    // Form sections animation
+    const formSections = document.querySelectorAll('.form-section');
+    formSections.forEach((section, index) => {
+        section.style.opacity = '0';
+        section.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            section.style.transition = 'all 0.5s ease';
+            section.style.opacity = '1';
+            section.style.transform = 'translateY(0)';
+        }, index * 150);
+    });
+
+    // Preview functionality
+    const previewBtn = document.getElementById('preview-btn');
+    const previewContent = document.getElementById('preview-content');
+    const formFields = {
+        nome: document.getElementById('{{ form.nome.id_for_label }}'),
+        tipo: document.getElementById('{{ form.tipo.id_for_label }}'),
+        turma: document.getElementById('{{ form.turma.id_for_label }}'),
+        disciplina: document.getElementById('{{ form.disciplina.id_for_label }}'),
+        data_aplicacao: document.getElementById('{{ form.data_aplicacao.id_for_label }}'),
+        peso: document.getElementById('{{ form.peso.id_for_label }}'),
+        descricao: document.getElementById('{{ form.descricao.id_for_label }}')
+    };
+
+    function updatePreview() {
+        const nome = formFields.nome.value || 'Nome da Avaliação';
+        const tipo = formFields.tipo.selectedOptions[0]?.text || 'Tipo não selecionado';
+        const turma = formFields.turma.selectedOptions[0]?.text || 'Turma não selecionada';
+        const disciplina = formFields.disciplina.selectedOptions[0]?.text || 'Disciplina não selecionada';
+        const data = formFields.data_aplicacao.value || 'Data não definida';
+        const peso = formFields.peso.value || 'Não definido';
+        const descricao = formFields.descricao.value || 'Sem descrição';
+
+        const previewHTML = `
+            <div class="space-y-4">
+                <div class="flex items-center justify-between">
+                    <h4 class="text-2xl font-bold text-gray-900">${nome}</h4>
+                    <span class="px-3 py-1 bg-purple-100 text-purple-800 rounded-full text-sm">${tipo}</span>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="text-sm text-gray-600">Turma:</span>
+                        <p class="font-medium">${turma}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">Disciplina:</span>
+                        <p class="font-medium">${disciplina}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">Data:</span>
+                        <p class="font-medium">${data}</p>
+                    </div>
+                    <div>
+                        <span class="text-sm text-gray-600">Peso:</span>
+                        <p class="font-medium">${peso}</p>
+                    </div>
+                </div>
+                
+                ${descricao !== 'Sem descrição' ? `
+                    <div>
+                        <span class="text-sm text-gray-600">Descrição:</span>
+                        <p class="text-gray-800 mt-1">${descricao}</p>
+                    </div>
+                ` : ''}
+            </div>
+        `;
+
+        previewContent.innerHTML = previewHTML;
+    }
+
+    previewBtn.addEventListener('click', updatePreview);
+
+    // Auto-update preview on field changes
+    Object.values(formFields).forEach(field => {
+        field.addEventListener('change', updatePreview);
+        field.addEventListener('input', updatePreview);
+    });
+
+    // Initial preview update
+    updatePreview();
+
+    // Form validation enhancement
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const requiredFields = [formFields.nome, formFields.turma, formFields.disciplina, formFields.data_aplicacao];
+        let hasError = false;
+
+        requiredFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('border-red-500');
+                hasError = true;
+            } else {
+                field.classList.remove('border-red-500');
+            }
+        });
+
+        if (hasError) {
+            e.preventDefault();
+            alert('Por favor, preencha todos os campos obrigatórios.');
+        }
+    });
+
+    // Floating labels for inputs with initial values
+    Object.values(formFields).forEach(field => {
+        if (field.type !== 'select-one' && field.type !== 'textarea' && field.value) {
+            const label = field.nextElementSibling;
+            if (label && label.classList.contains('floating-label')) {
+                label.style.transform = 'translateY(-1.5rem) scale(0.85)';
+                label.style.color = '#8B5CF6';
+            }
+        }
+    });
+});
+</script>
+{% endblock %}
