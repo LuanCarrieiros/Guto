@@ -1,0 +1,439 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Boletim - {{ aluno.nome }}{% endblock %}
+
+{% block extra_head %}
+<style>
+@media print {
+    body * { visibility: hidden; }
+    .print-area, .print-area * { visibility: visible; }
+    .print-area { 
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+    }
+    .no-print { display: none !important; }
+    
+    /* A4 Page Setup */
+    @page {
+        size: A4;
+        margin: 1cm;
+    }
+    
+    .print-area {
+        font-size: 12px;
+        line-height: 1.4;
+    }
+    
+    .break-page { page-break-before: always; }
+}
+
+.grade-cell {
+    min-width: 60px;
+    text-align: center;
+}
+
+.grade-excellent { @apply bg-green-100 text-green-800; }
+.grade-good { @apply bg-blue-100 text-blue-800; }
+.grade-regular { @apply bg-yellow-100 text-yellow-800; }
+.grade-poor { @apply bg-red-100 text-red-800; }
+.grade-absent { @apply bg-gray-100 text-gray-600; }
+</style>
+{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex no-print" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard:home' %}" class="text-gray-700 hover:text-gray-900 inline-flex items-center">
+                <svg class="w-5 h-5 mr-2.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+                </svg>
+                Home
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <a href="{% url 'avaliacao:avaliacao_home' %}" class="ml-1 text-gray-700 hover:text-gray-900 md:ml-2">Avaliações</a>
+            </div>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <a href="{% url 'avaliacao:relatorios' %}" class="ml-1 text-gray-700 hover:text-gray-900 md:ml-2">Relatórios</a>
+            </div>
+        </li>
+        <li aria-current="page">
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <span class="ml-1 text-gray-500 md:ml-2">Boletim - {{ aluno.nome|truncatechars:20 }}</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<!-- Controles de Impressão -->
+<div class="mb-6 no-print">
+    <div class="bg-white shadow rounded-lg p-4">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-xl font-bold text-gray-900">
+                    <i class="fas fa-file-alt text-indigo-600 mr-2"></i>
+                    Boletim Escolar
+                </h1>
+                <p class="text-gray-600">{{ aluno.nome }}</p>
+            </div>
+            <div class="space-x-2">
+                <button onclick="window.print()" 
+                        class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors">
+                    <i class="fas fa-print mr-2"></i>
+                    Imprimir
+                </button>
+                <a href="{% url 'avaliacao:relatorios' %}" 
+                   class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Área de Impressão -->
+<div class="print-area">
+    <!-- Cabeçalho da Escola -->
+    <div class="bg-white border-2 border-gray-300 p-6 mb-6">
+        <div class="text-center mb-6">
+            <div class="flex items-center justify-center mb-4">
+                {% comment %} Logo da escola - adicionar se disponível {% endcomment %}
+                <div class="w-16 h-16 bg-indigo-600 rounded-full flex items-center justify-center mr-4">
+                    <i class="fas fa-graduation-cap text-white text-2xl"></i>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-bold text-gray-900">Sistema GUTO</h1>
+                    <p class="text-gray-600">Gestão Educacional</p>
+                </div>
+            </div>
+            <div class="border-t border-b border-gray-300 py-3">
+                <h2 class="text-xl font-bold text-gray-800">BOLETIM ESCOLAR</h2>
+                <p class="text-gray-600 mt-1">Ano Letivo: {{ ano_letivo|default:"2025" }}</p>
+            </div>
+        </div>
+
+        <!-- Dados do Aluno -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+            <div class="space-y-2">
+                <div class="flex">
+                    <span class="font-medium text-gray-700 min-w-24">Nome:</span>
+                    <span class="text-gray-900">{{ aluno.nome }}</span>
+                </div>
+                <div class="flex">
+                    <span class="font-medium text-gray-700 min-w-24">Matrícula:</span>
+                    <span class="text-gray-900">{{ aluno.matricula|default:"Não informada" }}</span>
+                </div>
+                <div class="flex">
+                    <span class="font-medium text-gray-700 min-w-24">CPF:</span>
+                    <span class="text-gray-900">{{ aluno.cpf|default:"Não informado" }}</span>
+                </div>
+            </div>
+            <div class="space-y-2">
+                <div class="flex">
+                    <span class="font-medium text-gray-700 min-w-32">Data Nascimento:</span>
+                    <span class="text-gray-900">{{ aluno.data_nascimento|date:"d/m/Y"|default:"Não informada" }}</span>
+                </div>
+                <div class="flex">
+                    <span class="font-medium text-gray-700 min-w-32">Turma:</span>
+                    <span class="text-gray-900">{{ turma_atual.nome|default:"Não enturmado" }}</span>
+                </div>
+                <div class="flex">
+                    <span class="font-medium text-gray-700 min-w-32">Período:</span>
+                    <span class="text-gray-900">{{ turma_atual.periodo_letivo|default:"Não definido" }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notas por Disciplina -->
+    <div class="bg-white border-2 border-gray-300 mb-6 overflow-hidden">
+        <div class="bg-gray-50 px-4 py-3 border-b border-gray-300">
+            <h3 class="text-lg font-bold text-gray-900">
+                <i class="fas fa-chart-line text-blue-600 mr-2"></i>
+                Desempenho Acadêmico
+            </h3>
+        </div>
+
+        {% if notas_por_disciplina %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full">
+                <thead class="bg-gray-100">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-sm font-bold text-gray-900 border-b border-gray-300">
+                            Disciplina
+                        </th>
+                        <th class="px-2 py-3 text-center text-sm font-bold text-gray-900 border-b border-gray-300 grade-cell">
+                            1º Bim
+                        </th>
+                        <th class="px-2 py-3 text-center text-sm font-bold text-gray-900 border-b border-gray-300 grade-cell">
+                            2º Bim
+                        </th>
+                        <th class="px-2 py-3 text-center text-sm font-bold text-gray-900 border-b border-gray-300 grade-cell">
+                            3º Bim
+                        </th>
+                        <th class="px-2 py-3 text-center text-sm font-bold text-gray-900 border-b border-gray-300 grade-cell">
+                            4º Bim
+                        </th>
+                        <th class="px-2 py-3 text-center text-sm font-bold text-gray-900 border-b border-gray-300 grade-cell">
+                            Média
+                        </th>
+                        <th class="px-2 py-3 text-center text-sm font-bold text-gray-900 border-b border-gray-300 grade-cell">
+                            Freq.
+                        </th>
+                        <th class="px-4 py-3 text-center text-sm font-bold text-gray-900 border-b border-gray-300">
+                            Situação
+                        </th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for disciplina_data in notas_por_disciplina %}
+                    <tr class="border-b border-gray-200">
+                        <td class="px-4 py-3 text-sm font-medium text-gray-900">
+                            {{ disciplina_data.disciplina.nome }}
+                        </td>
+                        
+                        {% comment %} Notas dos bimestres {% endcomment %}
+                        {% for bimestre in "1234" %}
+                        <td class="px-2 py-3 text-center text-sm grade-cell">
+                            {% with nota=disciplina_data.bimestres|getitem:bimestre %}
+                                {% if nota %}
+                                    {% if nota >= 9.0 %}
+                                        <span class="grade-excellent px-2 py-1 rounded font-medium">
+                                            {{ nota|floatformat:1 }}
+                                        </span>
+                                    {% elif nota >= 7.0 %}
+                                        <span class="grade-good px-2 py-1 rounded font-medium">
+                                            {{ nota|floatformat:1 }}
+                                        </span>
+                                    {% elif nota >= 5.0 %}
+                                        <span class="grade-regular px-2 py-1 rounded font-medium">
+                                            {{ nota|floatformat:1 }}
+                                        </span>
+                                    {% else %}
+                                        <span class="grade-poor px-2 py-1 rounded font-medium">
+                                            {{ nota|floatformat:1 }}
+                                        </span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="grade-absent px-2 py-1 rounded">
+                                        --
+                                    </span>
+                                {% endif %}
+                            {% endwith %}
+                        </td>
+                        {% endfor %}
+                        
+                        {% comment %} Média da disciplina {% endcomment %}
+                        <td class="px-2 py-3 text-center text-sm font-bold grade-cell">
+                            {% if disciplina_data.media %}
+                                {% if disciplina_data.media >= 9.0 %}
+                                    <span class="grade-excellent px-2 py-1 rounded">
+                                        {{ disciplina_data.media|floatformat:1 }}
+                                    </span>
+                                {% elif disciplina_data.media >= 7.0 %}
+                                    <span class="grade-good px-2 py-1 rounded">
+                                        {{ disciplina_data.media|floatformat:1 }}
+                                    </span>
+                                {% elif disciplina_data.media >= 5.0 %}
+                                    <span class="grade-regular px-2 py-1 rounded">
+                                        {{ disciplina_data.media|floatformat:1 }}
+                                    </span>
+                                {% else %}
+                                    <span class="grade-poor px-2 py-1 rounded">
+                                        {{ disciplina_data.media|floatformat:1 }}
+                                    </span>
+                                {% endif %}
+                            {% else %}
+                                <span class="grade-absent px-2 py-1 rounded">--</span>
+                            {% endif %}
+                        </td>
+                        
+                        {% comment %} Frequência {% endcomment %}
+                        <td class="px-2 py-3 text-center text-sm grade-cell">
+                            {% if disciplina_data.frequencia %}
+                                {% if disciplina_data.frequencia >= 75 %}
+                                    <span class="text-green-700 font-medium">{{ disciplina_data.frequencia|floatformat:0 }}%</span>
+                                {% else %}
+                                    <span class="text-red-700 font-medium">{{ disciplina_data.frequencia|floatformat:0 }}%</span>
+                                {% endif %}
+                            {% else %}
+                                <span class="text-gray-500">--%</span>
+                            {% endif %}
+                        </td>
+                        
+                        {% comment %} Situação {% endcomment %}
+                        <td class="px-4 py-3 text-center text-sm">
+                            {% if disciplina_data.situacao == 'APROVADO' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check mr-1"></i>
+                                    Aprovado
+                                </span>
+                            {% elif disciplina_data.situacao == 'REPROVADO' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times mr-1"></i>
+                                    Reprovado
+                                </span>
+                            {% elif disciplina_data.situacao == 'RECUPERACAO' %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                                    <i class="fas fa-exclamation mr-1"></i>
+                                    Recuperação
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                    Em Andamento
+                                </span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-8 text-center">
+            <i class="fas fa-clipboard-list text-4xl text-gray-300 mb-4"></i>
+            <p class="text-gray-500">Nenhuma avaliação encontrada para este aluno.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Resumo Geral -->
+    <div class="bg-white border-2 border-gray-300 mb-6">
+        <div class="bg-gray-50 px-4 py-3 border-b border-gray-300">
+            <h3 class="text-lg font-bold text-gray-900">
+                <i class="fas fa-chart-pie text-purple-600 mr-2"></i>
+                Resumo Geral
+            </h3>
+        </div>
+        <div class="p-4">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div class="text-center p-3 bg-blue-50 rounded">
+                    <div class="text-2xl font-bold text-blue-600">{{ resumo.media_geral|floatformat:1|default:"--" }}</div>
+                    <div class="text-sm text-gray-600">Média Geral</div>
+                </div>
+                <div class="text-center p-3 bg-green-50 rounded">
+                    <div class="text-2xl font-bold text-green-600">{{ resumo.frequencia_geral|floatformat:0|default:"--" }}%</div>
+                    <div class="text-sm text-gray-600">Frequência</div>
+                </div>
+                <div class="text-center p-3 bg-yellow-50 rounded">
+                    <div class="text-2xl font-bold text-yellow-600">{{ resumo.disciplinas_aprovadas|default:"0" }}</div>
+                    <div class="text-sm text-gray-600">Aprovações</div>
+                </div>
+                <div class="text-center p-3 bg-red-50 rounded">
+                    <div class="text-2xl font-bold text-red-600">{{ resumo.disciplinas_reprovadas|default:"0" }}</div>
+                    <div class="text-sm text-gray-600">Reprovações</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Situação Final -->
+    <div class="bg-white border-2 border-gray-300 mb-6">
+        <div class="bg-gray-50 px-4 py-3 border-b border-gray-300">
+            <h3 class="text-lg font-bold text-gray-900">
+                <i class="fas fa-flag-checkered text-orange-600 mr-2"></i>
+                Situação Final
+            </h3>
+        </div>
+        <div class="p-4">
+            <div class="text-center py-4">
+                {% if resumo.situacao_final == 'APROVADO' %}
+                    <div class="inline-flex items-center px-6 py-3 rounded-lg text-lg font-bold bg-green-100 text-green-800">
+                        <i class="fas fa-check-circle text-2xl mr-3"></i>
+                        APROVADO
+                    </div>
+                {% elif resumo.situacao_final == 'REPROVADO' %}
+                    <div class="inline-flex items-center px-6 py-3 rounded-lg text-lg font-bold bg-red-100 text-red-800">
+                        <i class="fas fa-times-circle text-2xl mr-3"></i>
+                        REPROVADO
+                    </div>
+                {% elif resumo.situacao_final == 'RECUPERACAO' %}
+                    <div class="inline-flex items-center px-6 py-3 rounded-lg text-lg font-bold bg-yellow-100 text-yellow-800">
+                        <i class="fas fa-exclamation-triangle text-2xl mr-3"></i>
+                        EM RECUPERAÇÃO
+                    </div>
+                {% else %}
+                    <div class="inline-flex items-center px-6 py-3 rounded-lg text-lg font-bold bg-gray-100 text-gray-800">
+                        <i class="fas fa-clock text-2xl mr-3"></i>
+                        EM ANDAMENTO
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Observações -->
+    {% if observacoes %}
+    <div class="bg-white border-2 border-gray-300 mb-6">
+        <div class="bg-gray-50 px-4 py-3 border-b border-gray-300">
+            <h3 class="text-lg font-bold text-gray-900">
+                <i class="fas fa-sticky-note text-yellow-600 mr-2"></i>
+                Observações
+            </h3>
+        </div>
+        <div class="p-4">
+            <div class="text-sm text-gray-700 space-y-2">
+                {% for obs in observacoes %}
+                <p>• {{ obs }}</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Rodapé -->
+    <div class="bg-white border-2 border-gray-300 p-4">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-8 text-sm">
+            <div>
+                <p class="font-medium text-gray-700 mb-4">Assinatura do Responsável:</p>
+                <div class="border-b border-gray-400 h-8"></div>
+                <p class="text-xs text-gray-500 mt-1">Nome e assinatura</p>
+            </div>
+            <div>
+                <p class="font-medium text-gray-700 mb-4">Direção Escolar:</p>
+                <div class="border-b border-gray-400 h-8"></div>
+                <p class="text-xs text-gray-500 mt-1">Carimbo e assinatura</p>
+            </div>
+        </div>
+        
+        <div class="mt-6 pt-4 border-t border-gray-300 text-center">
+            <p class="text-xs text-gray-500">
+                Boletim emitido em {{ hoje|date:"d/m/Y" }} às {{ hoje|time:"H:i" }} - Sistema GUTO
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-print quando solicitado via parâmetro
+    const urlParams = new URLSearchParams(window.location.search);
+    if (urlParams.get('print') === 'true') {
+        setTimeout(() => {
+            window.print();
+        }, 1000);
+    }
+});
+</script>
+{% endblock %}
