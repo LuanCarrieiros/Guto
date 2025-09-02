@@ -1,0 +1,293 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .report-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    .report-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+        border-left-color: #4F46E5;
+    }
+    
+    .action-card {
+        transition: all 0.3s ease;
+    }
+    .action-card:hover {
+        transform: translateY(-2px) scale(1.02);
+        box-shadow: 0 10px 25px -3px rgb(0 0 0 / 0.1), 0 4px 6px -2px rgb(0 0 0 / 0.05);
+    }
+    
+    .floating-element {
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        33% { transform: translateY(-10px) rotate(1deg); }
+        66% { transform: translateY(-5px) rotate(-1deg); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-7xl mx-auto">
+    
+    <!-- Page Header -->
+    <div class="relative mb-8 overflow-hidden rounded-3xl">
+        <div class="absolute inset-0 bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 opacity-90"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-white bg-opacity-10 rounded-full -translate-y-48 translate-x-48 floating-element"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 bg-white bg-opacity-5 rounded-full translate-y-32 -translate-x-32 floating-element" style="animation-delay: -2s;"></div>
+        
+        <div class="relative p-8 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-5xl font-bold mb-2">{{ title }}</h1>
+                    <p class="text-xl text-white text-opacity-90 mb-4">Relatórios estatísticos e dados do censo educacional</p>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
+                        <p class="text-sm font-medium">Sistema de relatórios ativo</p>
+                    </div>
+                </div>
+                <div class="hidden lg:block">
+                    <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-3xl p-8 floating-element">
+                        <i class="fas fa-chart-line text-6xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <div class="flex items-center">
+                <div class="p-3 bg-blue-100 rounded-full mr-4">
+                    <i class="fas fa-file-alt text-blue-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 font-medium">Relatórios</p>
+                    <h3 class="text-2xl font-bold text-gray-900">5</h3>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <div class="flex items-center">
+                <div class="p-3 bg-green-100 rounded-full mr-4">
+                    <i class="fas fa-download text-green-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 font-medium">Exportações</p>
+                    <h3 class="text-2xl font-bold text-gray-900">JSON/CSV</h3>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <div class="flex items-center">
+                <div class="p-3 bg-purple-100 rounded-full mr-4">
+                    <i class="fas fa-chart-pie text-purple-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 font-medium">Gráficos</p>
+                    <h3 class="text-2xl font-bold text-gray-900">Dinâmicos</h3>
+                </div>
+            </div>
+        </div>
+        
+        <div class="bg-white rounded-2xl shadow-lg p-6 border border-gray-100">
+            <div class="flex items-center">
+                <div class="p-3 bg-orange-100 rounded-full mr-4">
+                    <i class="fas fa-calendar text-orange-600 text-xl"></i>
+                </div>
+                <div>
+                    <p class="text-sm text-gray-600 font-medium">Período</p>
+                    <h3 class="text-2xl font-bold text-gray-900">{{ ano_atual|default:"2025" }}</h3>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Reports Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        
+        <!-- Relatórios de Matrículas -->
+        <div class="report-card bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-blue-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-user-graduate text-blue-600 mr-3"></i>
+                    Relatórios de Matrículas
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Dados sobre matrículas e alunos</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4">
+                    <a href="{% url 'censo:relatorio_matriculas' %}" class="action-card flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300">
+                        <div class="p-3 bg-blue-100 rounded-lg mr-4">
+                            <i class="fas fa-list text-blue-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">Relatório Completo de Matrículas</h4>
+                            <p class="text-sm text-gray-600">Lista detalhada de todas as matrículas</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </a>
+                    
+                    <a href="{% url 'censo:exportar_dados' 'matriculas' %}" class="action-card flex items-center p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300">
+                        <div class="p-3 bg-blue-100 rounded-lg mr-4">
+                            <i class="fas fa-download text-blue-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">Exportar Dados de Matrículas</h4>
+                            <p class="text-sm text-gray-600">Download em formato JSON</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Relatórios de Funcionários -->
+        <div class="report-card bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-green-50 to-emerald-50 px-6 py-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-users text-green-600 mr-3"></i>
+                    Relatórios de Funcionários
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Dados sobre equipe e professores</p>
+            </div>
+            
+            <div class="p-6">
+                <div class="space-y-4">
+                    <a href="{% url 'censo:relatorio_funcionarios' %}" class="action-card flex items-center p-4 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-300">
+                        <div class="p-3 bg-green-100 rounded-lg mr-4">
+                            <i class="fas fa-list text-green-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">Relatório de Funcionários</h4>
+                            <p class="text-sm text-gray-600">Lista completa da equipe ativa</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </a>
+                    
+                    <a href="{% url 'censo:exportar_dados' 'funcionarios' %}" class="action-card flex items-center p-4 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-300">
+                        <div class="p-3 bg-green-100 rounded-lg mr-4">
+                            <i class="fas fa-download text-green-600"></i>
+                        </div>
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900">Exportar Dados de Funcionários</h4>
+                            <p class="text-sm text-gray-600">Download em formato JSON</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-400"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Relatórios Estatísticos -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+        <div class="bg-gradient-to-r from-purple-50 to-pink-50 px-6 py-4 border-b border-gray-100">
+            <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-chart-bar text-purple-600 mr-3"></i>
+                Relatórios Estatísticos e Análises
+            </h3>
+            <p class="text-sm text-gray-600 mt-1">Dados demográficos e estatísticas educacionais</p>
+        </div>
+        
+        <div class="p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                
+                <a href="{% url 'censo:relatorio_estatisticas' %}" class="action-card flex flex-col items-center p-6 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-300">
+                    <div class="p-4 bg-purple-100 rounded-xl mb-4">
+                        <i class="fas fa-chart-pie text-purple-600 text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 text-center mb-2">Estatísticas Gerais</h4>
+                    <p class="text-sm text-gray-600 text-center">Dados demográficos e faixas etárias</p>
+                </a>
+                
+                <a href="{% url 'censo:censo_escolar' %}" class="action-card flex flex-col items-center p-6 rounded-xl border border-gray-200 hover:border-indigo-300 hover:bg-indigo-50 transition-all duration-300">
+                    <div class="p-4 bg-indigo-100 rounded-xl mb-4">
+                        <i class="fas fa-school text-indigo-600 text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-900 text-center mb-2">Censo Escolar</h4>
+                    <p class="text-sm text-gray-600 text-center">Dados oficiais do censo educacional</p>
+                </a>
+                
+                <div class="action-card flex flex-col items-center p-6 rounded-xl border border-gray-200 bg-gray-50 opacity-75">
+                    <div class="p-4 bg-gray-200 rounded-xl mb-4">
+                        <i class="fas fa-chart-line text-gray-500 text-2xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-gray-700 text-center mb-2">Relatórios Avançados</h4>
+                    <p class="text-sm text-gray-500 text-center">Em desenvolvimento</p>
+                    <span class="mt-2 px-3 py-1 bg-gray-300 text-gray-600 text-xs rounded-full">Em breve</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Export Options -->
+    <div class="bg-gradient-to-r from-gray-900 to-blue-900 rounded-2xl shadow-lg overflow-hidden">
+        <div class="p-8 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-2xl font-bold mb-2">Exportação de Dados</h3>
+                    <p class="text-gray-300 mb-4">Exporte dados em diferentes formatos para análise externa</p>
+                    <div class="flex space-x-4">
+                        <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm">JSON</span>
+                        <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm">CSV (em breve)</span>
+                        <span class="px-3 py-1 bg-white bg-opacity-20 rounded-full text-sm">PDF (em breve)</span>
+                    </div>
+                </div>
+                <div class="hidden lg:block">
+                    <i class="fas fa-cloud-download-alt text-6xl text-white text-opacity-50"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="mt-8 flex items-center justify-between">
+        <a href="{% url 'censo:censo_home' %}" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">
+            <i class="fas fa-arrow-left mr-2"></i>Voltar ao Início
+        </a>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add stagger animation to action cards
+    const actionCards = document.querySelectorAll('.action-card');
+    actionCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Report cards hover effect
+    const reportCards = document.querySelectorAll('.report-card');
+    reportCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px)';
+            this.style.boxShadow = '0 25px 50px -12px rgb(0 0 0 / 0.25)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0)';
+            this.style.boxShadow = '';
+        });
+    });
+});
+</script>
+{% endblock %}
