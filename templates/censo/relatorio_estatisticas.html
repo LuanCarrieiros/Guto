@@ -1,0 +1,437 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, var(--tw-gradient-from), var(--tw-gradient-to));
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .age-group-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    .age-group-card:hover {
+        border-left-color: #8B5CF6;
+        background-color: #F3F4F6;
+        transform: translateX(4px);
+    }
+    
+    .gender-card {
+        transition: all 0.3s ease;
+    }
+    .gender-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+    
+    .progress-bar {
+        background: linear-gradient(90deg, #8B5CF6, #EC4899, #F59E0B);
+        background-size: 200% 100%;
+        animation: shimmer 3s ease-in-out infinite;
+    }
+    
+    @keyframes shimmer {
+        0% { background-position: -200% 0; }
+        100% { background-position: 200% 0; }
+    }
+    
+    .floating-element {
+        animation: float 6s ease-in-out infinite;
+    }
+    
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        33% { transform: translateY(-10px) rotate(1deg); }
+        66% { transform: translateY(-5px) rotate(-1deg); }
+    }
+    
+    @media print {
+        .no-print { display: none !important; }
+        .print-only { display: block !important; }
+        body { background: white !important; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-7xl mx-auto">
+    
+    <!-- Page Header -->
+    <div class="relative mb-8 overflow-hidden rounded-3xl">
+        <div class="absolute inset-0 bg-gradient-to-r from-purple-600 via-pink-600 to-orange-500 opacity-90"></div>
+        <div class="absolute top-0 right-0 w-96 h-96 bg-white bg-opacity-10 rounded-full -translate-y-48 translate-x-48 floating-element"></div>
+        <div class="absolute bottom-0 left-0 w-64 h-64 bg-white bg-opacity-5 rounded-full translate-y-32 -translate-x-32 floating-element" style="animation-delay: -2s;"></div>
+        
+        <div class="relative p-8 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-5xl font-bold mb-2">{{ title }}</h1>
+                    <p class="text-xl text-white text-opacity-90 mb-4">Dados demográficos e estatísticas educacionais</p>
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
+                        <p class="text-sm font-medium">{{ total_alunos }} aluno{{ total_alunos|pluralize:"s" }} analisado{{ total_alunos|pluralize:"s" }}</p>
+                    </div>
+                </div>
+                <div class="hidden lg:block no-print">
+                    <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-3xl p-8 floating-element">
+                        <i class="fas fa-chart-pie text-6xl text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="no-print absolute top-4 right-4">
+            <div class="flex space-x-2">
+                <button onclick="window.print()" class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all duration-200">
+                    <i class="fas fa-print mr-2"></i>Imprimir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Gender Distribution -->
+    <div class="mb-8">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-pink-50 px-6 py-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-venus-mars text-pink-600 mr-3"></i>
+                    Distribuição por Sexo
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Total de {{ total_alunos }} aluno{{ total_alunos|pluralize:"s" }}</p>
+            </div>
+            
+            <div class="p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Masculino -->
+                    <div class="gender-card bg-gradient-to-br from-blue-50 to-blue-100 rounded-2xl p-6 border border-blue-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-blue-500 rounded-full mr-4">
+                                    <i class="fas fa-mars text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900">Masculino</h4>
+                                    <p class="text-sm text-gray-600">Alunos do sexo masculino</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <h3 class="text-3xl font-bold text-blue-700">{{ alunos_masculino }}</h3>
+                                {% if total_alunos > 0 %}
+                                <p class="text-sm text-blue-600">{{ alunos_masculino|mul:100|div:total_alunos|floatformat:1 }}%</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if total_alunos > 0 %}
+                        <div class="w-full bg-blue-200 rounded-full h-3">
+                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full transition-all duration-1000" 
+                                 style="width: {{ alunos_masculino|mul:100|div:total_alunos }}%"></div>
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <!-- Feminino -->
+                    <div class="gender-card bg-gradient-to-br from-pink-50 to-pink-100 rounded-2xl p-6 border border-pink-200">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <div class="p-3 bg-pink-500 rounded-full mr-4">
+                                    <i class="fas fa-venus text-white text-xl"></i>
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900">Feminino</h4>
+                                    <p class="text-sm text-gray-600">Alunos do sexo feminino</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <h3 class="text-3xl font-bold text-pink-700">{{ alunos_feminino }}</h3>
+                                {% if total_alunos > 0 %}
+                                <p class="text-sm text-pink-600">{{ alunos_feminino|mul:100|div:total_alunos|floatformat:1 }}%</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if total_alunos > 0 %}
+                        <div class="w-full bg-pink-200 rounded-full h-3">
+                            <div class="bg-gradient-to-r from-pink-500 to-pink-600 h-3 rounded-full transition-all duration-1000" 
+                                 style="width: {{ alunos_feminino|mul:100|div:total_alunos }}%"></div>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Age Groups Distribution -->
+    <div class="mb-8">
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-purple-50 px-6 py-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-birthday-cake text-purple-600 mr-3"></i>
+                    Distribuição por Faixas Etárias
+                </h3>
+                <p class="text-sm text-gray-600 mt-1">Análise demográfica por idade dos alunos</p>
+            </div>
+            
+            <div class="p-8">
+                {% if faixas_etarias %}
+                <div class="space-y-6">
+                    {% for faixa, quantidade in faixas_etarias.items %}
+                    <div class="age-group-card p-6 rounded-xl bg-gray-50 border border-gray-200">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="flex items-center space-x-4">
+                                <div class="w-12 h-12 bg-gradient-to-r from-purple-500 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
+                                    {% if "0-5" in faixa %}
+                                        <i class="fas fa-baby text-white"></i>
+                                    {% elif "6-10" in faixa %}
+                                        <i class="fas fa-child text-white"></i>
+                                    {% elif "11-14" in faixa %}
+                                        <i class="fas fa-user text-white"></i>
+                                    {% elif "15-17" in faixa %}
+                                        <i class="fas fa-user-graduate text-white"></i>
+                                    {% else %}
+                                        <i class="fas fa-user-tie text-white"></i>
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900">{{ faixa }}</h4>
+                                    <p class="text-sm text-gray-600">{{ quantidade }} aluno{{ quantidade|pluralize:"s" }}</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <h3 class="text-2xl font-bold text-purple-700">{{ quantidade }}</h3>
+                                {% if total_alunos > 0 %}
+                                <p class="text-sm text-purple-600">{{ quantidade|mul:100|div:total_alunos|floatformat:1 }}%</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if total_alunos > 0 %}
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="progress-bar h-2 rounded-full transition-all duration-1000" 
+                                 style="width: {{ quantidade|mul:100|div:total_alunos }}%"></div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-chart-bar text-gray-400 text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">Nenhum dado de faixa etária disponível</h4>
+                    <p class="text-gray-500">Os dados serão exibidos quando houver alunos cadastrados com datas de nascimento.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Statistics -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        
+        <!-- Total de Alunos -->
+        <div class="stats-card bg-gradient-to-br from-indigo-500 to-indigo-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-indigo-100 text-sm font-medium mb-1">Total de Alunos</p>
+                    <h3 class="text-3xl font-bold">{{ total_alunos }}</h3>
+                </div>
+                <div class="p-3 bg-white bg-opacity-20 rounded-full">
+                    <i class="fas fa-users text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alunos Masculinos -->
+        <div class="stats-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium mb-1">Masculino</p>
+                    <h3 class="text-3xl font-bold">{{ alunos_masculino }}</h3>
+                </div>
+                <div class="p-3 bg-white bg-opacity-20 rounded-full">
+                    <i class="fas fa-mars text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Alunos Femininos -->
+        <div class="stats-card bg-gradient-to-br from-pink-500 to-pink-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-pink-100 text-sm font-medium mb-1">Feminino</p>
+                    <h3 class="text-3xl font-bold">{{ alunos_feminino }}</h3>
+                </div>
+                <div class="p-3 bg-white bg-opacity-20 rounded-full">
+                    <i class="fas fa-venus text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data de Geração -->
+        <div class="stats-card bg-gradient-to-br from-gray-700 to-gray-800 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-300 text-sm font-medium mb-1">Atualizado</p>
+                    <h3 class="text-lg font-bold">{{ "now"|date:"d/m/Y" }}</h3>
+                    <p class="text-xs text-gray-400">{{ "now"|date:"H:i" }}</p>
+                </div>
+                <div class="p-3 bg-white bg-opacity-20 rounded-full">
+                    <i class="fas fa-clock text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Statistics -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+        <div class="bg-gradient-to-r from-gray-50 to-orange-50 px-6 py-4 border-b border-gray-100">
+            <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                <i class="fas fa-calculator text-orange-600 mr-3"></i>
+                Estatísticas Complementares
+            </h3>
+            <p class="text-sm text-gray-600 mt-1">Análises adicionais dos dados educacionais</p>
+        </div>
+        
+        <div class="p-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Média de Idade -->
+                <div class="text-center p-6 bg-gradient-to-br from-orange-50 to-orange-100 rounded-xl border border-orange-200">
+                    <div class="w-16 h-16 bg-orange-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-calculator text-white text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">Idade Média</h4>
+                    <p class="text-2xl font-bold text-orange-600">
+                        {% if total_alunos > 0 %}--{% else %}--{% endif %}
+                    </p>
+                    <p class="text-sm text-gray-600 mt-1">anos</p>
+                </div>
+                
+                <!-- Proporção de Gênero -->
+                <div class="text-center p-6 bg-gradient-to-br from-purple-50 to-purple-100 rounded-xl border border-purple-200">
+                    <div class="w-16 h-16 bg-purple-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-balance-scale text-white text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">Proporção M/F</h4>
+                    <p class="text-lg font-bold text-purple-600">
+                        {% if total_alunos > 0 %}
+                            {{ alunos_masculino|mul:100|div:total_alunos|floatformat:0 }}% / {{ alunos_feminino|mul:100|div:total_alunos|floatformat:0 }}%
+                        {% else %}
+                            -- / --
+                        {% endif %}
+                    </p>
+                </div>
+                
+                <!-- Maior Faixa Etária -->
+                <div class="text-center p-6 bg-gradient-to-br from-green-50 to-green-100 rounded-xl border border-green-200">
+                    <div class="w-16 h-16 bg-green-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-trophy text-white text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2">Faixa Predominante</h4>
+                    <p class="text-sm font-bold text-green-600">
+                        {% if faixas_etarias %}
+                            {% for faixa, quantidade in faixas_etarias.items %}
+                                {% if forloop.first %}{{ faixa }}{% endif %}
+                            {% endfor %}
+                        {% else %}
+                            --
+                        {% endif %}
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Print Footer -->
+    <div class="print-only hidden mt-8 pt-4 border-t border-gray-200">
+        <div class="text-center text-sm text-gray-600">
+            <p>{{ title }} - GUTO Sistema de Gestão Educacional</p>
+            <p>Relatório gerado em {{ "now"|date:"d/m/Y H:i" }}</p>
+            <p>Total de {{ total_alunos }} aluno{{ total_alunos|pluralize:"s" }} analisado{{ total_alunos|pluralize:"s" }}</p>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="no-print mt-8 flex items-center justify-between">
+        <a href="{% url 'censo:relatorios' %}" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">
+            <i class="fas fa-arrow-left mr-2"></i>Voltar aos Relatórios
+        </a>
+        
+        <div class="flex space-x-4">
+            <a href="{% url 'censo:censo_escolar' %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                <i class="fas fa-school mr-2"></i>Ver Censo Escolar
+            </a>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add stagger animation to age group cards
+    const ageGroupCards = document.querySelectorAll('.age-group-card');
+    ageGroupCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.6s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 200);
+    });
+
+    // Stats cards hover effect
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-12px) scale(1.03)';
+            this.style.boxShadow = '0 35px 60px -12px rgba(0, 0, 0, 0.3)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = '';
+        });
+    });
+
+    // Gender cards animation
+    const genderCards = document.querySelectorAll('.gender-card');
+    genderCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateX(' + (index === 0 ? '-50px' : '50px') + ')';
+        setTimeout(() => {
+            card.style.transition = 'all 0.8s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateX(0)';
+        }, 300);
+    });
+
+    // Progress bars animation
+    const progressBars = document.querySelectorAll('.progress-bar');
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                entry.target.style.width = entry.target.getAttribute('data-width') || entry.target.style.width;
+            }
+        });
+    });
+    
+    progressBars.forEach(bar => observer.observe(bar));
+});
+</script>
+{% endblock %}
