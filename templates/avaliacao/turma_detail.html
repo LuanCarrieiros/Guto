@@ -108,11 +108,11 @@
                         <i class="fas fa-user-plus mr-2"></i>
                         Enturmar Alunos
                     </a>
-                    <a href="#" class="w-full flex items-center justify-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors">
+                    <a href="{% url 'avaliacao:gerenciar_disciplinas_turma' turma.id %}" class="w-full flex items-center justify-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors">
                         <i class="fas fa-book mr-2"></i>
                         Gerenciar Disciplinas
                     </a>
-                    <a href="#" class="w-full flex items-center justify-center px-4 py-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
+                    <a href="{% url 'avaliacao:diario_online_turma' turma.id %}" class="w-full flex items-center justify-center px-4 py-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
                         <i class="fas fa-chart-line mr-2"></i>
                         Diário Online
                     </a>
