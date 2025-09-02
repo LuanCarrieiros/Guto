@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stats-card {
+        background: linear-gradient(135deg, var(--tw-gradient-from), var(--tw-gradient-to));
+        transition: all 0.3s ease;
+    }
+    .stats-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 300px;
+    }
+    
+    .data-card {
+        transition: all 0.3s ease;
+        border-left: 4px solid transparent;
+    }
+    .data-card:hover {
+        border-left-color: #4F46E5;
+        background-color: #F8FAFC;
+        transform: translateX(4px);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-7xl mx-auto">
+    
+    <!-- Page Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-4xl font-bold text-gray-900 mb-2">{{ title }}</h1>
+                <p class="text-gray-600">Dados estatísticos e censo educacional de {{ ano }}</p>
+            </div>
+            <div class="flex items-center space-x-4">
+                <select id="year-selector" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                    {% for y in "2020,2021,2022,2023,2024,2025"|split:"," %}
+                        <option value="{{ y }}" {% if y|add:0 == ano %}selected{% endif %}>{{ y }}</option>
+                    {% endfor %}
+                </select>
+                <a href="{% url 'censo:exportar_dados' 'matriculas' %}?ano={{ ano }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>Exportar Dados
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        
+        <!-- Total Matrículas -->
+        <div class="stats-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-blue-100 text-sm font-medium mb-1">Total de Matrículas</p>
+                    <h3 class="text-3xl font-bold">{{ total_matriculas|default:0 }}</h3>
+                </div>
+                <div class="p-3 bg-white bg-opacity-20 rounded-full">
+                    <i class="fas fa-user-graduate text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matrículas Ativas -->
+        <div class="stats-card bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-green-100 text-sm font-medium mb-1">Matrículas Ativas</p>
+                    <h3 class="text-3xl font-bold">{{ matriculas_ativas|default:0 }}</h3>
+                </div>
+                <div class="p-3 bg-white bg-opacity-20 rounded-full">
+                    <i class="fas fa-check-circle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Matrículas Encerradas -->
+        <div class="stats-card bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-orange-100 text-sm font-medium mb-1">Matrículas Encerradas</p>
+                    <h3 class="text-3xl font-bold">{{ matriculas_encerradas|default:0 }}</h3>
+                </div>
+                <div class="p-3 bg-white bg-opacity-20 rounded-full">
+                    <i class="fas fa-times-circle text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Taxa de Retenção -->
+        <div class="stats-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-purple-100 text-sm font-medium mb-1">Taxa de Retenção</p>
+                    {% if total_matriculas > 0 %}
+                        <h3 class="text-3xl font-bold">{{ matriculas_ativas|mul:100|div:total_matriculas|floatformat:1 }}%</h3>
+                    {% else %}
+                        <h3 class="text-3xl font-bold">--</h3>
+                    {% endif %}
+                </div>
+                <div class="p-3 bg-white bg-opacity-20 rounded-full">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        
+        <!-- Matrículas por Tipo de Ensino -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-chart-pie text-blue-600 mr-3"></i>
+                    Matrículas por Tipo de Ensino
+                </h3>
+            </div>
+            
+            <div class="p-6">
+                {% if matriculas_por_tipo %}
+                <div class="space-y-4">
+                    {% for tipo, quantidade in matriculas_por_tipo.items %}
+                    <div class="data-card p-4 rounded-lg bg-gray-50">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-graduation-cap text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-gray-900">{{ tipo }}</h4>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-2xl font-bold text-gray-900">{{ quantidade }}</p>
+                                {% if total_matriculas > 0 %}
+                                <p class="text-xs text-gray-500">{{ quantidade|mul:100|div:total_matriculas|floatformat:1 }}%</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        {% if total_matriculas > 0 %}
+                        <div class="mt-3">
+                            <div class="w-full bg-gray-200 rounded-full h-2">
+                                <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-1000" 
+                                     style="width: {{ quantidade|mul:100|div:total_matriculas }}%"></div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-12">
+                    <div class="mx-auto w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-chart-pie text-gray-400 text-2xl"></i>
+                    </div>
+                    <h4 class="text-lg font-medium text-gray-900 mb-2">Nenhuma matrícula encontrada</h4>
+                    <p class="text-gray-500">Não há dados de matrículas para {{ ano }}.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Ações Rápidas -->
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-gray-50 to-purple-50 px-6 py-4 border-b border-gray-100">
+                <h3 class="text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-bolt text-purple-600 mr-3"></i>
+                    Relatórios e Ações
+                </h3>
+            </div>
+            
+            <div class="p-6">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    
+                    <a href="{% url 'censo:relatorio_matriculas' %}?ano={{ ano }}" class="group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300">
+                        <div class="p-3 bg-blue-100 rounded-xl group-hover:bg-blue-200 group-hover:scale-105 transition-all duration-300 mb-3">
+                            <i class="fas fa-file-alt text-blue-600 text-lg"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-900 group-hover:text-blue-700 text-center text-sm">Relatório de Matrículas</h4>
+                    </a>
+
+                    <a href="{% url 'censo:relatorio_estatisticas' %}" class="group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-green-300 hover:bg-green-50 transition-all duration-300">
+                        <div class="p-3 bg-green-100 rounded-xl group-hover:bg-green-200 group-hover:scale-105 transition-all duration-300 mb-3">
+                            <i class="fas fa-chart-bar text-green-600 text-lg"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-900 group-hover:text-green-700 text-center text-sm">Estatísticas Gerais</h4>
+                    </a>
+
+                    <a href="{% url 'censo:relatorio_funcionarios' %}" class="group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-orange-300 hover:bg-orange-50 transition-all duration-300">
+                        <div class="p-3 bg-orange-100 rounded-xl group-hover:bg-orange-200 group-hover:scale-105 transition-all duration-300 mb-3">
+                            <i class="fas fa-users text-orange-600 text-lg"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-900 group-hover:text-orange-700 text-center text-sm">Relatório de Funcionários</h4>
+                    </a>
+
+                    <a href="{% url 'censo:relatorios' %}" class="group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-300">
+                        <div class="p-3 bg-purple-100 rounded-xl group-hover:bg-purple-200 group-hover:scale-105 transition-all duration-300 mb-3">
+                            <i class="fas fa-folder-open text-purple-600 text-lg"></i>
+                        </div>
+                        <h4 class="font-medium text-gray-900 group-hover:text-purple-700 text-center text-sm">Todos os Relatórios</h4>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <div class="mt-8 flex items-center justify-between">
+        <a href="{% url 'censo:censo_home' %}" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">
+            <i class="fas fa-arrow-left mr-2"></i>Voltar ao Início
+        </a>
+        
+        <div class="flex space-x-4">
+            {% if ano > 2020 %}
+            <a href="{% url 'censo:censo_escolar_ano' ano=ano|add:-1 %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                <i class="fas fa-chevron-left mr-2"></i>Ano Anterior
+            </a>
+            {% endif %}
+            
+            {% if ano < 2025 %}
+            <a href="{% url 'censo:censo_escolar_ano' ano=ano|add:1 %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                Próximo Ano<i class="fas fa-chevron-right ml-2"></i>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Year selector functionality
+    const yearSelector = document.getElementById('year-selector');
+    if (yearSelector) {
+        yearSelector.addEventListener('change', function() {
+            const selectedYear = this.value;
+            window.location.href = `{% url 'censo:censo_escolar_ano' ano=0 %}`.replace('0', selectedYear);
+        });
+    }
+
+    // Add animations to data cards
+    const dataCards = document.querySelectorAll('.data-card');
+    dataCards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Stats cards hover effect
+    const statsCards = document.querySelectorAll('.stats-card');
+    statsCards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-8px) scale(1.02)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+        });
+    });
+});
+</script>
+{% endblock %}
