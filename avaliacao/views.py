@@ -10,7 +10,8 @@ from .models import (
     Conceito, Turma, Disciplina, LancamentoNota, AtestadoMedico,
     MediaGlobalConceito, RecuperacaoEspecial, ParecerDescritivo,
     AvaliacaoDescritiva, PendenciaAvaliacao, DiarioOnline, ConteudoAula,
-    Enturmacao
+    Enturmacao, AulaRegistrada, RegistroFrequencia, TipoAvaliacao,
+    Avaliacao, NotaAvaliacao, RelatorioFrequencia, DivisaoPeriodoLetivo
 )
 from .forms import TurmaForm, DisciplinaForm, EnturmacaoForm
 from alunos.models import Aluno
@@ -491,3 +492,462 @@ def desenturmar_aluno(request, pk, aluno_id):
     }
     
     return render(request, 'avaliacao/confirmar_desenturmacao.html', context)
+
+
+# ==================== DIÁRIO ELETRÔNICO ====================
+
+@login_required
+def diario_dashboard(request):
+    """
+    Dashboard principal do diário eletrônico - estilo Canvas
+    """
+    # Turmas do professor (se for professor) ou todas (se for admin/coordenador)
+    if request.user.groups.filter(name='Professor').exists():
+        # Buscar turmas onde o usuário é professor em alguma aula
+        turmas_ids = AulaRegistrada.objects.filter(
+            professor=request.user
+        ).values_list('turma', flat=True).distinct()
+        turmas = Turma.objects.filter(id__in=turmas_ids)
+    else:
+        turmas = Turma.objects.all()[:12]  # Limite para performance
+    
+    # Estatísticas rápidas
+    total_turmas = turmas.count()
+    aulas_hoje = AulaRegistrada.objects.filter(
+        data_aula=date.today(),
+        professor=request.user if request.user.groups.filter(name='Professor').exists() else None
+    ).count()
+    
+    avaliacoes_pendentes = Avaliacao.objects.filter(
+        notas_lancadas=False,
+        data_aplicacao__lte=date.today()
+    )
+    if request.user.groups.filter(name='Professor').exists():
+        avaliacoes_pendentes = avaliacoes_pendentes.filter(professor=request.user)
+    
+    # Atividades recentes
+    aulas_recentes = AulaRegistrada.objects.filter(
+        professor=request.user if request.user.groups.filter(name='Professor').exists() else None
+    ).order_by('-data_aula', '-horario_inicio')[:8]
+    
+    context = {
+        'turmas': turmas,
+        'total_turmas': total_turmas,
+        'aulas_hoje': aulas_hoje,
+        'avaliacoes_pendentes': avaliacoes_pendentes.count(),
+        'avaliacoes_pendentes_list': avaliacoes_pendentes[:5],
+        'aulas_recentes': aulas_recentes,
+    }
+    
+    return render(request, 'avaliacao/diario_dashboard.html', context)
+
+
+@login_required
+def turma_diario(request, turma_id):
+    """
+    Diário específico de uma turma - visão completa
+    """
+    turma = get_object_or_404(Turma, pk=turma_id)
+    
+    # Verificar permissões (simplificado)
+    if request.user.groups.filter(name='Professor').exists():
+        if not AulaRegistrada.objects.filter(turma=turma, professor=request.user).exists():
+            messages.error(request, 'Você não tem permissão para acessar esta turma.')
+            return redirect('avaliacao:diario_dashboard')
+    
+    # Alunos da turma
+    alunos = turma.get_alunos_enturmados().order_by('nome')
+    
+    # Disciplinas da turma (baseado nas aulas registradas)
+    disciplinas = Disciplina.objects.filter(
+        aularegistrada__turma=turma
+    ).distinct().order_by('nome')
+    
+    # Aulas recentes
+    aulas_recentes = AulaRegistrada.objects.filter(
+        turma=turma
+    ).order_by('-data_aula', '-horario_inicio')[:10]
+    
+    # Avaliações da turma
+    avaliacoes_recentes = Avaliacao.objects.filter(
+        turma=turma
+    ).order_by('-data_aplicacao')[:5]
+    
+    # Estatísticas
+    total_aulas = AulaRegistrada.objects.filter(turma=turma).count()
+    total_avaliacoes = Avaliacao.objects.filter(turma=turma).count()
+    
+    context = {
+        'turma': turma,
+        'alunos': alunos,
+        'disciplinas': disciplinas,
+        'aulas_recentes': aulas_recentes,
+        'avaliacoes_recentes': avaliacoes_recentes,
+        'total_aulas': total_aulas,
+        'total_avaliacoes': total_avaliacoes,
+        'total_alunos': alunos.count(),
+    }
+    
+    return render(request, 'avaliacao/turma_diario.html', context)
+
+
+@login_required
+def registrar_aula(request, turma_id=None):
+    """
+    Registrar nova aula
+    """
+    turma = None
+    if turma_id:
+        turma = get_object_or_404(Turma, pk=turma_id)
+    
+    if request.method == 'POST':
+        turma_id = request.POST.get('turma')
+        disciplina_id = request.POST.get('disciplina')
+        data_aula = request.POST.get('data_aula')
+        horario_inicio = request.POST.get('horario_inicio')
+        horario_fim = request.POST.get('horario_fim')
+        conteudo = request.POST.get('conteudo_programatico')
+        observacoes = request.POST.get('observacoes', '')
+        
+        if turma_id and disciplina_id and data_aula and horario_inicio and horario_fim and conteudo:
+            turma_obj = get_object_or_404(Turma, pk=turma_id)
+            disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
+            
+            # Criar a aula
+            aula = AulaRegistrada.objects.create(
+                turma=turma_obj,
+                disciplina=disciplina,
+                professor=request.user,
+                data_aula=data_aula,
+                horario_inicio=horario_inicio,
+                horario_fim=horario_fim,
+                conteudo_programatico=conteudo,
+                observacoes=observacoes
+            )
+            
+            # Registrar atividade
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='REGISTRAR_AULA',
+                modulo='AVALIACAO',
+                objeto_nome=f'{disciplina.nome} - {turma_obj.nome}',
+                objeto_id=aula.id,
+                descricao=f'Aula registrada: {disciplina.nome} em {data_aula}'
+            )
+            
+            messages.success(request, 'Aula registrada com sucesso!')
+            
+            # Perguntar se quer fazer a chamada agora
+            if 'fazer_chamada' in request.POST:
+                return redirect('avaliacao:fazer_chamada', aula_id=aula.id)
+            
+            return redirect('avaliacao:turma_diario', turma_id=turma_obj.id)
+        else:
+            messages.error(request, 'Preencha todos os campos obrigatórios.')
+    
+    # Buscar turmas e disciplinas para o formulário
+    if request.user.groups.filter(name='Professor').exists():
+        turmas = Turma.objects.filter(
+            aulas__professor=request.user
+        ).distinct() if not turma else [turma]
+    else:
+        turmas = Turma.objects.all()
+    
+    disciplinas = Disciplina.objects.filter(ativo=True).order_by('nome')
+    
+    context = {
+        'turma': turma,
+        'turmas': turmas,
+        'disciplinas': disciplinas,
+    }
+    
+    return render(request, 'avaliacao/registrar_aula.html', context)
+
+
+@login_required
+def fazer_chamada(request, aula_id):
+    """
+    Interface para fazer chamada de uma aula
+    """
+    aula = get_object_or_404(AulaRegistrada, pk=aula_id)
+    
+    # Verificar permissões
+    if request.user.groups.filter(name='Professor').exists() and aula.professor != request.user:
+        messages.error(request, 'Você não tem permissão para fazer chamada desta aula.')
+        return redirect('avaliacao:diario_dashboard')
+    
+    # Alunos da turma
+    alunos = aula.turma.get_alunos_enturmados().order_by('nome')
+    
+    # Registros de frequência existentes
+    frequencias_existentes = RegistroFrequencia.objects.filter(
+        aula=aula
+    ).values_list('aluno_id', 'situacao')
+    frequencias_dict = dict(frequencias_existentes)
+    
+    if request.method == 'POST':
+        # Processar a chamada
+        for aluno in alunos:
+            situacao = request.POST.get(f'situacao_{aluno.id}', 'PRESENTE')
+            observacoes = request.POST.get(f'observacoes_{aluno.id}', '')
+            
+            # Criar ou atualizar registro de frequência
+            registro, created = RegistroFrequencia.objects.get_or_create(
+                aula=aula,
+                aluno=aluno,
+                defaults={
+                    'situacao': situacao,
+                    'observacoes': observacoes,
+                    'usuario_registro': request.user
+                }
+            )
+            
+            if not created:
+                registro.situacao = situacao
+                registro.observacoes = observacoes
+                registro.save()
+        
+        # Marcar chamada como realizada
+        aula.chamada_realizada = True
+        aula.save()
+        
+        # Registrar atividade
+        AtividadeRecente.registrar_atividade(
+            usuario=request.user,
+            acao='FAZER_CHAMADA',
+            modulo='AVALIACAO',
+            objeto_nome=f'{aula.disciplina.nome} - {aula.turma.nome}',
+            objeto_id=aula.id,
+            descricao=f'Chamada realizada para {aula.data_aula.strftime("%d/%m/%Y")}'
+        )
+        
+        messages.success(request, 'Chamada realizada com sucesso!')
+        return redirect('avaliacao:turma_diario', turma_id=aula.turma.id)
+    
+    context = {
+        'aula': aula,
+        'alunos': alunos,
+        'frequencias_dict': frequencias_dict,
+        'situacao_choices': RegistroFrequencia.SITUACAO_CHOICES,
+    }
+    
+    return render(request, 'avaliacao/fazer_chamada.html', context)
+
+
+@login_required
+def criar_avaliacao(request, turma_id=None):
+    """
+    Criar nova avaliação
+    """
+    turma = None
+    if turma_id:
+        turma = get_object_or_404(Turma, pk=turma_id)
+    
+    if request.method == 'POST':
+        turma_id = request.POST.get('turma')
+        disciplina_id = request.POST.get('disciplina')
+        divisao_periodo_id = request.POST.get('divisao_periodo')
+        tipo_avaliacao_id = request.POST.get('tipo_avaliacao')
+        nome = request.POST.get('nome')
+        descricao = request.POST.get('descricao', '')
+        data_aplicacao = request.POST.get('data_aplicacao')
+        valor_maximo = request.POST.get('valor_maximo', '10.00')
+        peso = request.POST.get('peso', '1.0')
+        
+        if all([turma_id, disciplina_id, divisao_periodo_id, tipo_avaliacao_id, nome, data_aplicacao]):
+            turma_obj = get_object_or_404(Turma, pk=turma_id)
+            disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
+            divisao_periodo = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_periodo_id)
+            tipo_avaliacao = get_object_or_404(TipoAvaliacao, pk=tipo_avaliacao_id)
+            
+            avaliacao = Avaliacao.objects.create(
+                turma=turma_obj,
+                disciplina=disciplina,
+                divisao_periodo=divisao_periodo,
+                tipo_avaliacao=tipo_avaliacao,
+                professor=request.user,
+                nome=nome,
+                descricao=descricao,
+                data_aplicacao=data_aplicacao,
+                valor_maximo=valor_maximo,
+                peso=peso
+            )
+            
+            # Criar registros de notas para todos os alunos da turma
+            alunos = turma_obj.get_alunos_enturmados()
+            for aluno in alunos:
+                NotaAvaliacao.objects.create(
+                    avaliacao=avaliacao,
+                    aluno=aluno,
+                    usuario_lancamento=request.user
+                )
+            
+            # Registrar atividade
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='CRIAR_AVALIACAO',
+                modulo='AVALIACAO',
+                objeto_nome=nome,
+                objeto_id=avaliacao.id,
+                descricao=f'Avaliação criada: {nome} - {turma_obj.nome}'
+            )
+            
+            messages.success(request, 'Avaliação criada com sucesso!')
+            return redirect('avaliacao:lancar_notas_avaliacao', avaliacao_id=avaliacao.id)
+        else:
+            messages.error(request, 'Preencha todos os campos obrigatórios.')
+    
+    # Dados para o formulário
+    if request.user.groups.filter(name='Professor').exists():
+        turmas = Turma.objects.filter(
+            aulas__professor=request.user
+        ).distinct() if not turma else [turma]
+    else:
+        turmas = Turma.objects.all()
+    
+    disciplinas = Disciplina.objects.filter(ativo=True).order_by('nome')
+    divisoes_periodo = DivisaoPeriodoLetivo.objects.filter(ativo=True).order_by('periodo_letivo', 'ordem')
+    tipos_avaliacao = TipoAvaliacao.objects.filter(ativo=True).order_by('nome')
+    
+    context = {
+        'turma': turma,
+        'turmas': turmas,
+        'disciplinas': disciplinas,
+        'divisoes_periodo': divisoes_periodo,
+        'tipos_avaliacao': tipos_avaliacao,
+    }
+    
+    return render(request, 'avaliacao/criar_avaliacao.html', context)
+
+
+@login_required
+def lancar_notas_avaliacao(request, avaliacao_id):
+    """
+    Lançar notas de uma avaliação específica
+    """
+    avaliacao = get_object_or_404(Avaliacao, pk=avaliacao_id)
+    
+    # Verificar permissões
+    if request.user.groups.filter(name='Professor').exists() and avaliacao.professor != request.user:
+        messages.error(request, 'Você não tem permissão para lançar notas desta avaliação.')
+        return redirect('avaliacao:diario_dashboard')
+    
+    # Notas da avaliação
+    notas = NotaAvaliacao.objects.filter(avaliacao=avaliacao).order_by('aluno__nome')
+    
+    if request.method == 'POST':
+        alguma_alteracao = False
+        
+        for nota in notas:
+            # Dados do POST
+            nota_valor = request.POST.get(f'nota_{nota.id}')
+            conceito_id = request.POST.get(f'conceito_{nota.id}')
+            ausente = 'ausente' in request.POST.getlist(f'ausente_{nota.id}')
+            dispensado = 'dispensado' in request.POST.getlist(f'dispensado_{nota.id}')
+            observacoes = request.POST.get(f'observacoes_{nota.id}', '')
+            
+            # Atualizar nota
+            if nota_valor and not ausente and not dispensado:
+                nota.nota = float(nota_valor)
+                nota.conceito = None
+            elif conceito_id and not ausente and not dispensado:
+                nota.conceito_id = int(conceito_id)
+                nota.nota = None
+            else:
+                nota.nota = None
+                nota.conceito = None
+            
+            nota.ausente = ausente
+            nota.dispensado = dispensado
+            nota.observacoes = observacoes
+            nota.save()
+            alguma_alteracao = True
+        
+        if alguma_alteracao:
+            # Marcar avaliação como tendo notas lançadas
+            avaliacao.notas_lancadas = True
+            avaliacao.save()
+            
+            # Registrar atividade
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='LANCAR_NOTAS',
+                modulo='AVALIACAO',
+                objeto_nome=avaliacao.nome,
+                objeto_id=avaliacao.id,
+                descricao=f'Notas lançadas: {avaliacao.nome}'
+            )
+            
+            messages.success(request, 'Notas lançadas com sucesso!')
+            return redirect('avaliacao:turma_diario', turma_id=avaliacao.turma.id)
+    
+    # Conceitos disponíveis
+    conceitos = Conceito.objects.filter(ativo=True).order_by('valor_numerico')
+    
+    context = {
+        'avaliacao': avaliacao,
+        'notas': notas,
+        'conceitos': conceitos,
+        'usa_conceitos': avaliacao.disciplina.avalia_por_conceito,
+    }
+    
+    return render(request, 'avaliacao/lancar_notas_avaliacao.html', context)
+
+
+@login_required
+def relatorio_frequencia(request, turma_id=None, aluno_id=None):
+    """
+    Relatório de frequência
+    """
+    turma = None
+    aluno = None
+    
+    if turma_id:
+        turma = get_object_or_404(Turma, pk=turma_id)
+    if aluno_id:
+        aluno = get_object_or_404(Aluno, pk=aluno_id)
+    
+    # Filtros
+    disciplina_id = request.GET.get('disciplina')
+    periodo_id = request.GET.get('periodo')
+    
+    # Query base
+    frequencias = RegistroFrequencia.objects.select_related(
+        'aula__turma', 'aula__disciplina', 'aluno'
+    )
+    
+    if turma:
+        frequencias = frequencias.filter(aula__turma=turma)
+    if aluno:
+        frequencias = frequencias.filter(aluno=aluno)
+    if disciplina_id:
+        frequencias = frequencias.filter(aula__disciplina_id=disciplina_id)
+    
+    # Estatísticas
+    total_registros = frequencias.count()
+    presencas = frequencias.filter(situacao='PRESENTE').count()
+    faltas = frequencias.filter(situacao='AUSENTE').count()
+    justificadas = frequencias.filter(situacao='JUSTIFICADO').count()
+    
+    percentual_frequencia = round((presencas / total_registros) * 100, 2) if total_registros > 0 else 0
+    
+    # Dados para filtros
+    disciplinas = Disciplina.objects.all().order_by('nome')
+    periodos = DivisaoPeriodoLetivo.objects.filter(ativo=True).order_by('periodo_letivo', 'ordem')
+    
+    context = {
+        'turma': turma,
+        'aluno': aluno,
+        'frequencias': frequencias.order_by('-aula__data_aula')[:100],  # Limitar para performance
+        'total_registros': total_registros,
+        'presencas': presencas,
+        'faltas': faltas,
+        'justificadas': justificadas,
+        'percentual_frequencia': percentual_frequencia,
+        'disciplinas': disciplinas,
+        'periodos': periodos,
+        'disciplina_selecionada': disciplina_id,
+        'periodo_selecionado': periodo_id,
+    }
+    
+    return render(request, 'avaliacao/relatorio_frequencia.html', context)
