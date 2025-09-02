@@ -5,13 +5,14 @@ from django.db.models import Count, Avg
 from django.db import models
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-from datetime import date
+from datetime import date, datetime
 from .models import (
     Conceito, Turma, Disciplina, LancamentoNota, AtestadoMedico,
     MediaGlobalConceito, RecuperacaoEspecial, ParecerDescritivo,
     AvaliacaoDescritiva, PendenciaAvaliacao, DiarioOnline, ConteudoAula,
     Enturmacao, AulaRegistrada, RegistroFrequencia, TipoAvaliacao,
-    Avaliacao, NotaAvaliacao, RelatorioFrequencia, DivisaoPeriodoLetivo
+    Avaliacao, NotaAvaliacao, RelatorioFrequencia, DivisaoPeriodoLetivo,
+    DiarioEletronico, RegistroChamada, RegistroNota
 )
 from .forms import TurmaForm, DisciplinaForm, EnturmacaoForm
 from alunos.models import Aluno
@@ -105,6 +106,9 @@ def turma_create(request):
             turma.usuario_criacao = request.user
             turma.save()
             
+            # Criar diário eletrônico automaticamente
+            turma.criar_diario_automatico()
+            
             # Registrar atividade recente
             AtividadeRecente.registrar_atividade(
                 usuario=request.user,
@@ -112,10 +116,10 @@ def turma_create(request):
                 modulo='AVALIACAO',
                 objeto_nome=turma.nome,
                 objeto_id=turma.id,
-                descricao=f'Nova turma criada: {turma.nome}'
+                descricao=f'Nova turma criada: {turma.nome} (diário criado automaticamente)'
             )
             
-            messages.success(request, 'Turma criada com sucesso!')
+            messages.success(request, 'Turma criada com sucesso! Diário eletrônico criado automaticamente.')
             return redirect('avaliacao:turmas_list')
     else:
         form = TurmaForm()
@@ -619,6 +623,13 @@ def enturmar_alunos(request, pk):
                     aluno=aluno,
                     usuario_enturmacao=request.user
                 )
+                
+                # Adicionar aluno aos diários eletrônicos da turma
+                diarios = DiarioEletronico.objects.filter(turma=turma)
+                for diario in diarios:
+                    # Criar registros de chamada padrão (presente) para datas futuras se necessário
+                    # Aqui não criamos nada, apenas garantimos que o aluno está disponível para chamadas
+                    pass
             
             # Registrar atividade
             AtividadeRecente.registrar_atividade(
@@ -1702,3 +1713,215 @@ def bulk_attendance(request, turma_id):
     }
     
     return render(request, 'avaliacao/bulk_attendance.html', context)
+
+
+# ==================== NOVO DIÁRIO ELETRÔNICO ====================
+
+@login_required
+def diario_eletronico_dashboard(request):
+    """
+    Dashboard do novo diário eletrônico
+    """
+    # Buscar turmas do usuário (se professor) ou todas (se coordenador/admin)
+    if request.user.groups.filter(name='Professor').exists():
+        turmas_ids = DiarioEletronico.objects.filter(
+            # Para professor: apenas turmas onde ele tem diários
+        ).values_list('turma', flat=True).distinct()
+        turmas = Turma.objects.filter(id__in=turmas_ids)
+    else:
+        turmas = Turma.objects.all()
+    
+    # Estatísticas
+    total_turmas = turmas.count()
+    diarios_ativos = DiarioEletronico.objects.filter(turma__in=turmas, ativo=True).count()
+    
+    context = {
+        'turmas': turmas,
+        'total_turmas': total_turmas,
+        'diarios_ativos': diarios_ativos,
+    }
+    
+    return render(request, 'avaliacao/diario_eletronico_dashboard.html', context)
+
+
+@login_required
+def diario_eletronico_turma(request, turma_id):
+    """
+    Visualizar diário eletrônico de uma turma específica
+    """
+    turma = get_object_or_404(Turma, pk=turma_id)
+    
+    # Buscar diários da turma
+    diarios = DiarioEletronico.objects.filter(turma=turma, ativo=True).select_related('disciplina')
+    
+    # Alunos da turma
+    alunos = turma.get_alunos_enturmados()
+    
+    context = {
+        'turma': turma,
+        'diarios': diarios,
+        'alunos': alunos,
+        'total_alunos': alunos.count(),
+    }
+    
+    return render(request, 'avaliacao/diario_eletronico_turma.html', context)
+
+
+@login_required
+def fazer_chamada_diario(request, diario_id):
+    """
+    Interface para fazer chamada no diário eletrônico
+    """
+    diario = get_object_or_404(DiarioEletronico, pk=diario_id)
+    
+    # Verificar permissões básicas (simplificado)
+    if request.user.groups.filter(name='Professor').exists():
+        # Aqui poderia verificar se o professor está autorizado para esta disciplina/turma
+        pass
+    
+    # Data padrão (hoje) ou data selecionada
+    data_chamada = request.GET.get('data', date.today().strftime('%Y-%m-%d'))
+    try:
+        data_chamada_obj = datetime.strptime(data_chamada, '%Y-%m-%d').date()
+    except:
+        data_chamada_obj = date.today()
+        data_chamada = date.today().strftime('%Y-%m-%d')
+    
+    # Alunos da turma
+    alunos = diario.get_alunos()
+    
+    # Registros de chamada existentes para esta data
+    registros_existentes = RegistroChamada.objects.filter(
+        diario=diario,
+        data_chamada=data_chamada_obj
+    ).values_list('aluno_id', 'situacao', 'observacoes')
+    registros_dict = {reg[0]: {'situacao': reg[1], 'observacoes': reg[2]} for reg in registros_existentes}
+    
+    if request.method == 'POST':
+        # Processar a chamada
+        for aluno in alunos:
+            situacao = request.POST.get(f'situacao_{aluno.id}', 'PRESENTE')
+            observacoes = request.POST.get(f'observacoes_{aluno.id}', '')
+            
+            # Criar ou atualizar registro de chamada
+            registro, created = RegistroChamada.objects.get_or_create(
+                diario=diario,
+                aluno=aluno,
+                data_chamada=data_chamada_obj,
+                defaults={
+                    'situacao': situacao,
+                    'observacoes': observacoes,
+                    'usuario_registro': request.user
+                }
+            )
+            
+            if not created:
+                registro.situacao = situacao
+                registro.observacoes = observacoes
+                registro.save()
+        
+        # Registrar atividade
+        AtividadeRecente.registrar_atividade(
+            usuario=request.user,
+            acao='CHAMADA_DIARIO',
+            modulo='AVALIACAO',
+            objeto_nome=f'{diario.disciplina.nome} - {diario.turma.nome}',
+            objeto_id=diario.id,
+            descricao=f'Chamada realizada para {data_chamada_obj.strftime("%d/%m/%Y")}'
+        )
+        
+        messages.success(request, f'Chamada realizada com sucesso para {data_chamada_obj.strftime("%d/%m/%Y")}!')
+        return redirect('avaliacao:diario_eletronico_turma', turma_id=diario.turma.id)
+    
+    context = {
+        'diario': diario,
+        'alunos': alunos,
+        'data_chamada': data_chamada,
+        'data_chamada_obj': data_chamada_obj,
+        'registros_dict': registros_dict,
+        'situacao_choices': RegistroChamada.SITUACAO_CHOICES,
+    }
+    
+    return render(request, 'avaliacao/fazer_chamada_diario.html', context)
+
+
+@login_required
+def lancar_notas_diario(request, diario_id):
+    """
+    Interface para lançar notas no diário eletrônico
+    """
+    diario = get_object_or_404(DiarioEletronico, pk=diario_id)
+    
+    # Períodos disponíveis
+    periodos = DivisaoPeriodoLetivo.objects.filter(
+        periodo_letivo=diario.periodo_letivo,
+        ativo=True
+    ).order_by('ordem')
+    
+    # Período selecionado
+    periodo_id = request.GET.get('periodo')
+    periodo_selecionado = None
+    if periodo_id:
+        periodo_selecionado = get_object_or_404(DivisaoPeriodoLetivo, pk=periodo_id)
+    elif periodos.exists():
+        periodo_selecionado = periodos.first()
+    
+    # Alunos e notas
+    alunos = diario.get_alunos()
+    notas_dict = {}
+    
+    if periodo_selecionado:
+        registros_notas = RegistroNota.objects.filter(
+            diario=diario,
+            divisao_periodo=periodo_selecionado
+        ).values_list('aluno_id', 'nota', 'conceito_id', 'observacoes')
+        notas_dict = {reg[0]: {'nota': reg[1], 'conceito_id': reg[2], 'observacoes': reg[3]} for reg in registros_notas}
+    
+    if request.method == 'POST' and periodo_selecionado:
+        # Processar lançamento de notas
+        for aluno in alunos:
+            nota_valor = request.POST.get(f'nota_{aluno.id}')
+            conceito_id = request.POST.get(f'conceito_{aluno.id}')
+            observacoes = request.POST.get(f'observacoes_{aluno.id}', '')
+            
+            # Criar ou atualizar registro de nota
+            registro, created = RegistroNota.objects.get_or_create(
+                diario=diario,
+                aluno=aluno,
+                divisao_periodo=periodo_selecionado,
+                defaults={
+                    'usuario_lancamento': request.user
+                }
+            )
+            
+            # Atualizar dados
+            if nota_valor:
+                registro.nota = float(nota_valor)
+                registro.conceito = None
+            elif conceito_id:
+                registro.conceito_id = int(conceito_id)
+                registro.nota = None
+            else:
+                registro.nota = None
+                registro.conceito = None
+            
+            registro.observacoes = observacoes
+            registro.save()
+        
+        messages.success(request, f'Notas lançadas com sucesso para {periodo_selecionado.nome}!')
+        return redirect('avaliacao:lancar_notas_diario', diario_id=diario_id)
+    
+    # Conceitos para disciplinas que avaliam por conceito
+    conceitos = Conceito.objects.filter(ativo=True).order_by('valor_numerico')
+    
+    context = {
+        'diario': diario,
+        'alunos': alunos,
+        'periodos': periodos,
+        'periodo_selecionado': periodo_selecionado,
+        'notas_dict': notas_dict,
+        'conceitos': conceitos,
+        'usa_conceitos': diario.disciplina.avalia_por_conceito,
+    }
+    
+    return render(request, 'avaliacao/lancar_notas_diario.html', context)
