@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}Diário Online - GUTO{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-book text-green-600 mr-3"></i>Diário Online
+                </h1>
+                <p class="text-gray-600 mt-1">Registro de conteúdos e frequência das aulas</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="{% url 'avaliacao:avaliacao_home' %}" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all duration-200">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Formulário de Registro -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+            <i class="fas fa-plus-circle text-green-600 mr-2"></i>Registrar Conteúdo
+        </h2>
+
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Turma -->
+                <div>
+                    <label for="turma" class="block text-sm font-medium text-gray-700 mb-1">
+                        Turma <span class="text-red-500">*</span>
+                    </label>
+                    <select name="turma" id="turma" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                        <option value="">Selecione uma turma</option>
+                        {% for turma in turmas %}
+                            <option value="{{ turma.id }}">{{ turma.nome }} - {{ turma.get_tipo_ensino_display }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <!-- Disciplina -->
+                <div>
+                    <label for="disciplina" class="block text-sm font-medium text-gray-700 mb-1">
+                        Disciplina <span class="text-red-500">*</span>
+                    </label>
+                    <select name="disciplina" id="disciplina" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                        <option value="">Selecione uma disciplina</option>
+                        {% for disciplina in disciplinas %}
+                            <option value="{{ disciplina.id }}" {% if request.POST.disciplina == disciplina.id|stringformat:"s" %}selected{% endif %}>
+                                {{ disciplina.nome }}
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if not disciplinas %}
+                    <p class="mt-1 text-sm text-red-500">
+                        <i class="fas fa-exclamation-triangle mr-1"></i>
+                        Nenhuma disciplina cadastrada. 
+                        <a href="{% url 'avaliacao:disciplinas_list' %}" class="text-blue-600 hover:text-blue-800 underline">
+                            Cadastre uma disciplina primeiro
+                        </a>
+                    </p>
+                    {% endif %}
+                </div>
+
+                <!-- Data da Aula -->
+                <div>
+                    <label for="data_aula" class="block text-sm font-medium text-gray-700 mb-1">
+                        Data da Aula <span class="text-red-500">*</span>
+                    </label>
+                    <input type="date" name="data_aula" id="data_aula" value="{{ request.POST.data_aula|default:'' }}" 
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>
+                </div>
+
+                <!-- Horário -->
+                <div>
+                    <label for="horario" class="block text-sm font-medium text-gray-700 mb-1">
+                        Horário
+                    </label>
+                    <input type="text" name="horario" id="horario" value="{{ request.POST.horario|default:'' }}" 
+                           placeholder="Ex: 08:00 - 09:40"
+                           class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500">
+                </div>
+            </div>
+
+            <!-- Conteúdo Programático -->
+            <div>
+                <label for="conteudo" class="block text-sm font-medium text-gray-700 mb-1">
+                    Conteúdo Programático <span class="text-red-500">*</span>
+                </label>
+                <textarea name="conteudo" id="conteudo" rows="4" 
+                          placeholder="Descreva o conteúdo abordado na aula..."
+                          class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-green-500" required>{{ request.POST.conteudo|default:'' }}</textarea>
+            </div>
+
+            <!-- Botões -->
+            <div class="flex justify-end space-x-3">
+                <button type="reset" class="bg-gray-500 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition-all duration-200">
+                    <i class="fas fa-eraser mr-2"></i>Limpar
+                </button>
+                <button type="submit" class="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-2 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200">
+                    <i class="fas fa-save mr-2"></i>Registrar Conteúdo
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Conteúdos Recentes -->
+    {% if conteudos_recentes %}
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4">
+            <i class="fas fa-clock text-blue-600 mr-2"></i>Conteúdos Recentes
+        </h2>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Data</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Turma</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Disciplina</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Conteúdo</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Professor</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for conteudo in conteudos_recentes %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ conteudo.data_aula|date:"d/m/Y" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ conteudo.turma.nome }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ conteudo.disciplina.nome }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            <div class="max-w-xs truncate">{{ conteudo.conteudo }}</div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ conteudo.usuario_registro.first_name|default:conteudo.usuario_registro.username }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- JavaScript para funcionalidades -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Definir data atual como padrão
+    const today = new Date().toISOString().split('T')[0];
+    document.getElementById('data_aula').value = today;
+    
+    // Validação do formulário
+    const form = document.querySelector('form');
+    form.addEventListener('submit', function(e) {
+        const turma = document.getElementById('turma').value;
+        const disciplina = document.getElementById('disciplina').value;
+        const dataAula = document.getElementById('data_aula').value;
+        const conteudo = document.getElementById('conteudo').value;
+        
+        if (!turma || !disciplina || !dataAula || !conteudo.trim()) {
+            e.preventDefault();
+            alert('Por favor, preencha todos os campos obrigatórios.');
+        }
+    });
+    
+    // Contador de caracteres para o conteúdo
+    const conteudoTextarea = document.getElementById('conteudo');
+    const maxLength = 1000;
+    
+    // Criar elemento contador
+    const counterElement = document.createElement('div');
+    counterElement.className = 'text-xs text-gray-500 mt-1';
+    counterElement.innerHTML = `<span id="char-count">0</span>/${maxLength} caracteres`;
+    conteudoTextarea.parentNode.appendChild(counterElement);
+    
+    // Atualizar contador
+    conteudoTextarea.addEventListener('input', function() {
+        const charCount = this.value.length;
+        document.getElementById('char-count').textContent = charCount;
+        
+        if (charCount > maxLength * 0.9) {
+            counterElement.classList.add('text-red-500');
+            counterElement.classList.remove('text-gray-500');
+        } else {
+            counterElement.classList.add('text-gray-500');
+            counterElement.classList.remove('text-red-500');
+        }
+    });
+});
+</script>
+{% endblock %}
