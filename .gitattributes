@@ -1,2 +1,10 @@
 # Auto detect text files and perform LF normalization
 * text=auto eol=lf
+
+# Configurar linguagens para o GitHub (priorizar Python)
+*.html linguist-detectable=false
+*.css linguist-detectable=false  
+*.js linguist-detectable=false
+*.py linguist-language=Python
+templates/* linguist-vendored=true
+static/* linguist-vendored=true
