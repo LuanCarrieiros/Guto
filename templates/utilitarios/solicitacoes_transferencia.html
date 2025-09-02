@@ -1,0 +1,544 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Solicitações de Transferência - GUTO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .request-card {
+        transition: all 0.3s ease;
+    }
+    
+    .request-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+    
+    .status-badge {
+        animation: statusPulse 2s infinite;
+    }
+    
+    .status-pendente {
+        background: linear-gradient(135deg, #F59E0B, #D97706);
+    }
+    
+    .status-aprovada {
+        background: linear-gradient(135deg, #10B981, #047857);
+    }
+    
+    .status-rejeitada {
+        background: linear-gradient(135deg, #EF4444, #B91C1C);
+    }
+    
+    @keyframes statusPulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.8; }
+    }
+    
+    .timeline-step {
+        position: relative;
+    }
+    
+    .timeline-step::before {
+        content: '';
+        position: absolute;
+        left: 15px;
+        top: 40px;
+        bottom: -20px;
+        width: 2px;
+        background: #E5E7EB;
+    }
+    
+    .timeline-step:last-child::before {
+        display: none;
+    }
+    
+    .timeline-icon {
+        position: relative;
+        z-index: 1;
+        background: white;
+        border: 3px solid;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .action-modal {
+        backdrop-filter: blur(10px);
+        background: rgba(0, 0, 0, 0.5);
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-8 max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div>
+            <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+                <a href="{% url 'utilitarios:dashboard' %}" class="hover:text-guto-blue">Utilitários</a>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-gray-900">Transferências</span>
+            </nav>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-exchange-alt text-indigo-600 mr-3"></i>
+                Solicitações de Transferência
+            </h1>
+            <p class="text-lg text-gray-600">Gerencie e processe solicitações de transferência de estudantes</p>
+            <div class="flex items-center mt-3 space-x-4 text-sm text-gray-500">
+                <span class="flex items-center">
+                    <i class="fas fa-clock mr-1"></i>
+                    {{ solicitacoes.paginator.count }} solicitações
+                </span>
+                <span class="flex items-center">
+                    <span class="w-2 h-2 bg-orange-500 rounded-full mr-2"></span>
+                    {% with pendentes=solicitacoes|length %}{{ pendentes }} pendente{{ pendentes|pluralize:"s" }}{% endwith %}
+                </span>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="flex flex-wrap gap-3 mt-4 lg:mt-0">
+            <button class="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-xl hover:bg-indigo-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                <i class="fas fa-plus w-4 h-4"></i>
+                <span>Nova Solicitação</span>
+            </button>
+            <button class="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                <i class="fas fa-download w-4 h-4"></i>
+                <span>Exportar</span>
+            </button>
+            <button class="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                <i class="fas fa-chart-line w-4 h-4"></i>
+                <span>Relatórios</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <i class="fas fa-clock text-2xl"></i>
+                </div>
+                <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Pendentes</span>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">{{ solicitacoes|length }}</h3>
+            <p class="text-orange-100 text-sm">Aguardando Análise</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <i class="fas fa-check text-2xl"></i>
+                </div>
+                <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Este mês</span>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">28</h3>
+            <p class="text-green-100 text-sm">Aprovadas</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-red-500 to-red-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <i class="fas fa-times text-2xl"></i>
+                </div>
+                <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Este mês</span>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">5</h3>
+            <p class="text-red-100 text-sm">Rejeitadas</p>
+        </div>
+
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                </div>
+                <span class="text-xs bg-white bg-opacity-20 px-2 py-1 rounded-full">Média</span>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">3.2</h3>
+            <p class="text-blue-100 text-sm">Dias Processamento</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+        <div class="bg-gradient-to-r from-gray-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-filter text-indigo-600 mr-3"></i>
+                Filtros
+            </h2>
+        </div>
+        
+        <div class="p-6">
+            <form method="get" class="flex flex-wrap gap-4">
+                <div class="flex-1 min-w-64">
+                    <div class="relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <i class="fas fa-search text-gray-400"></i>
+                        </div>
+                        <input type="text" name="search" value="{{ request.GET.search }}" 
+                               placeholder="Buscar por aluno, instituição..." 
+                               class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                    </div>
+                </div>
+                
+                <div class="min-w-48">
+                    <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                        <option value="">Todos os status</option>
+                        <option value="PENDENTE" {% if status_filter == 'PENDENTE' %}selected{% endif %}>Pendente</option>
+                        <option value="APROVADA" {% if status_filter == 'APROVADA' %}selected{% endif %}>Aprovada</option>
+                        <option value="REJEITADA" {% if status_filter == 'REJEITADA' %}selected{% endif %}>Rejeitada</option>
+                    </select>
+                </div>
+                
+                <div class="min-w-40">
+                    <input type="date" name="data_inicio" value="{{ request.GET.data_inicio }}" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent">
+                </div>
+                
+                <button type="submit" class="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-all duration-300">
+                    <i class="fas fa-search mr-2"></i>Filtrar
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Requests List -->
+    <div class="space-y-6">
+        {% for solicitacao in solicitacoes %}
+        <div class="request-card bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="p-6">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                    <!-- Request Info -->
+                    <div class="flex-1">
+                        <div class="flex items-center mb-4">
+                            <div class="w-12 h-12 bg-indigo-100 rounded-full flex items-center justify-center mr-4">
+                                <i class="fas fa-user text-indigo-600 text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-gray-900">
+                                    {{ solicitacao.aluno.nome|default:"Nome do Aluno" }}
+                                </h3>
+                                <p class="text-sm text-gray-600">
+                                    <i class="fas fa-graduation-cap mr-1"></i>
+                                    Matrícula: #{{ solicitacao.aluno.id|default:"12345" }}
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Instituição Origem</label>
+                                <p class="text-sm font-medium text-gray-900">{{ solicitacao.instituicao_origem|default:"Escola Municipal ABC" }}</p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Instituição Destino</label>
+                                <p class="text-sm font-medium text-gray-900">{{ solicitacao.instituicao_destino|default:"Escola Estadual XYZ" }}</p>
+                            </div>
+                            <div>
+                                <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Data Solicitação</label>
+                                <p class="text-sm font-medium text-gray-900">{{ solicitacao.data_solicitacao|date:"d/m/Y H:i" }}</p>
+                            </div>
+                        </div>
+                        
+                        {% if solicitacao.motivo %}
+                        <div class="mb-4">
+                            <label class="text-xs font-medium text-gray-500 uppercase tracking-wider">Motivo</label>
+                            <p class="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">{{ solicitacao.motivo }}</p>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Timeline -->
+                        <div class="flex items-center space-x-8 mb-4">
+                            <div class="timeline-step">
+                                <div class="timeline-icon border-blue-300 text-blue-600">
+                                    <i class="fas fa-file-alt text-xs"></i>
+                                </div>
+                                <div class="ml-8">
+                                    <p class="text-xs font-medium text-gray-900">Solicitação</p>
+                                    <p class="text-xs text-gray-500">{{ solicitacao.data_solicitacao|date:"d/m" }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if solicitacao.status != 'PENDENTE' %}
+                            <div class="timeline-step">
+                                <div class="timeline-icon border-green-300 text-green-600">
+                                    <i class="fas fa-check text-xs"></i>
+                                </div>
+                                <div class="ml-8">
+                                    <p class="text-xs font-medium text-gray-900">Processamento</p>
+                                    <p class="text-xs text-gray-500">{{ solicitacao.data_processamento|date:"d/m" }}</p>
+                                </div>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    
+                    <!-- Status and Actions -->
+                    <div class="flex flex-col lg:items-end space-y-4">
+                        <div class="flex items-center space-x-3">
+                            <span class="status-badge status-{{ solicitacao.status|lower }} inline-flex items-center px-3 py-1 rounded-full text-xs font-medium text-white">
+                                {% if solicitacao.status == 'PENDENTE' %}
+                                    <i class="fas fa-clock mr-1"></i>Pendente
+                                {% elif solicitacao.status == 'APROVADA' %}
+                                    <i class="fas fa-check mr-1"></i>Aprovada  
+                                {% elif solicitacao.status == 'REJEITADA' %}
+                                    <i class="fas fa-times mr-1"></i>Rejeitada
+                                {% endif %}
+                            </span>
+                            
+                            <span class="text-xs text-gray-500">
+                                ID: #{{ solicitacao.id }}
+                            </span>
+                        </div>
+                        
+                        {% if solicitacao.status == 'PENDENTE' %}
+                        <div class="flex space-x-2">
+                            <button class="process-request bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors text-sm" 
+                                    data-id="{{ solicitacao.id }}" data-action="aprovar">
+                                <i class="fas fa-check mr-2"></i>Aprovar
+                            </button>
+                            <button class="process-request bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors text-sm" 
+                                    data-id="{{ solicitacao.id }}" data-action="rejeitar">
+                                <i class="fas fa-times mr-2"></i>Rejeitar
+                            </button>
+                        </div>
+                        {% endif %}
+                        
+                        <div class="flex space-x-2">
+                            <button class="text-indigo-600 hover:text-indigo-700 hover:bg-indigo-50 p-2 rounded-lg transition-all" 
+                                    title="Ver detalhes" onclick="showRequestDetails({{ solicitacao.id }})">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button class="text-gray-600 hover:text-gray-700 hover:bg-gray-50 p-2 rounded-lg transition-all" 
+                                    title="Histórico">
+                                <i class="fas fa-history"></i>
+                            </button>
+                            <button class="text-blue-600 hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-all" 
+                                    title="Imprimir">
+                                <i class="fas fa-print"></i>
+                            </button>
+                        </div>
+                        
+                        {% if solicitacao.usuario_processamento %}
+                        <div class="text-right">
+                            <p class="text-xs text-gray-500">Processado por:</p>
+                            <p class="text-xs font-medium text-gray-700">{{ solicitacao.usuario_processamento.get_full_name }}</p>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-16 text-center">
+            <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-6 mx-auto">
+                <i class="fas fa-exchange-alt text-4xl text-gray-400"></i>
+            </div>
+            <h3 class="text-xl font-medium text-gray-900 mb-2">Nenhuma Solicitação Encontrada</h3>
+            <p class="text-gray-500 mb-6">Não há solicitações de transferência que correspondam aos filtros aplicados.</p>
+            <button class="bg-indigo-600 text-white px-6 py-3 rounded-xl hover:bg-indigo-700 transition-colors">
+                <i class="fas fa-plus mr-2"></i>Nova Solicitação
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if solicitacoes.has_other_pages %}
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mt-8">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-sm text-gray-700">
+                Exibindo {{ solicitacoes|length }} de {{ solicitacoes.paginator.count }} solicitações
+            </div>
+            
+            <nav class="flex items-center space-x-2">
+                {% if solicitacoes.has_previous %}
+                    <a href="?page={{ solicitacoes.previous_page_number }}" 
+                       class="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all">
+                        <i class="fas fa-chevron-left mr-1"></i>Anterior
+                    </a>
+                {% endif %}
+                
+                <span class="px-4 py-2 text-sm font-medium text-white bg-indigo-600 rounded-lg">
+                    {{ solicitacoes.number }} de {{ solicitacoes.paginator.num_pages }}
+                </span>
+                
+                {% if solicitacoes.has_next %}
+                    <a href="?page={{ solicitacoes.next_page_number }}" 
+                       class="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all">
+                        Próxima<i class="fas fa-chevron-right ml-1"></i>
+                    </a>
+                {% endif %}
+            </nav>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Action Modal -->
+<div id="actionModal" class="fixed inset-0 action-modal hidden z-50">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+            <div class="p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 id="modalTitle" class="text-xl font-semibold text-gray-900">Processar Solicitação</h3>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <form id="processForm" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" id="modalSolicitacaoId" name="solicitacao_id">
+                    <input type="hidden" id="modalAction" name="acao">
+                    
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Observações</label>
+                        <textarea name="observacoes" rows="4" 
+                                  class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                                  placeholder="Adicione observações sobre esta decisão..."></textarea>
+                    </div>
+                    
+                    <div class="flex space-x-3">
+                        <button type="button" onclick="closeModal()" 
+                                class="flex-1 px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-transparent rounded-lg hover:bg-gray-200 transition-colors">
+                            Cancelar
+                        </button>
+                        <button type="submit" id="confirmBtn"
+                                class="flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 transition-colors">
+                            Confirmar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% include 'utilitarios/utilitarios_notifications.html' %}
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Process request buttons
+    const processButtons = document.querySelectorAll('.process-request');
+    processButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const id = this.getAttribute('data-id');
+            const action = this.getAttribute('data-action');
+            showActionModal(id, action);
+        });
+    });
+    
+    // Process form submission
+    document.getElementById('processForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const id = formData.get('solicitacao_id');
+        const action = formData.get('acao');
+        
+        // Show loading state
+        const confirmBtn = document.getElementById('confirmBtn');
+        const originalText = confirmBtn.innerHTML;
+        confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Processando...';
+        confirmBtn.disabled = true;
+        
+        // Simulate processing
+        setTimeout(() => {
+            // Show success notification
+            if (action === 'aprovar') {
+                notificationSystem.success(
+                    'Solicitação Aprovada',
+                    `A solicitação #${id} foi aprovada com sucesso.`,
+                    { category: 'Transferência' }
+                );
+            } else {
+                notificationSystem.warning(
+                    'Solicitação Rejeitada',
+                    `A solicitação #${id} foi rejeitada.`,
+                    { category: 'Transferência' }
+                );
+            }
+            
+            // Close modal and refresh page
+            closeModal();
+            setTimeout(() => {
+                location.reload();
+            }, 1000);
+        }, 2000);
+    });
+});
+
+function showActionModal(id, action) {
+    const modal = document.getElementById('actionModal');
+    const title = document.getElementById('modalTitle');
+    const solicitacaoId = document.getElementById('modalSolicitacaoId');
+    const modalAction = document.getElementById('modalAction');
+    const confirmBtn = document.getElementById('confirmBtn');
+    
+    title.textContent = action === 'aprovar' ? 'Aprovar Solicitação' : 'Rejeitar Solicitação';
+    solicitacaoId.value = id;
+    modalAction.value = action;
+    
+    if (action === 'aprovar') {
+        confirmBtn.className = confirmBtn.className.replace('bg-indigo-600 hover:bg-indigo-700', 'bg-green-600 hover:bg-green-700');
+        confirmBtn.innerHTML = '<i class="fas fa-check mr-2"></i>Aprovar';
+    } else {
+        confirmBtn.className = confirmBtn.className.replace('bg-green-600 hover:bg-green-700', 'bg-red-600 hover:bg-red-700');
+        confirmBtn.innerHTML = '<i class="fas fa-times mr-2"></i>Rejeitar';
+    }
+    
+    modal.classList.remove('hidden');
+    
+    // Focus on textarea
+    setTimeout(() => {
+        document.querySelector('textarea[name="observacoes"]').focus();
+    }, 100);
+}
+
+function closeModal() {
+    const modal = document.getElementById('actionModal');
+    modal.classList.add('hidden');
+    
+    // Reset form
+    document.getElementById('processForm').reset();
+    
+    // Reset button
+    const confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.disabled = false;
+    confirmBtn.className = 'flex-1 px-4 py-2 text-sm font-medium text-white bg-indigo-600 border border-transparent rounded-lg hover:bg-indigo-700 transition-colors';
+}
+
+function showRequestDetails(id) {
+    notificationSystem.info(
+        'Detalhes da Solicitação',
+        `Carregando detalhes completos da solicitação #${id}...`,
+        {
+            category: 'Sistema',
+            actions: [
+                {
+                    id: 'view',
+                    label: 'Ver Completo',
+                    type: 'primary',
+                    icon: 'fa-eye'
+                }
+            ]
+        }
+    );
+}
+
+// Auto-refresh every 5 minutes
+setInterval(() => {
+    const pendingRequests = document.querySelectorAll('.status-pendente').length;
+    if (pendingRequests > 0) {
+        console.log('Verificando novas solicitações...');
+        // Here you would make an AJAX call to check for new requests
+    }
+}, 300000);
+</script>
+{% endblock %}
