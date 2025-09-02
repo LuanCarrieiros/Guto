@@ -1,0 +1,313 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Excluir Avaliação - {{ avaliacao.nome }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard:home' %}" class="text-gray-700 hover:text-gray-900 inline-flex items-center">
+                <svg class="w-5 h-5 mr-2.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+                </svg>
+                Home
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <a href="{% url 'avaliacao:avaliacao_home' %}" class="ml-1 text-gray-700 hover:text-gray-900 md:ml-2">Avaliações</a>
+            </div>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <a href="{% url 'avaliacao:avaliacoes_list' %}" class="ml-1 text-gray-700 hover:text-gray-900 md:ml-2">Lista</a>
+            </div>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <a href="{% url 'avaliacao:avaliacao_detail' pk=avaliacao.pk %}" class="ml-1 text-gray-700 hover:text-gray-900 md:ml-2">{{ avaliacao.nome|truncatechars:30 }}</a>
+            </div>
+        </li>
+        <li aria-current="page">
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <span class="ml-1 text-gray-500 md:ml-2">Excluir</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+    <!-- Header de Aviso -->
+    <div class="bg-red-50 border border-red-200 rounded-lg p-6">
+        <div class="flex items-center">
+            <div class="flex-shrink-0">
+                <i class="fas fa-exclamation-triangle text-red-600 text-2xl"></i>
+            </div>
+            <div class="ml-4">
+                <h1 class="text-xl font-bold text-red-800">Confirmar Exclusão</h1>
+                <p class="text-red-700 mt-1">Esta ação não pode ser desfeita!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Informações da Avaliação -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-clipboard-list text-indigo-600 mr-2"></i>
+            Avaliação a ser excluída:
+        </h2>
+        
+        <div class="bg-gray-50 rounded-lg p-4 space-y-3">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Nome:</span>
+                    <p class="text-sm text-gray-900 font-medium">{{ avaliacao.nome }}</p>
+                </div>
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Status:</span>
+                    <p class="text-sm">
+                        {% if avaliacao.status == 'RASCUNHO' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                <i class="fas fa-edit mr-1"></i>Rascunho
+                            </span>
+                        {% elif avaliacao.status == 'ATIVA' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>Ativa
+                            </span>
+                        {% elif avaliacao.status == 'FINALIZADA' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-flag-checkered mr-1"></i>Finalizada
+                            </span>
+                        {% elif avaliacao.status == 'CANCELADA' %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <i class="fas fa-times-circle mr-1"></i>Cancelada
+                            </span>
+                        {% endif %}
+                    </p>
+                </div>
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Turma:</span>
+                    <p class="text-sm text-gray-900">{{ avaliacao.turma.nome }}</p>
+                </div>
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Disciplina:</span>
+                    <p class="text-sm text-gray-900">{{ avaliacao.disciplina.nome }}</p>
+                </div>
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Data de Aplicação:</span>
+                    <p class="text-sm text-gray-900">{{ avaliacao.data_aplicacao|date:"d/m/Y" }}</p>
+                </div>
+                <div>
+                    <span class="text-sm font-medium text-gray-500">Valor Máximo:</span>
+                    <p class="text-sm text-gray-900">{{ avaliacao.valor_maximo }}</p>
+                </div>
+            </div>
+            {% if avaliacao.descricao %}
+            <div class="mt-4">
+                <span class="text-sm font-medium text-gray-500">Descrição:</span>
+                <p class="text-sm text-gray-900 mt-1">{{ avaliacao.descricao }}</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Análise de Impacto -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-chart-bar text-orange-600 mr-2"></i>
+            Impacto da Exclusão
+        </h3>
+        
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-3 bg-yellow-50 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-users text-yellow-600 mr-3"></i>
+                    <span class="text-sm font-medium text-gray-900">Alunos afetados:</span>
+                </div>
+                <span class="text-lg font-bold text-yellow-700">{{ avaliacao.notaavaliacao_set.count }}</span>
+            </div>
+            
+            <div class="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+                <div class="flex items-center">
+                    <i class="fas fa-sticky-note text-red-600 mr-3"></i>
+                    <span class="text-sm font-medium text-gray-900">Notas que serão perdidas:</span>
+                </div>
+                <span class="text-lg font-bold text-red-700">
+                    {% with notas_lancadas=avaliacao.notaavaliacao_set.exclude|default:0 %}
+                        {% for nota in avaliacao.notaavaliacao_set.all %}
+                            {% if nota.nota is not None %}
+                                {% with notas_lancadas=notas_lancadas|add:"1" %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ notas_lancadas }}
+                    {% endwith %}
+                </span>
+            </div>
+            
+            {% if avaliacao.status == 'ATIVA' or avaliacao.status == 'FINALIZADA' %}
+            <div class="p-4 bg-red-100 border border-red-200 rounded-lg">
+                <div class="flex items-start">
+                    <i class="fas fa-exclamation-circle text-red-600 mt-1 mr-3"></i>
+                    <div>
+                        <h4 class="text-sm font-medium text-red-800">Atenção Especial!</h4>
+                        <p class="text-sm text-red-700 mt-1">
+                            Esta avaliação está <strong>{{ avaliacao.get_status_display|lower }}</strong> e possui notas lançadas. 
+                            A exclusão pode impactar significativamente os registros acadêmicos dos alunos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Verificações de Segurança -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-shield-alt text-blue-600 mr-2"></i>
+            Verificações de Segurança
+        </h3>
+        
+        <form method="post" id="delete-form" class="space-y-4">
+            {% csrf_token %}
+            
+            <!-- Confirmações obrigatórias -->
+            <div class="space-y-3">
+                <label class="flex items-start">
+                    <input type="checkbox" name="confirm_impact" required 
+                           class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                    <span class="ml-3 text-sm text-gray-700">
+                        Entendo que esta ação irá excluir permanentemente a avaliação e todas as notas associadas
+                    </span>
+                </label>
+                
+                <label class="flex items-start">
+                    <input type="checkbox" name="confirm_students" required 
+                           class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                    <span class="ml-3 text-sm text-gray-700">
+                        Confirmo que todos os {{ avaliacao.notaavaliacao_set.count }} alunos serão afetados por esta exclusão
+                    </span>
+                </label>
+                
+                {% if avaliacao.status == 'ATIVA' or avaliacao.status == 'FINALIZADA' %}
+                <label class="flex items-start">
+                    <input type="checkbox" name="confirm_active" required 
+                           class="mt-1 h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded">
+                    <span class="ml-3 text-sm text-gray-700">
+                        Tenho autorização para excluir uma avaliação {{ avaliacao.get_status_display|lower }}
+                    </span>
+                </label>
+                {% endif %}
+            </div>
+            
+            <!-- Confirmação textual -->
+            <div class="mt-6">
+                <label for="confirm_text" class="block text-sm font-medium text-gray-700 mb-2">
+                    Para confirmar, digite: <strong class="text-red-600">{{ avaliacao.nome }}</strong>
+                </label>
+                <input type="text" name="confirm_text" id="confirm_text" 
+                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                       placeholder="Digite o nome da avaliação"
+                       required>
+            </div>
+            
+            <!-- Razão da exclusão -->
+            <div>
+                <label for="reason" class="block text-sm font-medium text-gray-700 mb-2">
+                    Motivo da exclusão (obrigatório)
+                </label>
+                <textarea name="reason" id="reason" rows="3" 
+                          class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-red-500 focus:border-red-500"
+                          placeholder="Explique o motivo da exclusão desta avaliação..."
+                          required></textarea>
+            </div>
+        </form>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="flex justify-between pt-6">
+        <div class="space-x-3">
+            <a href="{% url 'avaliacao:avaliacao_detail' pk=avaliacao.pk %}" 
+               class="bg-gray-600 hover:bg-gray-700 text-white px-6 py-2 rounded-md transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Cancelar
+            </a>
+        </div>
+        <div class="space-x-3">
+            <button type="submit" form="delete-form" id="confirm-delete-btn" disabled
+                    class="bg-red-600 hover:bg-red-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white px-6 py-2 rounded-md transition-colors">
+                <i class="fas fa-trash mr-2"></i>
+                Confirmar Exclusão
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('delete-form');
+    const confirmButton = document.getElementById('confirm-delete-btn');
+    const confirmText = document.getElementById('confirm_text');
+    const checkboxes = form.querySelectorAll('input[type="checkbox"]');
+    const reason = document.getElementById('reason');
+    const expectedText = '{{ avaliacao.nome }}';
+    
+    // Função para verificar se pode habilitar o botão
+    function checkFormValidity() {
+        const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+        const textMatches = confirmText.value.trim() === expectedText;
+        const hasReason = reason.value.trim().length > 0;
+        
+        confirmButton.disabled = !(allChecked && textMatches && hasReason);
+        
+        if (textMatches) {
+            confirmText.classList.add('border-green-500');
+            confirmText.classList.remove('border-red-500');
+        } else if (confirmText.value.trim().length > 0) {
+            confirmText.classList.add('border-red-500');
+            confirmText.classList.remove('border-green-500');
+        } else {
+            confirmText.classList.remove('border-green-500', 'border-red-500');
+        }
+    }
+    
+    // Event listeners
+    checkboxes.forEach(cb => cb.addEventListener('change', checkFormValidity));
+    confirmText.addEventListener('input', checkFormValidity);
+    reason.addEventListener('input', checkFormValidity);
+    
+    // Confirmação final antes do envio
+    form.addEventListener('submit', function(e) {
+        const finalConfirmation = confirm(
+            'ÚLTIMA CONFIRMAÇÃO: Tem absoluta certeza que deseja excluir a avaliação "{{ avaliacao.nome }}"?\n\n' +
+            'Esta ação é IRREVERSÍVEL e afetará {{ avaliacao.notaavaliacao_set.count }} alunos.\n\n' +
+            'Clique OK apenas se tem certeza.'
+        );
+        
+        if (!finalConfirmation) {
+            e.preventDefault();
+        }
+    });
+    
+    // Focus no primeiro checkbox
+    checkboxes[0].focus();
+});
+</script>
+{% endblock %}
