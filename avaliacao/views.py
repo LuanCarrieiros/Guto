@@ -520,17 +520,54 @@ def diario_online(request):
                 turma = get_object_or_404(Turma, id=turma_id)
                 disciplina = get_object_or_404(Disciplina, id=disciplina_id)
                 
-                ConteudoAula.objects.create(
+                # Buscar ou criar DivisaoPeriodoLetivo padrão
+                divisao_periodo, created = DivisaoPeriodoLetivo.objects.get_or_create(
+                    nome="1º Bimestre",
+                    defaults={
+                        'tipo_divisao': 'BIMESTRE',
+                        'periodo_letivo': '2025',
+                        'ordem': 1,
+                        'data_inicio': '2025-01-01',
+                        'data_fim': '2025-03-31',
+                        'ativo': True
+                    }
+                )
+                
+                # Buscar ou criar DiarioOnline
+                diario, created = DiarioOnline.objects.get_or_create(
                     turma=turma,
                     disciplina=disciplina,
-                    data_aula=data_aula,
-                    conteudo=conteudo,
-                    usuario_registro=request.user
+                    professor=request.user,
+                    defaults={
+                        'divisao_periodo': divisao_periodo
+                    }
                 )
-                messages.success(request, 'Conteúdo registrado com sucesso!')
+                
+                # Verificar se já existe conteúdo para esta data
+                conteudo_existente = ConteudoAula.objects.filter(
+                    diario=diario,
+                    data_aula=data_aula
+                ).first()
+                
+                if conteudo_existente:
+                    # Atualizar conteúdo existente
+                    conteudo_existente.conteudo_lecionado = conteudo
+                    conteudo_existente.usuario_registro = request.user
+                    conteudo_existente.save()
+                    messages.success(request, 'Conteúdo atualizado com sucesso!')
+                else:
+                    # Criar novo conteúdo
+                    ConteudoAula.objects.create(
+                        diario=diario,
+                        data_aula=data_aula,
+                        conteudo_lecionado=conteudo,
+                        usuario_registro=request.user
+                    )
+                    messages.success(request, 'Conteúdo registrado com sucesso!')
+                
                 return redirect('avaliacao:diario_online')
             except Exception as e:
-                messages.error(request, 'Erro ao registrar conteúdo. Verifique se a turma e disciplina existem.')
+                messages.error(request, f'Erro ao registrar conteúdo: {str(e)}')
         else:
             messages.error(request, 'Preencha todos os campos obrigatórios.')
     
