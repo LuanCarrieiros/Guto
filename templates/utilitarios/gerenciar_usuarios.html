@@ -1,106 +1,397 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Gerenciar Usuários - Utilitários - GUTO{% endblock %}
+{% block title %}Gerenciar Usuários - GUTO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .user-card {
+        transition: all 0.3s ease;
+    }
+    .user-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+    }
+    
+    .search-highlight {
+        background-color: #FEF3C7;
+        padding: 2px 4px;
+        border-radius: 4px;
+    }
+    
+    .filter-badge {
+        animation: filterBadge 0.3s ease;
+    }
+    
+    @keyframes filterBadge {
+        from { opacity: 0; transform: scale(0.8); }
+        to { opacity: 1; transform: scale(1); }
+    }
+    
+    .bulk-actions {
+        transform: translateY(-100%);
+        opacity: 0;
+        transition: all 0.3s ease;
+    }
+    
+    .bulk-actions.active {
+        transform: translateY(0);
+        opacity: 1;
+    }
+</style>
+{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">
-                    <i class="fas fa-users text-blue-600 mr-3"></i>Gerenciar Usuários
-                </h1>
-                <p class="text-gray-600 mt-1">Gerenciar usuários e permissões do sistema</p>
+<div class="p-8 max-w-7xl mx-auto">
+    <!-- Header Section -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
+        <div>
+            <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-2">
+                <a href="{% url 'utilitarios:dashboard' %}" class="hover:text-guto-blue">Utilitários</a>
+                <i class="fas fa-chevron-right text-xs"></i>
+                <span class="text-gray-900">Gerenciar Usuários</span>
+            </nav>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2">
+                <i class="fas fa-users text-guto-blue mr-3"></i>
+                Gerenciamento de Usuários
+            </h1>
+            <p class="text-lg text-gray-600">Administre usuários, permissões e grupos do sistema</p>
+            <div class="flex items-center mt-3 space-x-4 text-sm text-gray-500">
+                <span class="flex items-center">
+                    <i class="fas fa-users mr-1"></i>
+                    {{ usuarios.paginator.count }} usuários
+                </span>
+                <span class="flex items-center">
+                    <i class="fas fa-user-check mr-1"></i>
+                    {{ usuarios.paginator.count|add:-5 }} ativos
+                </span>
             </div>
-            <a href="{% url 'utilitarios:dashboard' %}" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors">
-                <i class="fas fa-arrow-left mr-2"></i>Voltar
-            </a>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="flex flex-wrap gap-3 mt-4 lg:mt-0">
+            <button class="flex items-center space-x-2 bg-guto-blue text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                <i class="fas fa-plus w-4 h-4"></i>
+                <span>Novo Usuário</span>
+            </button>
+            <button class="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                <i class="fas fa-upload w-4 h-4"></i>
+                <span>Importar</span>
+            </button>
+            <button class="flex items-center space-x-2 bg-purple-600 text-white px-4 py-2 rounded-xl hover:bg-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                <i class="fas fa-download w-4 h-4"></i>
+                <span>Exportar</span>
+            </button>
         </div>
     </div>
 
-    <!-- Filtros -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <form method="get" class="flex flex-wrap gap-4">
-            <div class="flex-1 min-w-64">
-                <input type="text" name="q" value="{{ query }}" 
-                       placeholder="Buscar por nome, email ou username..."
-                       class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+    <!-- Advanced Filters -->
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mb-8">
+        <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                    <i class="fas fa-filter text-guto-blue mr-3"></i>
+                    Filtros Avançados
+                </h2>
+                <button type="button" id="clearFilters" class="text-sm text-gray-500 hover:text-red-600">
+                    <i class="fas fa-times mr-1"></i>Limpar filtros
+                </button>
             </div>
-            <div>
-                <select name="grupo" class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
-                    <option value="">Todos os grupos</option>
-                    {% for grupo in grupos %}
-                        <option value="{{ grupo.id }}" {% if grupo_selecionado == grupo.id|stringformat:"s" %}selected{% endif %}>
-                            {{ grupo.nome }}
-                        </option>
-                    {% endfor %}
-                </select>
-            </div>
-            <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
-                <i class="fas fa-search mr-2"></i>Buscar
-            </button>
-        </form>
+        </div>
+        
+        <div class="p-6">
+            <form method="get" id="filterForm" class="space-y-4">
+                <!-- Search and Quick Filters Row -->
+                <div class="flex flex-wrap gap-4">
+                    <!-- Search Box -->
+                    <div class="flex-1 min-w-64">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Busca Geral</label>
+                        <div class="relative">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i class="fas fa-search text-gray-400"></i>
+                            </div>
+                            <input type="text" name="q" value="{{ query }}" 
+                                   placeholder="Nome, email, username ou telefone..." 
+                                   class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-guto-blue focus:border-transparent">
+                        </div>
+                    </div>
+                    
+                    <!-- Group Filter -->
+                    <div class="min-w-48">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Grupo de Acesso</label>
+                        <select name="grupo" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-guto-blue focus:border-transparent">
+                            <option value="">Todos os grupos</option>
+                            {% for grupo in grupos %}
+                                <option value="{{ grupo.id }}" {% if grupo_selecionado == grupo.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ grupo.nome }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div class="min-w-40">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
+                        <select name="status" class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-guto-blue focus:border-transparent">
+                            <option value="">Todos</option>
+                            <option value="active">Ativos</option>
+                            <option value="inactive">Inativos</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- Advanced Filters (collapsible) -->
+                <div id="advancedFilters" class="space-y-4 hidden">
+                    <div class="flex flex-wrap gap-4">
+                        <div class="flex-1 min-w-48">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Função/Cargo</label>
+                            <input type="text" name="cargo" value="{{ request.GET.cargo }}" 
+                                   placeholder="Filtrar por cargo..." 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-guto-blue focus:border-transparent">
+                        </div>
+                        
+                        <div class="flex-1 min-w-48">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Data de Cadastro</label>
+                            <div class="flex gap-2">
+                                <input type="date" name="data_inicio" value="{{ request.GET.data_inicio }}" 
+                                       class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-guto-blue focus:border-transparent">
+                                <input type="date" name="data_fim" value="{{ request.GET.data_fim }}" 
+                                       class="flex-1 px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-guto-blue focus:border-transparent">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Filter Actions -->
+                <div class="flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-gray-100">
+                    <button type="button" id="toggleAdvanced" class="text-guto-blue hover:text-blue-700 text-sm font-medium">
+                        <i class="fas fa-chevron-down mr-2"></i>Filtros Avançados
+                    </button>
+                    
+                    <div class="flex gap-2">
+                        <button type="button" id="saveFilter" class="text-gray-600 hover:text-gray-800 px-4 py-2 rounded-xl border border-gray-300 hover:bg-gray-50 text-sm">
+                            <i class="fas fa-bookmark mr-2"></i>Salvar Filtro
+                        </button>
+                        <button type="submit" class="bg-guto-blue text-white px-6 py-2 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl">
+                            <i class="fas fa-search mr-2"></i>Aplicar Filtros
+                        </button>
+                    </div>
+                </div>
+            </form>
+            
+            <!-- Active Filters -->
+            <div id="activeFilters" class="flex flex-wrap gap-2 mt-4"></div>
+        </div>
     </div>
 
-    <!-- Lista de Usuários -->
-    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+    <!-- Bulk Actions Bar (hidden by default) -->
+    <div id="bulkActionsBar" class="bulk-actions bg-guto-blue text-white rounded-xl shadow-lg p-4 mb-6">
+        <div class="flex items-center justify-between">
+            <div class="flex items-center space-x-4">
+                <span id="selectedCount" class="font-medium">0 usuários selecionados</span>
+                <div class="h-4 w-px bg-blue-300"></div>
+                <button type="button" class="text-blue-100 hover:text-white text-sm">
+                    <i class="fas fa-check-square mr-2"></i>Selecionar todos
+                </button>
+                <button type="button" class="text-blue-100 hover:text-white text-sm">
+                    <i class="fas fa-square mr-2"></i>Desmarcar todos
+                </button>
+            </div>
+            
+            <div class="flex items-center space-x-2">
+                <button type="button" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                    <i class="fas fa-user-check mr-2"></i>Ativar
+                </button>
+                <button type="button" class="bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                    <i class="fas fa-user-times mr-2"></i>Desativar
+                </button>
+                <button type="button" class="bg-purple-600 hover:bg-purple-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                    <i class="fas fa-users-cog mr-2"></i>Alterar Grupo
+                </button>
+                <button type="button" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm transition-colors">
+                    <i class="fas fa-trash mr-2"></i>Excluir
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- View Toggle -->
+    <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center space-x-4">
+            <span class="text-sm text-gray-500">Visualização:</span>
+            <div class="flex bg-gray-100 rounded-lg p-1">
+                <button type="button" id="cardView" class="px-3 py-1 rounded text-sm font-medium text-gray-700 hover:bg-white hover:shadow-sm transition-all">
+                    <i class="fas fa-th-large mr-2"></i>Cards
+                </button>
+                <button type="button" id="tableView" class="px-3 py-1 rounded text-sm font-medium text-white bg-guto-blue shadow-sm">
+                    <i class="fas fa-list mr-2"></i>Lista
+                </button>
+            </div>
+        </div>
+        
+        <div class="flex items-center space-x-4 text-sm text-gray-500">
+            <span>{{ usuarios|length }} de {{ usuarios.paginator.count }} usuários</span>
+            <div class="flex items-center space-x-2">
+                <span>Por página:</span>
+                <select class="border border-gray-300 rounded px-2 py-1 text-sm">
+                    <option>20</option>
+                    <option>50</option>
+                    <option>100</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Users Table View -->
+    <div id="usersTableView" class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-100">
+            <h2 class="text-lg font-semibold text-gray-900 flex items-center">
+                <i class="fas fa-users text-guto-blue mr-3"></i>
+                Lista de Usuários
+            </h2>
+        </div>
+        
         <div class="overflow-x-auto">
             <table class="w-full">
-                <thead class="bg-gray-50">
+                <thead class="bg-gray-50 border-b border-gray-200">
                     <tr>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Usuário</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grupo</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                        <th class="px-6 py-4 text-left">
+                            <input type="checkbox" id="selectAll" class="w-4 h-4 text-guto-blue border-gray-300 rounded focus:ring-guto-blue">
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            <div class="flex items-center cursor-pointer hover:text-gray-700">
+                                <span>Usuário</span>
+                                <i class="fas fa-sort ml-2"></i>
+                            </div>
+                        </th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Grupo</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Acesso</th>
+                        <th class="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                     </tr>
                 </thead>
                 <tbody class="bg-white divide-y divide-gray-200">
                     {% for usuario in usuarios %}
-                    <tr class="hover:bg-gray-50">
+                    <tr class="hover:bg-gray-50 user-row transition-all duration-200">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <input type="checkbox" class="user-select w-4 h-4 text-guto-blue border-gray-300 rounded focus:ring-guto-blue" 
+                                   value="{{ usuario.id }}">
+                        </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="flex items-center">
-                                <div class="flex-shrink-0 h-10 w-10">
-                                    <img class="h-10 w-10 rounded-full" src="https://ui-avatars.com/api/?name={{ usuario.get_full_name|default:usuario.username }}&background=4F46E5&color=fff" alt="">
+                                <div class="flex-shrink-0 h-12 w-12 relative">
+                                    <img class="h-12 w-12 rounded-full border-2 border-gray-200" 
+                                         src="https://ui-avatars.com/api/?name={{ usuario.get_full_name|default:usuario.username }}&background=4F46E5&color=fff&size=48" 
+                                         alt="{{ usuario.get_full_name|default:usuario.username }}">
+                                    {% if usuario.is_active %}
+                                        <span class="absolute bottom-0 right-0 block h-3 w-3 rounded-full bg-green-400 ring-2 ring-white"></span>
+                                    {% endif %}
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">
+                                    <div class="text-sm font-semibold text-gray-900">
                                         {{ usuario.get_full_name|default:usuario.username }}
                                     </div>
                                     <div class="text-sm text-gray-500">@{{ usuario.username }}</div>
+                                    {% if usuario.perfilusuario.telefone %}
+                                        <div class="text-xs text-gray-400 flex items-center mt-1">
+                                            <i class="fas fa-phone mr-1"></i>
+                                            {{ usuario.perfilusuario.telefone }}
+                                        </div>
+                                    {% endif %}
                                 </div>
                             </div>
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                            {{ usuario.email|default:"-" }}
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if usuario.email %}
+                                <div class="text-sm text-gray-900">{{ usuario.email }}</div>
+                                <div class="text-xs text-gray-500">
+                                    <i class="fas fa-envelope mr-1"></i>Verificado
+                                </div>
+                            {% else %}
+                                <span class="text-gray-400 text-sm">Não informado</span>
+                            {% endif %}
                         </td>
-                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <td class="px-6 py-4 whitespace-nowrap">
                             {% if usuario.perfilusuario.grupo_acesso %}
-                                <span class="px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gradient-to-r from-blue-100 to-blue-200 text-blue-800">
+                                    <i class="fas fa-user-tag mr-1"></i>
                                     {{ usuario.perfilusuario.grupo_acesso.nome }}
                                 </span>
                             {% else %}
-                                <span class="text-gray-400">Sem grupo</span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">
+                                    <i class="fas fa-user-times mr-1"></i>
+                                    Sem grupo
+                                </span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             {% if usuario.is_active %}
-                                <span class="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">Ativo</span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
+                                    Ativo
+                                </span>
                             {% else %}
-                                <span class="px-2 py-1 text-xs font-medium bg-red-100 text-red-800 rounded-full">Inativo</span>
+                                <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                                    Inativo
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if usuario.last_login %}
+                                <div class="text-sm text-gray-900">{{ usuario.last_login|date:"d/m/Y" }}</div>
+                                <div class="text-xs text-gray-500">{{ usuario.last_login|date:"H:i" }}</div>
+                            {% else %}
+                                <span class="text-gray-400">Nunca</span>
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{% url 'utilitarios:editar_usuario' usuario.id %}" 
-                               class="text-blue-600 hover:text-blue-900 mr-3">Editar</a>
+                            <div class="flex items-center space-x-2">
+                                <a href="{% url 'utilitarios:editar_usuario' usuario.id %}" 
+                                   class="text-guto-blue hover:text-blue-700 hover:bg-blue-50 p-2 rounded-lg transition-all"
+                                   title="Editar usuário">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                <button type="button" 
+                                        class="text-green-600 hover:text-green-700 hover:bg-green-50 p-2 rounded-lg transition-all"
+                                        title="Ver perfil">
+                                    <i class="fas fa-eye"></i>
+                                </button>
+                                <button type="button" 
+                                        class="text-orange-600 hover:text-orange-700 hover:bg-orange-50 p-2 rounded-lg transition-all"
+                                        title="Redefinir senha">
+                                    <i class="fas fa-key"></i>
+                                </button>
+                                {% if usuario.is_active %}
+                                <button type="button" 
+                                        class="text-red-600 hover:text-red-700 hover:bg-red-50 p-2 rounded-lg transition-all"
+                                        title="Desativar usuário">
+                                    <i class="fas fa-user-times"></i>
+                                </button>
+                                {% else %}
+                                <button type="button" 
+                                        class="text-green-600 hover:text-green-700 hover:bg-green-50 p-2 rounded-lg transition-all"
+                                        title="Ativar usuário">
+                                    <i class="fas fa-user-check"></i>
+                                </button>
+                                {% endif %}
+                            </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="5" class="px-6 py-12 text-center text-gray-500">
-                            <i class="fas fa-users text-4xl mb-4"></i>
-                            <p>Nenhum usuário encontrado.</p>
+                        <td colspan="7" class="px-6 py-16 text-center">
+                            <div class="flex flex-col items-center">
+                                <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                                    <i class="fas fa-users text-4xl text-gray-400"></i>
+                                </div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum usuário encontrado</h3>
+                                <p class="text-gray-500 mb-4">Não há usuários que correspondam aos filtros aplicados.</p>
+                                <button type="button" class="bg-guto-blue text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                                    <i class="fas fa-plus mr-2"></i>Criar primeiro usuário
+                                </button>
+                            </div>
                         </td>
                     </tr>
                     {% endfor %}
@@ -109,31 +400,453 @@
         </div>
     </div>
 
-    <!-- Paginação -->
+    <!-- Users Card View (hidden by default) -->
+    <div id="usersCardView" class="hidden">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {% for usuario in usuarios %}
+            <div class="user-card bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden hover:shadow-xl transition-all duration-300">
+                <div class="relative p-6">
+                    <!-- Selection checkbox -->
+                    <div class="absolute top-4 left-4">
+                        <input type="checkbox" class="user-select w-4 h-4 text-guto-blue border-gray-300 rounded focus:ring-guto-blue" 
+                               value="{{ usuario.id }}">
+                    </div>
+                    
+                    <!-- User Avatar and Status -->
+                    <div class="flex flex-col items-center mb-4">
+                        <div class="relative">
+                            <img class="w-16 h-16 rounded-full border-4 border-gray-200" 
+                                 src="https://ui-avatars.com/api/?name={{ usuario.get_full_name|default:usuario.username }}&background=4F46E5&color=fff&size=64" 
+                                 alt="{{ usuario.get_full_name|default:usuario.username }}">
+                            {% if usuario.is_active %}
+                                <span class="absolute bottom-0 right-0 block h-4 w-4 rounded-full bg-green-400 ring-2 ring-white"></span>
+                            {% endif %}
+                        </div>
+                        
+                        <h3 class="text-lg font-semibold text-gray-900 mt-3 text-center">
+                            {{ usuario.get_full_name|default:usuario.username }}
+                        </h3>
+                        <p class="text-sm text-gray-500">@{{ usuario.username }}</p>
+                    </div>
+                    
+                    <!-- User Info -->
+                    <div class="space-y-3">
+                        {% if usuario.email %}
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-envelope w-4 text-gray-400 mr-3"></i>
+                            <span class="truncate">{{ usuario.email }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if usuario.perfilusuario.telefone %}
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-phone w-4 text-gray-400 mr-3"></i>
+                            <span>{{ usuario.perfilusuario.telefone }}</span>
+                        </div>
+                        {% endif %}
+                        
+                        {% if usuario.perfilusuario.cargo %}
+                        <div class="flex items-center text-sm text-gray-600">
+                            <i class="fas fa-briefcase w-4 text-gray-400 mr-3"></i>
+                            <span>{{ usuario.perfilusuario.cargo }}</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Status and Group -->
+                    <div class="flex flex-wrap gap-2 mt-4">
+                        {% if usuario.is_active %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <span class="w-2 h-2 bg-green-500 rounded-full mr-1"></span>
+                                Ativo
+                            </span>
+                        {% else %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                <span class="w-2 h-2 bg-red-500 rounded-full mr-1"></span>
+                                Inativo
+                            </span>
+                        {% endif %}
+                        
+                        {% if usuario.perfilusuario.grupo_acesso %}
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                {{ usuario.perfilusuario.grupo_acesso.nome }}
+                            </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Card Actions -->
+                <div class="bg-gray-50 px-6 py-4">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs text-gray-500">
+                            {% if usuario.last_login %}
+                                Último acesso: {{ usuario.last_login|date:"d/m/Y" }}
+                            {% else %}
+                                Nunca acessou
+                            {% endif %}
+                        </span>
+                        <div class="flex items-center space-x-2">
+                            <a href="{% url 'utilitarios:editar_usuario' usuario.id %}" 
+                               class="text-guto-blue hover:text-blue-700 p-1 rounded transition-colors"
+                               title="Editar">
+                                <i class="fas fa-edit text-sm"></i>
+                            </a>
+                            <button type="button" 
+                                    class="text-gray-600 hover:text-gray-700 p-1 rounded transition-colors"
+                                    title="Mais opções">
+                                <i class="fas fa-ellipsis-v text-sm"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Enhanced Pagination -->
     {% if usuarios.has_other_pages %}
-    <div class="bg-white rounded-xl shadow-lg p-4">
-        <nav class="flex justify-center">
-            <div class="flex space-x-2">
+    <div class="bg-white rounded-2xl shadow-lg border border-gray-100 p-6 mt-8">
+        <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="text-sm text-gray-700">
+                Exibindo 
+                <span class="font-medium">{{ usuarios.start_index }}</span>
+                a 
+                <span class="font-medium">{{ usuarios.end_index }}</span>
+                de 
+                <span class="font-medium">{{ usuarios.paginator.count }}</span>
+                resultados
+            </div>
+            
+            <nav class="flex items-center space-x-2">
                 {% if usuarios.has_previous %}
                     <a href="?page=1{% if query %}&q={{ query }}{% endif %}{% if grupo_selecionado %}&grupo={{ grupo_selecionado }}{% endif %}" 
-                       class="px-3 py-2 rounded-lg bg-gray-200 text-gray-600 hover:bg-gray-300">Primeira</a>
+                       class="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all">
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        Primeira
+                    </a>
                     <a href="?page={{ usuarios.previous_page_number }}{% if query %}&q={{ query }}{% endif %}{% if grupo_selecionado %}&grupo={{ grupo_selecionado }}{% endif %}" 
-                       class="px-3 py-2 rounded-lg bg-gray-200 text-gray-600 hover:bg-gray-300">Anterior</a>
+                       class="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all">
+                        <i class="fas fa-chevron-left mr-1"></i>
+                        Anterior
+                    </a>
                 {% endif %}
                 
-                <span class="px-3 py-2 rounded-lg bg-blue-600 text-white">
-                    {{ usuarios.number }} de {{ usuarios.paginator.num_pages }}
-                </span>
+                <!-- Page Numbers -->
+                {% for page_num in usuarios.paginator.page_range %}
+                    {% if page_num == usuarios.number %}
+                        <span class="px-4 py-2 text-sm font-medium text-white bg-guto-blue rounded-lg">
+                            {{ page_num }}
+                        </span>
+                    {% elif page_num >= usuarios.number|add:-2 and page_num <= usuarios.number|add:2 %}
+                        <a href="?page={{ page_num }}{% if query %}&q={{ query }}{% endif %}{% if grupo_selecionado %}&grupo={{ grupo_selecionado }}{% endif %}" 
+                           class="px-4 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all">
+                            {{ page_num }}
+                        </a>
+                    {% elif page_num == usuarios.number|add:-3 or page_num == usuarios.number|add:3 %}
+                        <span class="px-2 py-2 text-sm text-gray-400">...</span>
+                    {% endif %}
+                {% endfor %}
                 
                 {% if usuarios.has_next %}
                     <a href="?page={{ usuarios.next_page_number }}{% if query %}&q={{ query }}{% endif %}{% if grupo_selecionado %}&grupo={{ grupo_selecionado }}{% endif %}" 
-                       class="px-3 py-2 rounded-lg bg-gray-200 text-gray-600 hover:bg-gray-300">Próxima</a>
+                       class="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all">
+                        Próxima
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </a>
                     <a href="?page={{ usuarios.paginator.num_pages }}{% if query %}&q={{ query }}{% endif %}{% if grupo_selecionado %}&grupo={{ grupo_selecionado }}{% endif %}" 
-                       class="px-3 py-2 rounded-lg bg-gray-200 text-gray-600 hover:bg-gray-300">Última</a>
+                       class="flex items-center px-3 py-2 text-sm font-medium text-gray-500 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 hover:text-gray-700 transition-all">
+                        Última
+                        <i class="fas fa-chevron-right ml-1"></i>
+                    </a>
                 {% endif %}
-            </div>
-        </nav>
+            </nav>
+        </div>
     </div>
     {% endif %}
 </div>
+
+<!-- Advanced JavaScript for User Management -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // View Toggle Functionality
+    const cardViewBtn = document.getElementById('cardView');
+    const tableViewBtn = document.getElementById('tableView');
+    const cardViewContainer = document.getElementById('usersCardView');
+    const tableViewContainer = document.getElementById('usersTableView');
+    
+    cardViewBtn.addEventListener('click', function() {
+        // Switch to card view
+        cardViewContainer.classList.remove('hidden');
+        tableViewContainer.classList.add('hidden');
+        
+        // Update button styles
+        cardViewBtn.classList.add('text-white', 'bg-guto-blue', 'shadow-sm');
+        cardViewBtn.classList.remove('text-gray-700');
+        tableViewBtn.classList.remove('text-white', 'bg-guto-blue', 'shadow-sm');
+        tableViewBtn.classList.add('text-gray-700');
+        
+        // Save preference
+        localStorage.setItem('userViewPreference', 'card');
+    });
+    
+    tableViewBtn.addEventListener('click', function() {
+        // Switch to table view
+        tableViewContainer.classList.remove('hidden');
+        cardViewContainer.classList.add('hidden');
+        
+        // Update button styles
+        tableViewBtn.classList.add('text-white', 'bg-guto-blue', 'shadow-sm');
+        tableViewBtn.classList.remove('text-gray-700');
+        cardViewBtn.classList.remove('text-white', 'bg-guto-blue', 'shadow-sm');
+        cardViewBtn.classList.add('text-gray-700');
+        
+        // Save preference
+        localStorage.setItem('userViewPreference', 'table');
+    });
+    
+    // Load saved view preference
+    const savedView = localStorage.getItem('userViewPreference');
+    if (savedView === 'card') {
+        cardViewBtn.click();
+    }
+    
+    // Advanced Filters Toggle
+    const toggleAdvancedBtn = document.getElementById('toggleAdvanced');
+    const advancedFilters = document.getElementById('advancedFilters');
+    
+    toggleAdvancedBtn.addEventListener('click', function() {
+        const isHidden = advancedFilters.classList.contains('hidden');
+        
+        if (isHidden) {
+            advancedFilters.classList.remove('hidden');
+            this.innerHTML = '<i class="fas fa-chevron-up mr-2"></i>Ocultar Filtros Avançados';
+        } else {
+            advancedFilters.classList.add('hidden');
+            this.innerHTML = '<i class="fas fa-chevron-down mr-2"></i>Filtros Avançados';
+        }
+    });
+    
+    // Bulk Selection Functionality
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const userCheckboxes = document.querySelectorAll('.user-select');
+    const bulkActionsBar = document.getElementById('bulkActionsBar');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    
+    function updateBulkActions() {
+        const selectedUsers = document.querySelectorAll('.user-select:checked');
+        const count = selectedUsers.length;
+        
+        if (count > 0) {
+            bulkActionsBar.classList.add('active');
+            selectedCountSpan.textContent = `${count} usuário${count > 1 ? 's' : ''} selecionado${count > 1 ? 's' : ''}`;
+        } else {
+            bulkActionsBar.classList.remove('active');
+        }
+        
+        // Update select all checkbox state
+        if (count === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (count === userCheckboxes.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+    
+    // Select all functionality
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            const isChecked = this.checked;
+            userCheckboxes.forEach(checkbox => {
+                checkbox.checked = isChecked;
+            });
+            updateBulkActions();
+        });
+    }
+    
+    // Individual checkbox functionality
+    userCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateBulkActions);
+    });
+    
+    // Clear Filters Functionality
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    clearFiltersBtn.addEventListener('click', function() {
+        // Reset form
+        document.getElementById('filterForm').reset();
+        
+        // Clear active filters display
+        document.getElementById('activeFilters').innerHTML = '';
+        
+        // Redirect to clean URL
+        window.location.href = window.location.pathname;
+    });
+    
+    // Real-time search (debounced)
+    const searchInput = document.querySelector('input[name="q"]');
+    let searchTimeout;
+    
+    searchInput.addEventListener('input', function() {
+        clearTimeout(searchTimeout);
+        const query = this.value.trim();
+        
+        if (query.length > 2) {
+            searchTimeout = setTimeout(() => {
+                // Add visual feedback
+                this.classList.add('border-guto-blue');
+                
+                // Here you could implement AJAX search
+                console.log('Searching for:', query);
+            }, 500);
+        } else {
+            this.classList.remove('border-guto-blue');
+        }
+    });
+    
+    // Filter Form Submission with Loading State
+    const filterForm = document.getElementById('filterForm');
+    const submitBtn = filterForm.querySelector('button[type="submit"]');
+    
+    filterForm.addEventListener('submit', function() {
+        // Add loading state
+        const originalContent = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Carregando...';
+        submitBtn.disabled = true;
+        
+        // Restore after timeout (form will submit)
+        setTimeout(() => {
+            submitBtn.innerHTML = originalContent;
+            submitBtn.disabled = false;
+        }, 2000);
+    });
+    
+    // Active Filters Display
+    function updateActiveFilters() {
+        const activeFilters = document.getElementById('activeFilters');
+        const formData = new FormData(filterForm);
+        const filters = [];
+        
+        for (let [key, value] of formData.entries()) {
+            if (value && value.trim() !== '' && key !== 'page') {
+                let displayName = key;
+                let displayValue = value;
+                
+                // Customize display names
+                switch(key) {
+                    case 'q': displayName = 'Busca'; break;
+                    case 'grupo': 
+                        displayName = 'Grupo';
+                        const option = document.querySelector(`select[name="grupo"] option[value="${value}"]`);
+                        displayValue = option ? option.textContent : value;
+                        break;
+                    case 'status': 
+                        displayName = 'Status';
+                        displayValue = value === 'active' ? 'Ativos' : value === 'inactive' ? 'Inativos' : value;
+                        break;
+                    case 'cargo': displayName = 'Cargo'; break;
+                }
+                
+                filters.push({ key, displayName, displayValue });
+            }
+        }
+        
+        // Generate filter badges
+        activeFilters.innerHTML = filters.map(filter => 
+            `<span class="filter-badge inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-guto-blue text-white">
+                ${filter.displayName}: ${filter.displayValue}
+                <button type="button" class="ml-2 hover:text-blue-200" onclick="removeFilter('${filter.key}')">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </span>`
+        ).join('');
+    }
+    
+    // Remove individual filter
+    window.removeFilter = function(filterKey) {
+        const input = document.querySelector(`[name="${filterKey}"]`);
+        if (input) {
+            if (input.type === 'select-one') {
+                input.selectedIndex = 0;
+            } else {
+                input.value = '';
+            }
+            updateActiveFilters();
+        }
+    };
+    
+    // Initialize active filters on page load
+    updateActiveFilters();
+    
+    // User Actions (View, Edit, etc.)
+    document.addEventListener('click', function(e) {
+        // Handle quick action buttons
+        if (e.target.closest('[title="Ver perfil"]')) {
+            e.preventDefault();
+            const userId = e.target.closest('tr')?.querySelector('.user-select')?.value || 
+                          e.target.closest('.user-card')?.querySelector('.user-select')?.value;
+            if (userId) {
+                // Here you could open a modal or navigate to user profile
+                console.log('View user profile:', userId);
+            }
+        }
+        
+        if (e.target.closest('[title="Redefinir senha"]')) {
+            e.preventDefault();
+            const userId = e.target.closest('tr')?.querySelector('.user-select')?.value || 
+                          e.target.closest('.user-card')?.querySelector('.user-select')?.value;
+            if (userId && confirm('Deseja redefinir a senha deste usuário?')) {
+                console.log('Reset password for user:', userId);
+            }
+        }
+        
+        if (e.target.closest('[title*="tivar usuário"]')) {
+            e.preventDefault();
+            const userId = e.target.closest('tr')?.querySelector('.user-select')?.value || 
+                          e.target.closest('.user-card')?.querySelector('.user-select')?.value;
+            const isActivating = e.target.closest('[title="Ativar usuário"]');
+            const action = isActivating ? 'ativar' : 'desativar';
+            
+            if (userId && confirm(`Deseja ${action} este usuário?`)) {
+                console.log(`${action} user:`, userId);
+            }
+        }
+    });
+    
+    // Enhanced tooltips for action buttons
+    const tooltipElements = document.querySelectorAll('[title]');
+    tooltipElements.forEach(element => {
+        element.addEventListener('mouseenter', function() {
+            // Add enhanced tooltip styling
+            this.classList.add('relative');
+        });
+    });
+    
+    // Performance: Lazy loading for large user lists
+    if (userCheckboxes.length > 50) {
+        console.log('Large user list detected, implementing performance optimizations');
+        
+        // Debounce checkbox updates for better performance
+        function debounce(func, wait) {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func(...args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+        
+        const debouncedUpdate = debounce(updateBulkActions, 100);
+        userCheckboxes.forEach(checkbox => {
+            checkbox.removeEventListener('change', updateBulkActions);
+            checkbox.addEventListener('change', debouncedUpdate);
+        });
+    }
+});
+</script>
 {% endblock %}
