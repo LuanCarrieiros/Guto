@@ -1,0 +1,588 @@
+<!-- Scripts JavaScript para o Diário Eletrônico -->
+<script>
+/**
+ * Sistema de Diário Eletrônico - Scripts de Interatividade
+ * Funcionalidades: Dashboard, Chamadas, Notas, Relatórios
+ */
+
+// =============================================================================
+// DASHBOARD DO PROFESSOR
+// =============================================================================
+
+function initDashboard() {
+    // Animações de entrada para os cards
+    const cards = document.querySelectorAll('.dashboard-card');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+
+    // Atualização automática de estatísticas
+    updateDashboardStats();
+    setInterval(updateDashboardStats, 30000); // A cada 30 segundos
+}
+
+function updateDashboardStats() {
+    // Simular atualizações em tempo real
+    const statsElements = document.querySelectorAll('[data-stat]');
+    
+    statsElements.forEach(element => {
+        const statType = element.getAttribute('data-stat');
+        
+        // Animação de loading
+        element.style.opacity = '0.7';
+        
+        setTimeout(() => {
+            // Aqui integraria com API real
+            element.style.opacity = '1';
+            
+            // Adicionar efeito de highlight para mudanças
+            element.classList.add('bg-blue-100');
+            setTimeout(() => element.classList.remove('bg-blue-100'), 1000);
+        }, 500);
+    });
+}
+
+// =============================================================================
+// SISTEMA DE CHAMADAS
+// =============================================================================
+
+function initChamada() {
+    const form = document.getElementById('chamada-form');
+    const contadores = {
+        presente: 0,
+        falta: 0,
+        justificada: 0,
+        atraso: 0
+    };
+
+    // Listener para mudanças nos radio buttons
+    document.querySelectorAll('input[type="radio"][name*="frequencia"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            updateContadores();
+            updateProgressBar();
+            saveLocalDraft();
+        });
+    });
+
+    function updateContadores() {
+        // Reset contadores
+        Object.keys(contadores).forEach(key => contadores[key] = 0);
+
+        // Contar status selecionados
+        document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+            const value = radio.value;
+            if (contadores.hasOwnProperty(value)) {
+                contadores[value]++;
+            }
+        });
+
+        // Atualizar UI
+        document.getElementById('contador-presente').textContent = contadores.presente;
+        document.getElementById('contador-falta').textContent = contadores.falta;
+        document.getElementById('contador-justificada').textContent = contadores.justificada;
+        document.getElementById('contador-atraso').textContent = contadores.atraso;
+
+        // Calcular e mostrar percentual de presença
+        const total = Object.values(contadores).reduce((a, b) => a + b, 0);
+        const percentualPresenca = total > 0 ? Math.round((contadores.presente / total) * 100) : 0;
+        
+        const percentualEl = document.getElementById('percentual-presenca');
+        if (percentualEl) {
+            percentualEl.textContent = `${percentualPresenca}%`;
+            
+            // Colorir baseado no percentual
+            percentualEl.className = 'text-2xl font-bold';
+            if (percentualPresenca >= 90) percentualEl.classList.add('text-green-600');
+            else if (percentualPresenca >= 75) percentualEl.classList.add('text-yellow-600');
+            else percentualEl.classList.add('text-red-600');
+        }
+    }
+
+    function updateProgressBar() {
+        const totalAlunos = document.querySelectorAll('.aluno-card').length;
+        const alunosVerificados = document.querySelectorAll('input[type="radio"]:checked').length;
+        const progresso = totalAlunos > 0 ? (alunosVerificados / totalAlunos) * 100 : 0;
+
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('progress-text');
+        
+        if (progressBar) {
+            progressBar.style.width = `${progresso}%`;
+            progressBar.style.transition = 'width 0.3s ease';
+        }
+        
+        if (progressText) {
+            progressText.textContent = `${alunosVerificados} de ${totalAlunos} alunos`;
+        }
+
+        // Habilitar botão de salvar quando todos os alunos estiverem marcados
+        const saveButton = document.getElementById('salvar-chamada');
+        if (saveButton) {
+            saveButton.disabled = progresso < 100;
+            saveButton.classList.toggle('opacity-50', progresso < 100);
+        }
+    }
+
+    function saveLocalDraft() {
+        const dadosChamada = {};
+        document.querySelectorAll('input[type="radio"]:checked').forEach(radio => {
+            const alunoId = radio.name.replace('frequencia_', '');
+            dadosChamada[alunoId] = radio.value;
+        });
+        
+        localStorage.setItem('chamada_draft', JSON.stringify({
+            data: new Date().toISOString(),
+            dados: dadosChamada
+        }));
+    }
+
+    function loadLocalDraft() {
+        const draft = localStorage.getItem('chamada_draft');
+        if (draft) {
+            try {
+                const dados = JSON.parse(draft);
+                
+                // Verificar se é do mesmo dia
+                const hoje = new Date().toDateString();
+                const dataDraft = new Date(dados.data).toDateString();
+                
+                if (hoje === dataDraft) {
+                    Object.entries(dados.dados).forEach(([alunoId, status]) => {
+                        const radio = document.querySelector(`input[name="frequencia_${alunoId}"][value="${status}"]`);
+                        if (radio) radio.checked = true;
+                    });
+                    
+                    updateContadores();
+                    updateProgressBar();
+                    
+                    // Mostrar notificação
+                    showNotification('Rascunho carregado automaticamente', 'info');
+                }
+            } catch (e) {
+                console.warn('Erro ao carregar rascunho:', e);
+            }
+        }
+    }
+
+    // Ações rápidas
+    window.marcarTodosPresentes = function() {
+        if (confirm('Marcar todos os alunos como presentes?')) {
+            document.querySelectorAll('input[value="presente"]').forEach(radio => {
+                radio.checked = true;
+            });
+            updateContadores();
+            updateProgressBar();
+            saveLocalDraft();
+            showNotification('Todos os alunos marcados como presentes', 'success');
+        }
+    };
+
+    window.limparChamada = function() {
+        if (confirm('Limpar todas as marcações?')) {
+            document.querySelectorAll('input[type="radio"]').forEach(radio => {
+                radio.checked = false;
+            });
+            updateContadores();
+            updateProgressBar();
+            localStorage.removeItem('chamada_draft');
+            showNotification('Chamada limpa', 'info');
+        }
+    };
+
+    // Carregar rascunho ao inicializar
+    loadLocalDraft();
+}
+
+// =============================================================================
+// SISTEMA DE NOTAS
+// =============================================================================
+
+function initNotas() {
+    const form = document.getElementById('notas-form');
+    let notasAlteradas = new Set();
+
+    // Listener para mudanças nas notas
+    document.querySelectorAll('input[type="number"][name*="nota"]').forEach(input => {
+        input.addEventListener('input', function() {
+            const alunoId = this.name.replace('nota_', '');
+            notasAlteradas.add(alunoId);
+            
+            validateNota(this);
+            updateEstatisticas();
+            saveLocalDraft();
+            
+            // Marcar como alterado visualmente
+            this.closest('.aluno-card').classList.add('border-blue-300', 'bg-blue-50');
+        });
+
+        input.addEventListener('blur', function() {
+            // Remover destaque visual após perder foco
+            setTimeout(() => {
+                this.closest('.aluno-card').classList.remove('border-blue-300', 'bg-blue-50');
+            }, 500);
+        });
+    });
+
+    function validateNota(input) {
+        const valor = parseFloat(input.value);
+        const min = parseFloat(input.min) || 0;
+        const max = parseFloat(input.max) || 10;
+
+        // Remover classes anteriores
+        input.classList.remove('border-red-500', 'border-yellow-500', 'border-green-500');
+
+        if (isNaN(valor)) {
+            input.classList.add('border-gray-300');
+            return;
+        }
+
+        if (valor < min || valor > max) {
+            input.classList.add('border-red-500');
+            showTooltip(input, `Nota deve estar entre ${min} e ${max}`, 'error');
+        } else if (valor < (max * 0.6)) {
+            input.classList.add('border-red-500'); // Abaixo da média
+        } else if (valor < (max * 0.8)) {
+            input.classList.add('border-yellow-500'); // Média
+        } else {
+            input.classList.add('border-green-500'); // Boa nota
+        }
+    }
+
+    function updateEstatisticas() {
+        const notas = Array.from(document.querySelectorAll('input[type="number"][name*="nota"]'))
+            .map(input => parseFloat(input.value))
+            .filter(nota => !isNaN(nota));
+
+        if (notas.length === 0) return;
+
+        const media = notas.reduce((a, b) => a + b, 0) / notas.length;
+        const maior = Math.max(...notas);
+        const menor = Math.min(...notas);
+        const aprovados = notas.filter(nota => nota >= 6).length;
+
+        // Atualizar UI
+        updateStatElement('media-turma', media.toFixed(1));
+        updateStatElement('maior-nota', maior.toFixed(1));
+        updateStatElement('menor-nota', menor.toFixed(1));
+        updateStatElement('aprovados', `${aprovados}/${notas.length}`);
+    }
+
+    function updateStatElement(id, valor) {
+        const element = document.getElementById(id);
+        if (element) {
+            element.textContent = valor;
+            
+            // Animação de destaque
+            element.classList.add('bg-blue-100');
+            setTimeout(() => element.classList.remove('bg-blue-100'), 500);
+        }
+    }
+
+    function saveLocalDraft() {
+        const dadosNotas = {};
+        document.querySelectorAll('input[type="number"][name*="nota"]').forEach(input => {
+            if (input.value) {
+                const alunoId = input.name.replace('nota_', '');
+                dadosNotas[alunoId] = input.value;
+            }
+        });
+        
+        localStorage.setItem('notas_draft', JSON.stringify({
+            data: new Date().toISOString(),
+            dados: dadosNotas,
+            avaliacao: document.querySelector('input[name="avaliacao_id"]')?.value
+        }));
+    }
+
+    // Ações rápidas para notas
+    window.aplicarNotaMinima = function() {
+        const nota = prompt('Digite a nota mínima a aplicar:');
+        if (nota !== null && !isNaN(parseFloat(nota))) {
+            document.querySelectorAll('input[type="number"][name*="nota"]').forEach(input => {
+                if (!input.value || parseFloat(input.value) < parseFloat(nota)) {
+                    input.value = nota;
+                    input.dispatchEvent(new Event('input'));
+                }
+            });
+            showNotification(`Nota mínima ${nota} aplicada`, 'success');
+        }
+    };
+
+    window.calcularMediaPonderada = function() {
+        // Implementar cálculo de média ponderada baseado nos pesos das avaliações
+        updateEstatisticas();
+        showNotification('Estatísticas atualizadas', 'info');
+    };
+}
+
+// =============================================================================
+// SISTEMA DE RELATÓRIOS
+// =============================================================================
+
+function initRelatorios() {
+    // Filtros dinâmicos
+    const filtros = document.querySelectorAll('select, input[type="checkbox"]');
+    
+    filtros.forEach(filtro => {
+        filtro.addEventListener('change', function() {
+            updateRelatorio();
+        });
+    });
+
+    // Exportação de dados
+    window.exportarRelatorio = function(formato) {
+        const dados = coletarDadosRelatorio();
+        
+        showNotification('Preparando exportação...', 'info');
+        
+        setTimeout(() => {
+            switch (formato) {
+                case 'pdf':
+                    exportarPDF(dados);
+                    break;
+                case 'excel':
+                    exportarExcel(dados);
+                    break;
+                case 'csv':
+                    exportarCSV(dados);
+                    break;
+                default:
+                    showNotification('Formato não suportado', 'error');
+            }
+        }, 1000);
+    };
+
+    function coletarDadosRelatorio() {
+        const linhas = document.querySelectorAll('tbody tr');
+        const dados = [];
+        
+        linhas.forEach(linha => {
+            const colunas = linha.querySelectorAll('td');
+            const registro = {};
+            
+            // Extrair dados de cada coluna
+            registro.aluno = colunas[0]?.textContent.trim();
+            registro.totalAulas = colunas[1]?.textContent.trim();
+            registro.presencas = colunas[2]?.textContent.trim();
+            registro.faltas = colunas[3]?.textContent.trim();
+            registro.frequencia = colunas[4]?.textContent.trim();
+            registro.status = colunas[5]?.textContent.trim();
+            
+            dados.push(registro);
+        });
+        
+        return dados;
+    }
+
+    function exportarCSV(dados) {
+        const headers = ['Aluno', 'Total Aulas', 'Presenças', 'Faltas', 'Frequência', 'Status'];
+        const csv = [headers.join(',')];
+        
+        dados.forEach(registro => {
+            const linha = [
+                `"${registro.aluno}"`,
+                registro.totalAulas,
+                registro.presencas,
+                registro.faltas,
+                `"${registro.frequencia}"`,
+                `"${registro.status}"`
+            ];
+            csv.push(linha.join(','));
+        });
+        
+        downloadFile(csv.join('\n'), 'relatorio_frequencia.csv', 'text/csv');
+        showNotification('Relatório CSV exportado com sucesso', 'success');
+    }
+
+    function updateRelatorio() {
+        // Simular atualização de relatório com base nos filtros
+        showNotification('Atualizando relatório...', 'info');
+        
+        // Aqui seria feita a requisição para o backend
+        setTimeout(() => {
+            showNotification('Relatório atualizado', 'success');
+        }, 1500);
+    }
+}
+
+// =============================================================================
+// UTILITÁRIOS GERAIS
+// =============================================================================
+
+function showNotification(message, type = 'info', duration = 3000) {
+    const notification = document.createElement('div');
+    notification.className = `
+        fixed top-4 right-4 z-50 px-6 py-4 rounded-lg shadow-lg max-w-sm
+        ${type === 'success' ? 'bg-green-500 text-white' : ''}
+        ${type === 'error' ? 'bg-red-500 text-white' : ''}
+        ${type === 'info' ? 'bg-blue-500 text-white' : ''}
+        ${type === 'warning' ? 'bg-yellow-500 text-white' : ''}
+        transform translate-x-full opacity-0 transition-all duration-300
+    `;
+
+    const icon = type === 'success' ? 'fa-check-circle' : 
+                type === 'error' ? 'fa-times-circle' : 
+                type === 'warning' ? 'fa-exclamation-triangle' : 'fa-info-circle';
+
+    notification.innerHTML = `
+        <div class="flex items-center space-x-3">
+            <i class="fas ${icon}"></i>
+            <span>${message}</span>
+            <button onclick="this.parentElement.parentElement.remove()" class="ml-auto">
+                <i class="fas fa-times opacity-70 hover:opacity-100"></i>
+            </button>
+        </div>
+    `;
+
+    document.body.appendChild(notification);
+
+    // Animação de entrada
+    setTimeout(() => {
+        notification.classList.remove('translate-x-full', 'opacity-0');
+    }, 100);
+
+    // Auto-remover
+    setTimeout(() => {
+        notification.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => notification.remove(), 300);
+    }, duration);
+}
+
+function showTooltip(element, message, type = 'info') {
+    const tooltip = document.createElement('div');
+    tooltip.className = `
+        absolute z-50 px-3 py-2 text-sm rounded-lg shadow-lg pointer-events-none
+        ${type === 'error' ? 'bg-red-500 text-white' : 'bg-gray-800 text-white'}
+        -mt-12 left-1/2 transform -translate-x-1/2
+    `;
+    tooltip.textContent = message;
+
+    element.parentElement.style.position = 'relative';
+    element.parentElement.appendChild(tooltip);
+
+    setTimeout(() => tooltip.remove(), 2000);
+}
+
+function downloadFile(content, filename, mimeType) {
+    const blob = new Blob([content], { type: mimeType });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+}
+
+// Função para confirmar ações destrutivas
+function confirmAction(message, callback) {
+    if (confirm(message)) {
+        callback();
+    }
+}
+
+// Auto-save periódico
+function setupAutoSave() {
+    setInterval(() => {
+        // Verificar se há formulários com dados não salvos
+        const forms = document.querySelectorAll('form[data-autosave]');
+        forms.forEach(form => {
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
+            
+            // Salvar no localStorage
+            localStorage.setItem(`autosave_${form.id}`, JSON.stringify({
+                timestamp: Date.now(),
+                data: data
+            }));
+        });
+    }, 30000); // A cada 30 segundos
+}
+
+// =============================================================================
+// INICIALIZAÇÃO
+// =============================================================================
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar componentes baseado na página atual
+    const currentPage = document.body.getAttribute('data-page');
+    
+    switch (currentPage) {
+        case 'dashboard':
+            initDashboard();
+            break;
+        case 'chamada':
+            initChamada();
+            break;
+        case 'notas':
+            initNotas();
+            break;
+        case 'relatorios':
+            initRelatorios();
+            break;
+    }
+    
+    // Funcionalidades gerais
+    setupAutoSave();
+    
+    // Feedback visual para formulários
+    setupFormValidation();
+    
+    console.log('Diário Eletrônico GUTO inicializado ✓');
+});
+
+function setupFormValidation() {
+    // Adicionar validação visual para todos os forms
+    const forms = document.querySelectorAll('form');
+    
+    forms.forEach(form => {
+        form.addEventListener('submit', function(e) {
+            const requiredFields = form.querySelectorAll('[required]');
+            let allValid = true;
+            
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('border-red-500');
+                    allValid = false;
+                } else {
+                    field.classList.remove('border-red-500');
+                }
+            });
+            
+            if (!allValid) {
+                e.preventDefault();
+                showNotification('Por favor, preencha todos os campos obrigatórios', 'error');
+            }
+        });
+    });
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + S para salvar
+    if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        const saveButton = document.querySelector('[type="submit"], .btn-save');
+        if (saveButton) {
+            saveButton.click();
+        }
+    }
+    
+    // ESC para fechar modais/notificações
+    if (e.key === 'Escape') {
+        document.querySelectorAll('.notification, .modal').forEach(el => {
+            el.remove();
+        });
+    }
+});
+
+console.log('Scripts do Diário Eletrônico GUTO carregados ✓');
+</script>
