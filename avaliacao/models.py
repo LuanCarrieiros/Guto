@@ -121,6 +121,36 @@ class Turma(models.Model):
         if self.vagas_total == 0:
             return 0
         return round((self.get_total_alunos() * 100) / self.vagas_total)
+    
+    def criar_diario_automatico(self):
+        """Cria diário automático para a turma com todas as disciplinas ativas"""
+        from django.db import transaction
+        
+        with transaction.atomic():
+            # Buscar ou criar divisão período padrão
+            divisao_periodo, created = DivisaoPeriodoLetivo.objects.get_or_create(
+                nome="1º Bimestre",
+                periodo_letivo=self.periodo_letivo,
+                defaults={
+                    'tipo_divisao': 'BIMESTRE',
+                    'ordem': 1,
+                    'data_inicio': f'{self.periodo_letivo}-01-01',
+                    'data_fim': f'{self.periodo_letivo}-03-31',
+                    'ativo': True
+                }
+            )
+            
+            # Criar diários para todas as disciplinas ativas
+            disciplinas = Disciplina.objects.filter(ativo=True)
+            for disciplina in disciplinas:
+                DiarioEletronico.objects.get_or_create(
+                    turma=self,
+                    disciplina=disciplina,
+                    periodo_letivo=self.periodo_letivo,
+                    defaults={
+                        'ativo': True
+                    }
+                )
 
 class Disciplina(models.Model):
     """Model para Disciplinas"""
@@ -629,3 +659,87 @@ class RelatorioFrequencia(models.Model):
         else:
             self.percentual_frequencia = 0
         return self.percentual_frequencia
+
+
+class DiarioEletronico(models.Model):
+    """Model para Diário Eletrônico - criado automaticamente para cada turma/disciplina"""
+    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='diarios', verbose_name="Turma")
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, verbose_name="Disciplina")
+    periodo_letivo = models.CharField(max_length=4, verbose_name="Período Letivo")
+    ativo = models.BooleanField(default=True, verbose_name="Diário Ativo")
+    
+    # Controle
+    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
+    
+    class Meta:
+        verbose_name = "Diário Eletrônico"
+        verbose_name_plural = "Diários Eletrônicos"
+        unique_together = ['turma', 'disciplina', 'periodo_letivo']
+        ordering = ['turma__nome', 'disciplina__nome']
+    
+    def __str__(self):
+        return f"{self.turma.nome} - {self.disciplina.nome} ({self.periodo_letivo})"
+    
+    def get_alunos(self):
+        """Retorna alunos do diário (alunos enturmados)"""
+        return self.turma.get_alunos_enturmados()
+
+
+class RegistroChamada(models.Model):
+    """Model para registro de chamada/frequência no diário eletrônico"""
+    SITUACAO_CHOICES = [
+        ('PRESENTE', 'Presente'),
+        ('AUSENTE', 'Ausente'),
+        ('JUSTIFICADO', 'Ausente Justificado'),
+    ]
+    
+    diario = models.ForeignKey(DiarioEletronico, on_delete=models.CASCADE, related_name='chamadas', verbose_name="Diário")
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
+    data_chamada = models.DateField(verbose_name="Data da Chamada")
+    situacao = models.CharField(max_length=15, choices=SITUACAO_CHOICES, default='PRESENTE', verbose_name="Situação")
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
+    
+    # Controle
+    data_registro = models.DateTimeField(auto_now_add=True, verbose_name="Data do Registro")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
+    usuario_registro = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Registrado por")
+    
+    class Meta:
+        verbose_name = "Registro de Chamada"
+        verbose_name_plural = "Registros de Chamada"
+        unique_together = ['diario', 'aluno', 'data_chamada']
+        ordering = ['data_chamada', 'aluno__nome']
+    
+    def __str__(self):
+        return f"{self.aluno.nome} - {self.get_situacao_display()} - {self.data_chamada.strftime('%d/%m/%Y')}"
+
+
+class RegistroNota(models.Model):
+    """Model para registro de notas no diário eletrônico"""
+    diario = models.ForeignKey(DiarioEletronico, on_delete=models.CASCADE, related_name='notas', verbose_name="Diário")
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
+    divisao_periodo = models.ForeignKey(DivisaoPeriodoLetivo, on_delete=models.CASCADE, verbose_name="Período")
+    
+    # Campos de avaliação
+    nota = models.DecimalField(
+        max_digits=4, decimal_places=2, blank=True, null=True,
+        validators=[MinValueValidator(0), MaxValueValidator(10)],
+        verbose_name="Nota"
+    )
+    conceito = models.ForeignKey(Conceito, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Conceito")
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
+    
+    # Controle
+    data_lancamento = models.DateTimeField(auto_now_add=True, verbose_name="Data do Lançamento")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
+    usuario_lancamento = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Usuário que Lançou")
+    
+    class Meta:
+        verbose_name = "Registro de Nota"
+        verbose_name_plural = "Registros de Notas"
+        unique_together = ['diario', 'aluno', 'divisao_periodo']
+        ordering = ['aluno__nome']
+    
+    def __str__(self):
+        return f"{self.aluno.nome} - {self.diario.disciplina.nome} - {self.divisao_periodo.nome}"
