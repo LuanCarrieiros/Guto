@@ -449,3 +449,183 @@ class Enturmacao(models.Model):
     
     def __str__(self):
         return f"{self.aluno.nome} - {self.turma.nome}"
+
+
+class AulaRegistrada(models.Model):
+    """Model para registro de aulas ministradas"""
+    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='aulas', verbose_name="Turma")
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, verbose_name="Disciplina")
+    professor = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Professor")
+    
+    # Dados da aula
+    data_aula = models.DateField(verbose_name="Data da Aula")
+    horario_inicio = models.TimeField(verbose_name="Horário de Início")
+    horario_fim = models.TimeField(verbose_name="Horário de Fim")
+    conteudo_programatico = models.TextField(verbose_name="Conteúdo Programático")
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
+    
+    # Controle
+    chamada_realizada = models.BooleanField(default=False, verbose_name="Chamada Realizada")
+    data_registro = models.DateTimeField(auto_now_add=True, verbose_name="Data do Registro")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
+    
+    class Meta:
+        verbose_name = "Aula Registrada"
+        verbose_name_plural = "Aulas Registradas"
+        unique_together = ['turma', 'disciplina', 'data_aula', 'horario_inicio']
+        ordering = ['-data_aula', 'horario_inicio']
+    
+    def __str__(self):
+        return f"{self.disciplina.nome} - {self.turma.nome} - {self.data_aula.strftime('%d/%m/%Y')}"
+    
+    @property
+    def duracao_aula(self):
+        """Calcula duração da aula em minutos"""
+        from datetime import datetime, timedelta
+        inicio = datetime.combine(date.today(), self.horario_inicio)
+        fim = datetime.combine(date.today(), self.horario_fim)
+        if fim < inicio:
+            fim += timedelta(days=1)
+        duracao = fim - inicio
+        return int(duracao.total_seconds() / 60)
+
+
+class RegistroFrequencia(models.Model):
+    """Model para registro de frequência por aula"""
+    SITUACAO_CHOICES = [
+        ('PRESENTE', 'Presente'),
+        ('AUSENTE', 'Ausente'),
+        ('JUSTIFICADO', 'Ausente Justificado'),
+        ('ATRASADO', 'Atrasado'),
+    ]
+    
+    aula = models.ForeignKey(AulaRegistrada, on_delete=models.CASCADE, related_name='frequencias', verbose_name="Aula")
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
+    situacao = models.CharField(max_length=15, choices=SITUACAO_CHOICES, default='PRESENTE', verbose_name="Situação")
+    observacoes = models.CharField(max_length=255, blank=True, null=True, verbose_name="Observações")
+    
+    # Controle
+    data_registro = models.DateTimeField(auto_now_add=True, verbose_name="Data do Registro")
+    usuario_registro = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Registrado por")
+    
+    class Meta:
+        verbose_name = "Registro de Frequência"
+        verbose_name_plural = "Registros de Frequência"
+        unique_together = ['aula', 'aluno']
+        ordering = ['aluno__nome']
+    
+    def __str__(self):
+        return f"{self.aluno.nome} - {self.get_situacao_display()} - {self.aula.data_aula.strftime('%d/%m/%Y')}"
+
+
+class TipoAvaliacao(models.Model):
+    """Model para tipos de avaliação (Prova, Trabalho, Participação, etc.)"""
+    nome = models.CharField(max_length=100, verbose_name="Nome do Tipo")
+    descricao = models.CharField(max_length=255, blank=True, null=True, verbose_name="Descrição")
+    peso_default = models.DecimalField(max_digits=3, decimal_places=1, default=1.0, verbose_name="Peso Padrão")
+    cor_display = models.CharField(max_length=7, default='#3B82F6', verbose_name="Cor para Exibição")
+    ativo = models.BooleanField(default=True, verbose_name="Tipo Ativo")
+    
+    class Meta:
+        verbose_name = "Tipo de Avaliação"
+        verbose_name_plural = "Tipos de Avaliação"
+        ordering = ['nome']
+    
+    def __str__(self):
+        return self.nome
+
+
+class Avaliacao(models.Model):
+    """Model para avaliações aplicadas"""
+    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='avaliacoes', verbose_name="Turma")
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, verbose_name="Disciplina")
+    divisao_periodo = models.ForeignKey(DivisaoPeriodoLetivo, on_delete=models.CASCADE, verbose_name="Período")
+    tipo_avaliacao = models.ForeignKey(TipoAvaliacao, on_delete=models.CASCADE, verbose_name="Tipo de Avaliação")
+    professor = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Professor")
+    
+    # Dados da avaliação
+    nome = models.CharField(max_length=255, verbose_name="Nome da Avaliação")
+    descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
+    data_aplicacao = models.DateField(verbose_name="Data de Aplicação")
+    valor_maximo = models.DecimalField(max_digits=4, decimal_places=2, default=10.00, verbose_name="Valor Máximo")
+    peso = models.DecimalField(max_digits=3, decimal_places=1, default=1.0, verbose_name="Peso")
+    
+    # Controle
+    ativo = models.BooleanField(default=True, verbose_name="Avaliação Ativa")
+    notas_lancadas = models.BooleanField(default=False, verbose_name="Notas Lançadas")
+    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
+    
+    class Meta:
+        verbose_name = "Avaliação"
+        verbose_name_plural = "Avaliações"
+        ordering = ['-data_aplicacao', 'nome']
+    
+    def __str__(self):
+        return f"{self.nome} - {self.turma.nome} - {self.disciplina.nome}"
+
+
+class NotaAvaliacao(models.Model):
+    """Model para notas individuais de avaliações"""
+    avaliacao = models.ForeignKey(Avaliacao, on_delete=models.CASCADE, related_name='notas', verbose_name="Avaliação")
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
+    nota = models.DecimalField(
+        max_digits=4, decimal_places=2, blank=True, null=True,
+        validators=[MinValueValidator(0)],
+        verbose_name="Nota"
+    )
+    conceito = models.ForeignKey(Conceito, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Conceito")
+    observacoes = models.TextField(blank=True, null=True, verbose_name="Observações")
+    
+    # Status
+    ausente = models.BooleanField(default=False, verbose_name="Ausente na Avaliação")
+    dispensado = models.BooleanField(default=False, verbose_name="Dispensado da Avaliação")
+    
+    # Controle
+    data_lancamento = models.DateTimeField(auto_now_add=True, verbose_name="Data do Lançamento")
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
+    usuario_lancamento = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Lançado por")
+    
+    class Meta:
+        verbose_name = "Nota de Avaliação"
+        verbose_name_plural = "Notas de Avaliações"
+        unique_together = ['avaliacao', 'aluno']
+        ordering = ['aluno__nome']
+    
+    def __str__(self):
+        return f"{self.aluno.nome} - {self.avaliacao.nome}: {self.nota or self.conceito or 'N/A'}"
+
+
+class RelatorioFrequencia(models.Model):
+    """Model para relatórios consolidados de frequência"""
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
+    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, verbose_name="Turma")
+    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, verbose_name="Disciplina")
+    divisao_periodo = models.ForeignKey(DivisaoPeriodoLetivo, on_delete=models.CASCADE, verbose_name="Período")
+    
+    # Estatísticas de frequência
+    total_aulas = models.IntegerField(default=0, verbose_name="Total de Aulas")
+    presencas = models.IntegerField(default=0, verbose_name="Presenças")
+    faltas = models.IntegerField(default=0, verbose_name="Faltas")
+    faltas_justificadas = models.IntegerField(default=0, verbose_name="Faltas Justificadas")
+    percentual_frequencia = models.DecimalField(max_digits=5, decimal_places=2, default=0, verbose_name="% Frequência")
+    
+    # Controle
+    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
+    
+    class Meta:
+        verbose_name = "Relatório de Frequência"
+        verbose_name_plural = "Relatórios de Frequência"
+        unique_together = ['aluno', 'turma', 'disciplina', 'divisao_periodo']
+        ordering = ['aluno__nome']
+    
+    def __str__(self):
+        return f"{self.aluno.nome} - {self.disciplina.nome} ({self.percentual_frequencia}%)"
+    
+    def calcular_frequencia(self):
+        """Calcula e atualiza o percentual de frequência"""
+        if self.total_aulas > 0:
+            self.percentual_frequencia = round((self.presencas / self.total_aulas) * 100, 2)
+        else:
+            self.percentual_frequencia = 0
+        return self.percentual_frequencia
