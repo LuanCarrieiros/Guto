@@ -1,0 +1,751 @@
+<!-- Sistema de Notificações Avançado para Utilitários -->
+<!-- Este arquivo deve ser incluído em todos os templates do módulo utilitários -->
+
+<style>
+/* Notification System Styles */
+.notification-center {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    width: 400px;
+    max-height: calc(100vh - 40px);
+    overflow-y: auto;
+}
+
+.notification-item {
+    margin-bottom: 12px;
+    transform: translateX(420px);
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    opacity: 0;
+}
+
+.notification-item.show {
+    transform: translateX(0);
+    opacity: 1;
+}
+
+.notification-item.hide {
+    transform: translateX(420px);
+    opacity: 0;
+}
+
+.notification-content {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+    border-left: 4px solid;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+    position: relative;
+}
+
+.notification-content::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+    pointer-events: none;
+}
+
+.notification-success {
+    border-left-color: #10B981;
+}
+
+.notification-error {
+    border-left-color: #EF4444;
+}
+
+.notification-warning {
+    border-left-color: #F59E0B;
+}
+
+.notification-info {
+    border-left-color: #3B82F6;
+}
+
+.notification-security {
+    border-left-color: #8B5CF6;
+}
+
+.notification-progress-bar {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: linear-gradient(90deg, #4F46E5, #7C3AED);
+    transition: width linear;
+}
+
+.notification-icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    color: white;
+    margin-right: 12px;
+    position: relative;
+    overflow: hidden;
+}
+
+.notification-icon::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: all 0.6s ease;
+}
+
+.notification-item:hover .notification-icon::before {
+    width: 100%;
+    height: 100%;
+}
+
+.notification-actions {
+    display: flex;
+    gap: 8px;
+    margin-top: 12px;
+}
+
+.notification-btn {
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    outline: none;
+}
+
+.notification-btn-primary {
+    background: #4F46E5;
+    color: white;
+}
+
+.notification-btn-primary:hover {
+    background: #3730A3;
+    transform: translateY(-1px);
+}
+
+.notification-btn-secondary {
+    background: #F3F4F6;
+    color: #6B7280;
+}
+
+.notification-btn-secondary:hover {
+    background: #E5E7EB;
+    color: #374151;
+}
+
+.notification-dismiss {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: all 0.2s ease;
+    color: #6B7280;
+}
+
+.notification-item:hover .notification-dismiss {
+    opacity: 1;
+}
+
+.notification-dismiss:hover {
+    background: rgba(0, 0, 0, 0.2);
+    transform: scale(1.1);
+}
+
+/* Notification Bell Icon */
+.notification-bell {
+    position: fixed;
+    top: 20px;
+    right: 440px;
+    z-index: 10001;
+    background: white;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.notification-bell:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.notification-bell .bell-icon {
+    font-size: 20px;
+    color: #6B7280;
+    transition: all 0.3s ease;
+}
+
+.notification-bell:hover .bell-icon {
+    color: #4F46E5;
+    animation: bellRing 0.5s ease-in-out;
+}
+
+.notification-badge {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    background: #EF4444;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: bold;
+    transform: scale(0);
+    transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.notification-badge.show {
+    transform: scale(1);
+}
+
+@keyframes bellRing {
+    0%, 100% { transform: rotate(0deg); }
+    10%, 30%, 50%, 70%, 90% { transform: rotate(-10deg); }
+    20%, 40%, 60%, 80% { transform: rotate(10deg); }
+}
+
+/* Notification Types */
+.notification-system {
+    background: linear-gradient(135deg, #3B82F6, #1E40AF);
+}
+
+.notification-user {
+    background: linear-gradient(135deg, #10B981, #047857);
+}
+
+.notification-security {
+    background: linear-gradient(135deg, #EF4444, #B91C1C);
+}
+
+.notification-backup {
+    background: linear-gradient(135deg, #8B5CF6, #6D28D9);
+}
+
+.notification-maintenance {
+    background: linear-gradient(135deg, #F59E0B, #D97706);
+}
+
+/* Sound wave animation for audio notifications */
+.sound-wave {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 60px;
+    height: 60px;
+    border: 2px solid rgba(79, 70, 229, 0.3);
+    border-radius: 50%;
+    animation: soundWave 2s infinite;
+}
+
+@keyframes soundWave {
+    0% {
+        transform: translate(-50%, -50%) scale(0.5);
+        opacity: 1;
+    }
+    100% {
+        transform: translate(-50%, -50%) scale(2);
+        opacity: 0;
+    }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+    .notification-center {
+        width: calc(100vw - 40px);
+        right: 20px;
+        left: 20px;
+    }
+    
+    .notification-bell {
+        right: 30px;
+        top: 70px;
+    }
+}
+</style>
+
+<!-- Notification Bell -->
+<div id="notificationBell" class="notification-bell">
+    <i class="fas fa-bell bell-icon"></i>
+    <div id="notificationBadge" class="notification-badge">0</div>
+</div>
+
+<!-- Notification Center -->
+<div id="notificationCenter" class="notification-center"></div>
+
+<!-- Audio for notification sounds -->
+<audio id="notificationSound" preload="auto">
+    <source src="data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBjiR1/LMeSwFJHfH8N2QQAoUXrTp66hVFApGn+DyvmwhCSF+zPTVgC4EIm+z7O6fUg8LSKXr8bljHgU2jdfw0YAuBSF5yO7fljEJHWq+9+COOQwUZLjg7KhfGAg+lNzr1YQvBSR2w+PbnkkAC0ml3O+hUgwKU6/g7bJlHAQ6kdHr1IA1BiNwu/DhljcKFWe69OOLOAkRZrfs4Z1WDgtCnODjulgZBzKV1eLgkUAHGGeuz+PhmU8NB1Gg2OWgTxEYYLHa8qJbGAo6m9vn2oM2BSJ0v+nnlTMIFGe89+KLPwwPY7Tr5aJZFAo4lNvu2oM4BiR2we3hjDUJFGe99eSJOAkRZrfs4Z1YDwxInN7l1nkeAS5/y/LWfzAEH3HF7N+WNAkVZrX062BREB1IqNvw2ogxAxNhtOPvpWYbCTqX0+vVgTkGI3K+7+CWOAkRZbfr6KNQDwhBpN3v3m0gAzCO3u+fVw0KSaXc8N1+KAUfcsP17pVBAhFqsv3mmTQJDUp12+yTORUgYqfaYIo2GCCi1u3mWC0GJXe79N2QRAhJYLnrY5RCBhVssuqNPQkXTp1zv4QzLJZ4CBzqoD5NP7EyU5LWNyTYDhVwzLvv4ntqECZvs/fV5YdCBSN4y/jc5IhGCyBqvfjY3oPdASZ3zP/f5YpJCzdnsfPk4oquJSV6wfvh5oJACC57w/Pf3IE/BiGCzPzf4og1BiB4yP7b5X9FCyJ7wvjh34G0NyGExv3i3oTAOSCFzv/h4q+3NieIy//e5qG7NyWKwvzg4G1ASqfTkUYAAOOGLf/jM1AaB4vI/v3o3v1LsZKS0v3vgG52i5k9t4TCNyDAOSCCyT3g4YByaIGC8tKA4v6pOSWDxSoU4pU3TDBEwT3g4G1gGlzs2ZASj6Bg3OHgv6xLSWGvSoU0WqAaC4vI/v3o3v1LsZKS0v3vgG52i5k9t4TCNyDAOSCCyT3g4YByaIGC8tKA4v6pOSWDxSoU4pU3TDBEwT3g4G1gGlzs2ZASj6Bg3OHgv6xLSWGvSoU0WqAaC4vI/v3o3v1LsZKS0v3vgG52i5k9t4TCNyDAOSCCyT3g4YByaIGC8tKA4v6pOSWDxSoU4pU3TDBEwT3g4G1gGlzs2ZASj6Bg3OHgv6xLSWGvSoU0WqA=" type="audio/wav">
+</audio>
+
+<script>
+// Sistema de Notificações Avançado
+class NotificationSystem {
+    constructor() {
+        this.notifications = [];
+        this.notificationId = 0;
+        this.maxNotifications = 5;
+        this.defaultDuration = 6000;
+        this.soundEnabled = true;
+        
+        this.bell = document.getElementById('notificationBell');
+        this.badge = document.getElementById('notificationBadge');
+        this.center = document.getElementById('notificationCenter');
+        this.sound = document.getElementById('notificationSound');
+        
+        this.init();
+    }
+    
+    init() {
+        // Bell click handler
+        this.bell.addEventListener('click', () => {
+            this.toggleCenter();
+        });
+        
+        // Load settings from localStorage
+        this.loadSettings();
+        
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+            Notification.requestPermission();
+        }
+        
+        // Listen for system events
+        this.listenToSystemEvents();
+    }
+    
+    show(options) {
+        const notification = {
+            id: ++this.notificationId,
+            type: options.type || 'info',
+            title: options.title || 'Notificação',
+            message: options.message || '',
+            duration: options.duration || this.defaultDuration,
+            actions: options.actions || [],
+            dismissible: options.dismissible !== false,
+            persistent: options.persistent || false,
+            timestamp: new Date(),
+            ...options
+        };
+        
+        this.notifications.unshift(notification);
+        this.updateBadge();
+        
+        // Limit notifications
+        if (this.notifications.length > this.maxNotifications) {
+            this.notifications = this.notifications.slice(0, this.maxNotifications);
+        }
+        
+        this.renderNotification(notification);
+        
+        // Play sound if enabled
+        if (this.soundEnabled && !options.silent) {
+            this.playSound(notification.type);
+        }
+        
+        // Show browser notification if supported and permitted
+        if (options.browserNotification && 'Notification' in window && Notification.permission === 'granted') {
+            this.showBrowserNotification(notification);
+        }
+        
+        // Auto dismiss if not persistent
+        if (!notification.persistent && notification.duration > 0) {
+            setTimeout(() => {
+                this.dismiss(notification.id);
+            }, notification.duration);
+        }
+        
+        return notification.id;
+    }
+    
+    renderNotification(notification) {
+        const element = document.createElement('div');
+        element.className = 'notification-item';
+        element.setAttribute('data-id', notification.id);
+        
+        const iconClass = this.getIconClass(notification.type);
+        const iconBg = this.getIconBackground(notification.type);
+        
+        element.innerHTML = `
+            <div class="notification-content notification-${notification.type}">
+                <div class="p-4 relative">
+                    ${notification.dismissible ? `
+                        <button class="notification-dismiss" onclick="notificationSystem.dismiss(${notification.id})">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    ` : ''}
+                    
+                    <div class="flex items-start">
+                        <div class="notification-icon ${iconBg}">
+                            <i class="fas ${iconClass}"></i>
+                        </div>
+                        
+                        <div class="flex-1">
+                            <h4 class="font-semibold text-gray-900 text-sm mb-1">${notification.title}</h4>
+                            <p class="text-gray-600 text-xs leading-relaxed">${notification.message}</p>
+                            
+                            ${notification.details ? `
+                                <p class="text-gray-500 text-xs mt-2 opacity-75">${notification.details}</p>
+                            ` : ''}
+                            
+                            <div class="flex items-center justify-between mt-2">
+                                <span class="text-xs text-gray-400">
+                                    <i class="fas fa-clock mr-1"></i>
+                                    ${this.formatTime(notification.timestamp)}
+                                </span>
+                                
+                                ${notification.category ? `
+                                    <span class="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded">
+                                        ${notification.category}
+                                    </span>
+                                ` : ''}
+                            </div>
+                            
+                            ${notification.actions.length > 0 ? `
+                                <div class="notification-actions">
+                                    ${notification.actions.map(action => `
+                                        <button class="notification-btn notification-btn-${action.type || 'secondary'}" 
+                                                onclick="notificationSystem.handleAction(${notification.id}, '${action.id}')">
+                                            ${action.icon ? `<i class="fas ${action.icon} mr-1"></i>` : ''}
+                                            ${action.label}
+                                        </button>
+                                    `).join('')}
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+                
+                ${!notification.persistent && notification.duration > 0 ? `
+                    <div class="notification-progress-bar" style="animation-duration: ${notification.duration}ms"></div>
+                ` : ''}
+            </div>
+        `;
+        
+        this.center.appendChild(element);
+        
+        // Trigger animation
+        setTimeout(() => {
+            element.classList.add('show');
+        }, 50);
+    }
+    
+    dismiss(id) {
+        const element = document.querySelector(`[data-id="${id}"]`);
+        if (element) {
+            element.classList.add('hide');
+            setTimeout(() => {
+                element.remove();
+            }, 400);
+        }
+        
+        this.notifications = this.notifications.filter(n => n.id !== id);
+        this.updateBadge();
+    }
+    
+    dismissAll() {
+        const elements = document.querySelectorAll('.notification-item');
+        elements.forEach(el => {
+            el.classList.add('hide');
+            setTimeout(() => {
+                el.remove();
+            }, 400);
+        });
+        
+        this.notifications = [];
+        this.updateBadge();
+    }
+    
+    handleAction(notificationId, actionId) {
+        const notification = this.notifications.find(n => n.id === notificationId);
+        if (!notification) return;
+        
+        const action = notification.actions.find(a => a.id === actionId);
+        if (!action) return;
+        
+        if (action.handler) {
+            action.handler(notification);
+        }
+        
+        if (action.dismiss !== false) {
+            this.dismiss(notificationId);
+        }
+    }
+    
+    updateBadge() {
+        const count = this.notifications.length;
+        this.badge.textContent = count;
+        
+        if (count > 0) {
+            this.badge.classList.add('show');
+        } else {
+            this.badge.classList.remove('show');
+        }
+    }
+    
+    toggleCenter() {
+        // Simple toggle - in a real implementation, this would show/hide a notification panel
+        if (this.notifications.length > 0) {
+            this.dismissAll();
+        }
+    }
+    
+    playSound(type) {
+        if (this.sound) {
+            this.sound.currentTime = 0;
+            this.sound.play().catch(() => {
+                // Silently ignore audio play failures
+            });
+        }
+    }
+    
+    showBrowserNotification(notification) {
+        const browserNotif = new Notification(notification.title, {
+            body: notification.message,
+            icon: '/static/images/guto-icon.png',
+            tag: `guto-${notification.id}`,
+            silent: notification.silent || false
+        });
+        
+        browserNotif.onclick = () => {
+            window.focus();
+            browserNotif.close();
+        };
+        
+        setTimeout(() => {
+            browserNotif.close();
+        }, notification.duration || this.defaultDuration);
+    }
+    
+    getIconClass(type) {
+        const icons = {
+            success: 'fa-check',
+            error: 'fa-times',
+            warning: 'fa-exclamation-triangle',
+            info: 'fa-info',
+            security: 'fa-shield-alt',
+            system: 'fa-cog',
+            user: 'fa-user',
+            backup: 'fa-database',
+            maintenance: 'fa-tools'
+        };
+        
+        return icons[type] || icons.info;
+    }
+    
+    getIconBackground(type) {
+        const backgrounds = {
+            success: 'notification-user',
+            error: 'notification-security',
+            warning: 'notification-maintenance',
+            info: 'notification-system',
+            security: 'notification-security',
+            system: 'notification-system',
+            user: 'notification-user',
+            backup: 'notification-backup',
+            maintenance: 'notification-maintenance'
+        };
+        
+        return backgrounds[type] || backgrounds.info;
+    }
+    
+    formatTime(timestamp) {
+        const now = new Date();
+        const diff = now - timestamp;
+        
+        if (diff < 60000) {
+            return 'agora mesmo';
+        } else if (diff < 3600000) {
+            return `${Math.floor(diff / 60000)}m atrás`;
+        } else {
+            return timestamp.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+    }
+    
+    listenToSystemEvents() {
+        // Listen for form submissions
+        document.addEventListener('submit', (e) => {
+            const form = e.target;
+            if (form.classList.contains('config-form')) {
+                setTimeout(() => {
+                    this.show({
+                        type: 'success',
+                        title: 'Configuração Salva',
+                        message: 'As configurações foram atualizadas com sucesso.',
+                        category: 'Sistema'
+                    });
+                }, 500);
+            }
+        });
+        
+        // Listen for user actions
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('[data-action="delete"]')) {
+                this.show({
+                    type: 'warning',
+                    title: 'Ação de Exclusão',
+                    message: 'Item marcado para exclusão. Esta ação não pode ser desfeita.',
+                    category: 'Usuário',
+                    actions: [
+                        {
+                            id: 'undo',
+                            label: 'Desfazer',
+                            type: 'primary',
+                            handler: (notification) => {
+                                console.log('Ação desfeita');
+                            }
+                        }
+                    ]
+                });
+            }
+            
+            if (e.target.matches('[data-action="backup"]')) {
+                this.show({
+                    type: 'info',
+                    title: 'Backup Iniciado',
+                    message: 'O backup está sendo processado em segundo plano.',
+                    category: 'Sistema',
+                    persistent: true,
+                    actions: [
+                        {
+                            id: 'view',
+                            label: 'Ver Progresso',
+                            type: 'primary',
+                            icon: 'fa-eye'
+                        }
+                    ]
+                });
+            }
+        });
+        
+        // Simulate security alerts
+        setInterval(() => {
+            if (Math.random() < 0.1) { // 10% chance every interval
+                this.show({
+                    type: 'security',
+                    title: 'Alerta de Segurança',
+                    message: 'Nova tentativa de login detectada de IP não reconhecido.',
+                    category: 'Segurança',
+                    browserNotification: true,
+                    actions: [
+                        {
+                            id: 'block',
+                            label: 'Bloquear IP',
+                            type: 'primary',
+                            icon: 'fa-ban'
+                        },
+                        {
+                            id: 'ignore',
+                            label: 'Ignorar',
+                            type: 'secondary'
+                        }
+                    ]
+                });
+            }
+        }, 30000); // Check every 30 seconds
+    }
+    
+    loadSettings() {
+        const settings = localStorage.getItem('guto_notification_settings');
+        if (settings) {
+            const parsed = JSON.parse(settings);
+            this.soundEnabled = parsed.soundEnabled !== false;
+        }
+    }
+    
+    saveSettings() {
+        const settings = {
+            soundEnabled: this.soundEnabled
+        };
+        localStorage.setItem('guto_notification_settings', JSON.stringify(settings));
+    }
+    
+    // Public API methods
+    success(title, message, options = {}) {
+        return this.show({ ...options, type: 'success', title, message });
+    }
+    
+    error(title, message, options = {}) {
+        return this.show({ ...options, type: 'error', title, message });
+    }
+    
+    warning(title, message, options = {}) {
+        return this.show({ ...options, type: 'warning', title, message });
+    }
+    
+    info(title, message, options = {}) {
+        return this.show({ ...options, type: 'info', title, message });
+    }
+    
+    security(title, message, options = {}) {
+        return this.show({ ...options, type: 'security', title, message, browserNotification: true });
+    }
+    
+    system(title, message, options = {}) {
+        return this.show({ ...options, type: 'system', title, message });
+    }
+}
+
+// Initialize the notification system
+const notificationSystem = new NotificationSystem();
+
+// Global notification functions for easy access
+window.showNotification = (type, title, message, options = {}) => {
+    return notificationSystem[type] ? notificationSystem[type](title, message, options) : notificationSystem.info(title, message, options);
+};
+
+window.showSuccessNotification = (title, message, options = {}) => notificationSystem.success(title, message, options);
+window.showErrorNotification = (title, message, options = {}) => notificationSystem.error(title, message, options);
+window.showWarningNotification = (title, message, options = {}) => notificationSystem.warning(title, message, options);
+window.showInfoNotification = (title, message, options = {}) => notificationSystem.info(title, message, options);
+window.showSecurityNotification = (title, message, options = {}) => notificationSystem.security(title, message, options);
+
+// Auto-show welcome notification
+document.addEventListener('DOMContentLoaded', () => {
+    setTimeout(() => {
+        notificationSystem.success(
+            'Sistema de Utilitários',
+            'Bem-vindo ao centro de controle administrativo do GUTO!',
+            {
+                category: 'Sistema',
+                details: 'Todas as funcionalidades administrativas estão disponíveis.',
+                duration: 8000
+            }
+        );
+    }, 1000);
+});
+</script>
