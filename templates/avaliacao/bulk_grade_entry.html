@@ -1,0 +1,318 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lançamento em Lote - {{ avaliacao.nome }}{% endblock %}
+
+{% block breadcrumbs %}
+<nav class="flex" aria-label="Breadcrumb">
+    <ol class="inline-flex items-center space-x-1 md:space-x-3">
+        <li class="inline-flex items-center">
+            <a href="{% url 'dashboard:home' %}" class="text-gray-700 hover:text-gray-900 inline-flex items-center">
+                <svg class="w-5 h-5 mr-2.5" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                    <path d="m19.707 9.293-2-2-7-7a1 1 0 0 0-1.414 0l-7 7-2 2a1 1 0 0 0 1.414 1.414L2 10.414V18a2 2 0 0 0 2 2h3a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1h3a2 2 0 0 0 2-2v-7.586l.293.293a1 1 0 0 0 1.414-1.414Z"/>
+                </svg>
+                Home
+            </a>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <a href="{% url 'avaliacao:avaliacao_home' %}" class="ml-1 text-gray-700 hover:text-gray-900 md:ml-2">Avaliações</a>
+            </div>
+        </li>
+        <li>
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <a href="{% url 'avaliacao:avaliacao_detail' pk=avaliacao.pk %}" class="ml-1 text-gray-700 hover:text-gray-900 md:ml-2">{{ avaliacao.nome|truncatechars:30 }}</a>
+            </div>
+        </li>
+        <li aria-current="page">
+            <div class="flex items-center">
+                <svg class="rtl:rotate-180 w-3 h-3 text-gray-400 mx-1" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 6 10">
+                    <path stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="m1 9 4-4-4-4"/>
+                </svg>
+                <span class="ml-1 text-gray-500 md:ml-2">Lançamento em Lote</span>
+            </div>
+        </li>
+    </ol>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">
+                    <i class="fas fa-clipboard-list text-indigo-600 mr-3"></i>
+                    Lançamento em Lote
+                </h1>
+                <div class="text-sm text-gray-600 space-y-1">
+                    <p><span class="font-medium">Avaliação:</span> {{ avaliacao.nome }}</p>
+                    <p><span class="font-medium">Turma:</span> {{ avaliacao.turma.nome }}</p>
+                    <p><span class="font-medium">Disciplina:</span> {{ avaliacao.disciplina.nome }}</p>
+                    <p><span class="font-medium">Valor Máximo:</span> {{ avaliacao.valor_maximo }}</p>
+                </div>
+            </div>
+            <div class="text-right">
+                <div class="text-3xl font-bold text-indigo-600">{{ notas.count }}</div>
+                <div class="text-sm text-gray-500">alunos</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Operações em Lote -->
+    <div class="bg-white shadow rounded-lg p-6">
+        <h2 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-magic text-purple-600 mr-2"></i>
+            Operações em Lote
+        </h2>
+        
+        <form method="post" class="space-y-4">
+            {% csrf_token %}
+            
+            <!-- Marcar Presença -->
+            <div class="flex items-center space-x-4 p-4 bg-green-50 rounded-lg">
+                <button type="submit" name="bulk_action" value="set_all_present" 
+                        class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-md transition-colors">
+                    <i class="fas fa-check-circle mr-2"></i>
+                    Marcar Todos Presentes
+                </button>
+                <span class="text-sm text-gray-600">Remove a marcação de ausente de todos os alunos</span>
+            </div>
+
+            <!-- Aplicar Nota Para Todos -->
+            <div class="flex items-center space-x-4 p-4 bg-blue-50 rounded-lg">
+                <div class="flex items-center space-x-2">
+                    <label for="bulk_nota" class="text-sm font-medium text-gray-700">Nota:</label>
+                    <input type="number" name="bulk_nota" id="bulk_nota" 
+                           step="0.1" min="0" max="{{ avaliacao.valor_maximo }}" 
+                           placeholder="0.0" 
+                           class="w-24 px-3 py-2 border border-gray-300 rounded-md focus:ring-indigo-500 focus:border-indigo-500">
+                </div>
+                <button type="submit" name="bulk_action" value="set_grade_all" 
+                        class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors">
+                    <i class="fas fa-edit mr-2"></i>
+                    Aplicar para Todos Presentes
+                </button>
+                <span class="text-sm text-gray-600">Aplica a mesma nota para todos os alunos presentes</span>
+            </div>
+        </form>
+    </div>
+
+    <!-- Lista de Alunos e Notas -->
+    <div class="bg-white shadow rounded-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-900">
+                <i class="fas fa-users text-blue-600 mr-2"></i>
+                Notas dos Alunos
+            </h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Aluno
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Situação
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Nota Atual
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Conceito
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Lançado em
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for nota in notas %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 h-10 w-10">
+                                    <div class="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center">
+                                        <span class="text-sm font-medium text-indigo-800">
+                                            {{ nota.aluno.nome|first }}{{ nota.aluno.nome|slice:"1"|first|default:"" }}
+                                        </span>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">
+                                        {{ nota.aluno.nome }}
+                                    </div>
+                                    <div class="text-sm text-gray-500">
+                                        Matrícula: {{ nota.aluno.matricula|default:"Não informada" }}
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if nota.ausente %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                                    <i class="fas fa-times-circle mr-1"></i>
+                                    Ausente
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    Presente
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if nota.nota is not None %}
+                                <span class="text-sm font-medium text-gray-900">{{ nota.nota|floatformat:1 }}</span>
+                            {% else %}
+                                <span class="text-sm text-gray-400">Não lançada</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if nota.conceito %}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                                    {{ nota.conceito.sigla }}
+                                </span>
+                            {% else %}
+                                <span class="text-sm text-gray-400">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {% if nota.data_lancamento %}
+                                {{ nota.data_lancamento|date:"d/m/Y H:i" }}
+                            {% else %}
+                                <span class="text-gray-400">Pendente</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="px-6 py-4 text-center text-gray-500">
+                            <div class="flex flex-col items-center space-y-3">
+                                <i class="fas fa-clipboard-list text-4xl text-gray-300"></i>
+                                <p>Nenhuma nota encontrada para esta avaliação.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    {% if notas %}
+    <div class="bg-white shadow rounded-lg p-6">
+        <h3 class="text-lg font-semibold text-gray-900 mb-4">
+            <i class="fas fa-chart-bar text-green-600 mr-2"></i>
+            Estatísticas
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="bg-blue-50 p-4 rounded-lg text-center">
+                <div class="text-2xl font-bold text-blue-600">
+                    {{ notas|length }}
+                </div>
+                <div class="text-sm text-gray-600">Total de Alunos</div>
+            </div>
+            <div class="bg-green-50 p-4 rounded-lg text-center">
+                <div class="text-2xl font-bold text-green-600">
+                    {% with presentes=notas|length %}
+                        {% for nota in notas %}
+                            {% if nota.ausente %}
+                                {% with presentes=presentes|add:"-1" %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ presentes }}
+                    {% endwith %}
+                </div>
+                <div class="text-sm text-gray-600">Presentes</div>
+            </div>
+            <div class="bg-red-50 p-4 rounded-lg text-center">
+                <div class="text-2xl font-bold text-red-600">
+                    {% with ausentes=0 %}
+                        {% for nota in notas %}
+                            {% if nota.ausente %}
+                                {% with ausentes=ausentes|add:"1" %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ ausentes }}
+                    {% endwith %}
+                </div>
+                <div class="text-sm text-gray-600">Ausentes</div>
+            </div>
+            <div class="bg-yellow-50 p-4 rounded-lg text-center">
+                <div class="text-2xl font-bold text-yellow-600">
+                    {% with pendentes=0 %}
+                        {% for nota in notas %}
+                            {% if not nota.nota and not nota.ausente %}
+                                {% with pendentes=pendentes|add:"1" %}{% endwith %}
+                            {% endif %}
+                        {% endfor %}
+                        {{ pendentes }}
+                    {% endwith %}
+                </div>
+                <div class="text-sm text-gray-600">Pendentes</div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Ações -->
+    <div class="flex justify-between">
+        <div class="space-x-2">
+            <a href="{% url 'avaliacao:avaliacao_detail' pk=avaliacao.pk %}" 
+               class="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-md transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Voltar para Avaliação
+            </a>
+        </div>
+        <div class="space-x-2">
+            <a href="{% url 'avaliacao:lancar_notas_avaliacao' avaliacao_id=avaliacao.pk %}" 
+               class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-md transition-colors">
+                <i class="fas fa-edit mr-2"></i>
+                Lançamento Individual
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Confirmação para operações em lote
+    const bulkButtons = document.querySelectorAll('button[name="bulk_action"]');
+    bulkButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            const action = this.value;
+            let message = '';
+            
+            if (action === 'set_all_present') {
+                message = 'Tem certeza que deseja marcar todos os alunos como presentes?';
+            } else if (action === 'set_grade_all') {
+                const nota = document.getElementById('bulk_nota').value;
+                if (!nota) {
+                    e.preventDefault();
+                    alert('Por favor, informe a nota para aplicar a todos os alunos.');
+                    return;
+                }
+                message = `Tem certeza que deseja aplicar a nota ${nota} para todos os alunos presentes?`;
+            }
+            
+            if (message && !confirm(message)) {
+                e.preventDefault();
+            }
+        });
+    });
+});
+</script>
+{% endblock %}
