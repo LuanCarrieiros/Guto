@@ -14,7 +14,7 @@
                 <p class="text-gray-600 mt-1">Selecione uma avaliação para lançar as notas de toda a turma</p>
             </div>
             <div class="flex space-x-3">
-                <a href="{% url 'avaliacao:avaliacao_home' %}" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all duration-200">
+                <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all duration-200" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
                     <i class="fas fa-arrow-left mr-2"></i>Voltar
                 </a>
                 <a href="{% url 'avaliacao:avaliacao_create' %}" class="bg-gradient-to-r from-green-600 to-emerald-600 text-white px-6 py-3 rounded-lg hover:from-green-700 hover:to-emerald-700 transition-all duration-200">
