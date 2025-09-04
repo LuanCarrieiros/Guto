@@ -6,22 +6,61 @@
 {% block content %}
 <div class="max-w-6xl mx-auto">
     {% csrf_token %}
-    <!-- Header -->
+    <!-- Header Vibrante -->
     <div class="mb-8">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
-                    <i class="fas fa-pencil-alt text-blue-600 mr-3"></i>
-                    Lançar Notas
-                </h1>
-                <p class="text-gray-600 mt-2">{{ turma.nome }}</p>
+        <div class="bg-gradient-to-r from-orange-500 to-red-600 rounded-xl p-6 text-white shadow-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <span class="text-4xl mr-3">⭐</span>
+                        📝 Lançar Notas
+                    </h1>
+                    <p class="mt-2 text-orange-100">{{ turma.nome }} • {{ turma.get_turno_display }}</p>
+                </div>
+                <a href="{% url 'diario:home' %}" 
+                   class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar ao Diário
+                </a>
             </div>
-            <a href="{% url 'diario:turma' turma.pk %}" 
-               class="btn-voltar flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200" 
-               onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Voltar
-            </a>
+        </div>
+    </div>
+
+    <!-- Busca e Filtros Coloridos -->
+    <div class="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl shadow-lg p-6 mb-6">
+        <h3 class="text-white font-bold text-lg mb-4 text-center">🔍 Encontre e organize suas notas</h3>
+        <div class="flex flex-col lg:flex-row gap-4 items-center">
+            <div class="flex-1">
+                <label for="alunoSearch" class="block text-sm font-medium text-purple-100 mb-2">🎓 Buscar Aluno</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-purple-300"></i>
+                    </div>
+                    <input type="text" id="alunoSearch"
+                           placeholder="Digite o nome do aluno..."
+                           class="w-full pl-10 pr-4 py-3 border-0 rounded-lg focus:outline-none focus:ring-4 focus:ring-white/30 text-lg font-medium shadow-lg">
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <div>
+                    <label for="filtroAvaliacao" class="block text-sm font-medium text-purple-100 mb-2">📊 Avaliação</label>
+                    <select id="filtroAvaliacao" class="px-4 py-3 border-0 rounded-lg focus:outline-none focus:ring-4 focus:ring-white/30 font-medium shadow-lg">
+                        <option value="">Todas as avaliações</option>
+                        {% for avaliacao in avaliacoes %}
+                        <option value="{{ avaliacao.pk }}">{{ avaliacao.nome }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="flex items-end">
+                    <button onclick="limparFiltros()" 
+                            class="inline-flex items-center px-4 py-3 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30 font-medium shadow-lg">
+                        <i class="fas fa-broom mr-2"></i>
+                        Limpar
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -29,62 +68,74 @@
         <!-- Lista de Alunos -->
         <div class="lg:col-span-3">
             {% if alunos %}
-            <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-2xl shadow-2xl p-6">
                 <div class="flex items-center justify-between mb-6">
-                    <h2 class="text-xl font-semibold text-gray-900">Alunos da Turma ({{ alunos|length }})</h2>
+                    <h2 class="text-2xl font-bold text-gray-800 flex items-center">
+                        <span class="text-3xl mr-3">🎓</span>
+                        Alunos da Turma ({{ alunos|length }})
+                    </h2>
+                    <div class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-bold">
+                        <span id="countVisivel">{{ alunos|length }}</span> de {{ alunos|length }} estudantes
+                    </div>
                 </div>
 
-                <div class="overflow-x-auto">
-                    <table class="w-full table-auto">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">#</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aluno</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Matrícula</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Notas Recentes</th>
-                                <th class="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                            </tr>
-                        </thead>
-                        <tbody class="bg-white divide-y divide-gray-200">
-                            {% for aluno in alunos %}
-                            <tr class="hover:bg-gray-50" id="aluno-row-{{ aluno.pk }}">
-                                <td class="px-4 py-4 whitespace-nowrap">
-                                    <div class="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
-                                        {{ forloop.counter }}
+                <div class="space-y-4" id="alunosContainer">
+                    {% for aluno in alunos %}
+                    <div class="bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl p-4 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 aluno-item" 
+                         data-aluno-id="{{ aluno.pk }}" 
+                         data-aluno-nome="{{ aluno.nome|lower }}">
+                        
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <!-- Avatar/Número Colorido -->
+                                <div class="w-12 h-12 bg-gradient-to-br from-emerald-400 to-blue-600 rounded-full flex items-center justify-center text-white font-bold shadow-lg">
+                                    {{ forloop.counter }}
+                                </div>
+
+                                <!-- Info do Aluno -->
+                                <div>
+                                    <h3 class="font-bold text-gray-900 text-lg">{{ aluno.nome }}</h3>
+                                    <p class="text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-full inline-block">📋 {{ aluno.codigo }}</p>
+                                </div>
+                            </div>
+
+                            <!-- Botão de Ação Mais Vibrante -->
+                            <button onclick="abrirModalNota({{ aluno.pk }}, '{{ aluno.nome }}')" 
+                                    class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 transition-all duration-300 font-bold shadow-lg transform hover:scale-105">
+                                <i class="fas fa-star mr-2"></i>
+                                ✨ Lançar Nota
+                            </button>
+                        </div>
+
+                        <!-- Notas Existentes -->
+                        <div class="mt-4 pt-4 border-t border-gray-100">
+                            <div class="flex flex-wrap gap-2" id="notas-aluno-{{ aluno.pk }}">
+                                {% if aluno.notas_existentes %}
+                                    {% for nota in aluno.notas_existentes %}
+                                        <div class="flex items-center bg-green-50 border border-green-200 rounded-lg px-3 py-2" data-avaliacao="{{ nota.avaliacao.id }}">
+                                            <div class="flex-1">
+                                                <div class="text-sm font-medium text-green-800">{{ nota.avaliacao.nome }}</div>
+                                                <div class="text-xs text-green-600">{{ nota.data_lancamento|date:"d/m/Y" }}</div>
+                                            </div>
+                                            <div class="ml-3 flex items-center">
+                                                <span class="text-lg font-bold text-green-800">{{ nota.nota|floatformat:1 }}</span>
+                                                <button onclick="editarNota({{ aluno.pk }}, {{ nota.avaliacao.id }}, {{ nota.nota }}, '{{ aluno.nome }}', '{{ nota.avaliacao.nome }}')" 
+                                                        class="ml-2 text-green-600 hover:text-green-800 transition-colors">
+                                                    <i class="fas fa-edit text-xs"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    <div class="text-sm text-gray-400 italic">
+                                        <i class="fas fa-info-circle mr-1"></i>
+                                        Nenhuma nota lançada ainda
                                     </div>
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap">
-                                    <div class="text-sm font-medium text-gray-900">{{ aluno.nome }}</div>
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap">
-                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-                                        {{ aluno.codigo }}
-                                    </span>
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap">
-                                    <div class="flex flex-wrap gap-1" id="notas-aluno-{{ aluno.pk }}">
-                                        {% if aluno.notas_existentes %}
-                                            {% for nota in aluno.notas_existentes %}
-                                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800" data-avaliacao="{{ nota.avaliacao.id }}">
-                                                    {{ nota.avaliacao.nome|truncatechars:8 }}: {{ nota.nota|floatformat:1 }}
-                                                </span>
-                                            {% endfor %}
-                                        {% else %}
-                                            <span class="text-xs text-gray-400">Nenhuma nota</span>
-                                        {% endif %}
-                                    </div>
-                                </td>
-                                <td class="px-4 py-4 whitespace-nowrap text-center">
-                                    <button onclick="abrirModalNota({{ aluno.pk }}, '{{ aluno.nome }}')" 
-                                            class="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-colors duration-200">
-                                        <i class="fas fa-edit mr-1"></i>
-                                        Notas
-                                    </button>
-                                </td>
-                            </tr>
-                            {% endfor %}
-                        </tbody>
-                    </table>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
                 </div>
             </div>
             {% else %}
@@ -101,62 +152,116 @@
             {% endif %}
         </div>
 
-        <!-- Sidebar com Avaliações -->
+        <!-- Sidebar Colorido com Avaliações -->
         <div class="space-y-6">
-            <!-- Lista de Avaliações -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-list text-blue-600 mr-2"></i>
-                    Avaliações
-                </h3>
+            <!-- Lista de Avaliações Vibrante -->
+            <div class="bg-gradient-to-br from-white to-green-50 border-2 border-green-200 rounded-2xl shadow-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-xl font-bold text-gray-800 flex items-center">
+                        <span class="text-2xl mr-2">📊</span>
+                        ✨ Avaliações
+                    </h3>
+                    <button onclick="criarNovaAvaliacao()" class="bg-gradient-to-r from-green-500 to-emerald-600 text-white p-2 rounded-lg hover:from-green-600 hover:to-emerald-700 transition-all duration-200 shadow-lg">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
                 
                 {% if avaliacoes %}
                 <div class="space-y-3">
                     {% for avaliacao in avaliacoes %}
-                    <div class="p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
-                        <div class="flex items-center justify-between">
-                            <div class="flex-1">
-                                <p class="font-medium text-gray-900 text-sm">{{ avaliacao.nome }}</p>
-                                <p class="text-xs text-gray-600">{{ avaliacao.data_criacao|date:"d/m/Y" }}</p>
-                                {% if avaliacao.disciplina %}
-                                <p class="text-xs text-blue-600">{{ avaliacao.disciplina.nome }}</p>
-                                {% endif %}
+                    <div class="bg-gradient-to-r from-green-50 to-emerald-50 border-2 border-green-200 rounded-xl p-4 hover:shadow-lg hover:scale-[1.02] transition-all duration-300">
+                        <div class="flex items-start justify-between gap-3">
+                            <div class="flex-1 min-w-0">
+                                <p class="font-bold text-gray-900 flex items-center">
+                                    <span class="text-lg mr-2">📝</span>
+                                    {{ avaliacao.nome }}
+                                </p>
+                                <div class="flex items-center gap-2 mt-2 flex-wrap">
+                                    <span class="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full font-medium">
+                                        <i class="fas fa-calendar mr-1"></i>
+                                        {{ avaliacao.data_criacao|date:"d/m/Y" }}
+                                    </span>
+                                    {% if avaliacao.disciplina %}
+                                    <span class="text-xs text-blue-600 bg-blue-100 px-2 py-1 rounded-full font-medium">
+                                        <i class="fas fa-book mr-1"></i>
+                                        {{ avaliacao.disciplina.nome }}
+                                    </span>
+                                    {% endif %}
+                                </div>
                             </div>
-                            <div class="text-right">
-                                <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                    {{ avaliacao.peso|floatformat:1 }}
-                                </span>
+                            <div class="flex-shrink-0 text-right">
+                                <div class="mb-1">
+                                    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-orange-100 text-orange-800">
+                                        💪 Peso {{ avaliacao.peso|floatformat:1 }}
+                                    </span>
+                                </div>
+                                <div class="text-xs text-gray-600 font-medium">
+                                    {{ avaliacao.total_notas_lancadas|default:0 }} nota{{ avaliacao.total_notas_lancadas|pluralize }}
+                                </div>
                             </div>
                         </div>
                     </div>
                     {% endfor %}
                 </div>
                 {% else %}
-                <div class="text-center py-6">
-                    <i class="fas fa-clipboard text-2xl text-gray-400 mb-2"></i>
-                    <p class="text-sm text-gray-600">Nenhuma avaliação criada</p>
+                <div class="text-center py-8">
+                    <i class="fas fa-clipboard text-3xl text-gray-300 mb-3"></i>
+                    <p class="text-sm text-gray-600 mb-4">Nenhuma avaliação criada</p>
+                    <button onclick="criarNovaAvaliacao()" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                        <i class="fas fa-plus mr-1"></i>
+                        Criar primeira avaliação
+                    </button>
                 </div>
                 {% endif %}
             </div>
 
-            <!-- Estatísticas -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                    <i class="fas fa-chart-bar text-purple-600 mr-2"></i>
-                    Estatísticas
+            <!-- Estatísticas Vibrantes -->
+            <div class="bg-gradient-to-br from-white to-yellow-50 border-2 border-yellow-200 rounded-2xl shadow-2xl p-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-6 flex items-center">
+                    <span class="text-2xl mr-3">📈</span>
+                    🌟 Resumo Geral
                 </h3>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Total de Alunos</span>
-                        <span class="font-semibold text-blue-600">{{ alunos|length }}</span>
+                <div class="space-y-4">
+                    <div class="bg-gradient-to-r from-blue-400 to-cyan-500 rounded-xl p-4 text-white shadow-lg">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="text-2xl mr-3">👥</div>
+                                <span class="text-sm font-bold">Total de Alunos</span>
+                            </div>
+                            <span class="text-2xl font-bold">{{ alunos|length }}</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Avaliações</span>
-                        <span class="font-semibold text-green-600">{{ avaliacoes|length }}</span>
+                    
+                    <div class="bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl p-4 text-white shadow-lg">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="text-2xl mr-3">📊</div>
+                                <span class="text-sm font-bold">Avaliações</span>
+                            </div>
+                            <span class="text-2xl font-bold">{{ avaliacoes|length }}</span>
+                        </div>
                     </div>
-                    <div class="flex justify-between items-center">
-                        <span class="text-sm text-gray-600">Turma</span>
-                        <span class="font-semibold text-purple-600">Ativa</span>
+                    
+                    <div class="bg-gradient-to-r from-purple-400 to-pink-500 rounded-xl p-4 text-white shadow-lg">
+                        <div class="flex justify-between items-center">
+                            <div class="flex items-center">
+                                <div class="text-2xl mr-3">⭐</div>
+                                <span class="text-sm font-bold">Notas Lançadas</span>
+                            </div>
+                            <span class="text-2xl font-bold" id="totalNotas">0</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Progresso -->
+                <div class="mt-4 pt-4 border-t border-gray-200">
+                    <div class="flex justify-between text-sm text-gray-600 mb-2">
+                        <span>Progresso das avaliações</span>
+                        <span id="progressoTexto">0%</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500" 
+                             style="width: 0%" id="progressoBarra"></div>
                     </div>
                 </div>
             </div>
@@ -164,26 +269,43 @@
     </div>
 </div>
 
-<!-- Modal para Lançar Nota -->
-<div id="modalNota" class="hidden fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-    <div class="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-md bg-white">
-        <div class="mt-3">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-lg font-medium text-gray-900">Lançar Nota</h3>
-                <button onclick="fecharModalNota()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times"></i>
-                </button>
+<!-- Modal para Lançar/Editar Nota -->
+<div id="modalNota" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+    <div class="flex items-center justify-center min-h-screen px-4">
+        <div class="relative bg-white rounded-xl shadow-2xl w-full max-w-md mx-auto">
+            <!-- Header do Modal -->
+            <div class="bg-gradient-to-r from-blue-500 to-purple-600 text-white px-6 py-4 rounded-t-xl">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas fa-star text-xl mr-3"></i>
+                        <h3 class="text-lg font-semibold" id="modalTitulo">Lançar Nota</h3>
+                    </div>
+                    <button onclick="fecharModalNota()" class="text-white hover:text-gray-200 transition-colors">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
             </div>
             
-            <form id="formNota" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700">Aluno</label>
-                    <input type="text" id="nomeAluno" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm bg-gray-50" readonly>
+            <!-- Corpo do Modal -->
+            <form id="formNota" class="p-6 space-y-6">
+                <!-- Informações do Aluno -->
+                <div class="bg-gray-50 rounded-lg p-4">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Aluno</label>
+                    <div class="flex items-center">
+                        <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm mr-3">
+                            A
+                        </div>
+                        <input type="text" id="nomeAluno" class="flex-1 border-0 bg-transparent text-gray-900 font-medium focus:ring-0" readonly>
+                    </div>
                 </div>
                 
+                <!-- Seleção da Avaliação -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Avaliação</label>
-                    <select id="avaliacaoSelect" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-clipboard-list text-blue-600 mr-1"></i>
+                        Avaliação
+                    </label>
+                    <select id="avaliacaoSelect" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all">
                         <option value="">Selecione uma avaliação</option>
                         {% for avaliacao in avaliacoes %}
                         <option value="{{ avaliacao.pk }}">{{ avaliacao.nome }} (Peso: {{ avaliacao.peso }})</option>
@@ -191,19 +313,54 @@
                     </select>
                 </div>
                 
+                <!-- Input da Nota -->
                 <div>
-                    <label class="block text-sm font-medium text-gray-700">Nota (0 a 10)</label>
-                    <input type="number" id="notaInput" min="0" max="10" step="0.1" 
-                           class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-star text-yellow-500 mr-1"></i>
+                        Nota (0 a 10)
+                    </label>
+                    <div class="relative">
+                        <input type="number" id="notaInput" min="0" max="10" step="0.1" 
+                               placeholder="Digite a nota..."
+                               class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
+                        <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                            <span class="text-gray-400 text-sm font-medium">/10</span>
+                        </div>
+                    </div>
+                    
+                    <!-- Indicador Visual da Nota -->
+                    <div class="mt-3">
+                        <div class="flex justify-between text-xs text-gray-500 mb-1">
+                            <span>0</span>
+                            <span id="notaAtual" class="font-medium text-blue-600">-</span>
+                            <span>10</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div id="barraNota" class="h-2 rounded-full transition-all duration-300" style="width: 0%; background: linear-gradient(90deg, #ef4444 0%, #f59e0b 30%, #10b981 70%, #3b82f6 100%);"></div>
+                        </div>
+                    </div>
                 </div>
                 
-                <div class="flex justify-end space-x-3 pt-4">
+                <!-- Comentário/Observação (opcional) -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        <i class="fas fa-comment text-gray-500 mr-1"></i>
+                        Observação (opcional)
+                    </label>
+                    <textarea id="observacaoNota" rows="3" placeholder="Adicione uma observação sobre esta nota..."
+                              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"></textarea>
+                </div>
+                
+                <!-- Botões de Ação -->
+                <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                     <button type="button" onclick="fecharModalNota()" 
-                            class="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 bg-white hover:bg-gray-50">
+                            class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                        <i class="fas fa-times mr-2"></i>
                         Cancelar
                     </button>
-                    <button type="submit" 
-                            class="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700">
+                    <button type="submit" id="btnSalvarNota"
+                            class="px-6 py-3 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 transition-all">
+                        <i class="fas fa-save mr-2"></i>
                         Salvar Nota
                     </button>
                 </div>
@@ -214,18 +371,140 @@
 
 <script>
 let alunoAtual = null;
+let modoEdicao = false;
+let avaliacaoEditando = null;
 
+// Função para abrir modal para nova nota
 function abrirModalNota(alunoId, nomeAluno) {
     alunoAtual = alunoId;
+    modoEdicao = false;
+    avaliacaoEditando = null;
+    
+    document.getElementById('modalTitulo').textContent = 'Lançar Nova Nota';
     document.getElementById('nomeAluno').value = nomeAluno;
+    document.getElementById('btnSalvarNota').innerHTML = '<i class="fas fa-save mr-2"></i>Salvar Nota';
+    
+    // Reset do form
+    document.getElementById('formNota').reset();
+    document.getElementById('nomeAluno').value = nomeAluno;
+    document.getElementById('avaliacaoSelect').disabled = false;
+    atualizarIndicadorNota('');
+    
     document.getElementById('modalNota').classList.remove('hidden');
-    document.getElementById('notaInput').focus();
+    setTimeout(() => document.getElementById('avaliacaoSelect').focus(), 100);
+}
+
+// Função para editar nota existente
+function editarNota(alunoId, avaliacaoId, notaAtual, nomeAluno, nomeAvaliacao) {
+    alunoAtual = alunoId;
+    modoEdicao = true;
+    avaliacaoEditando = avaliacaoId;
+    
+    document.getElementById('modalTitulo').textContent = 'Editar Nota';
+    document.getElementById('nomeAluno').value = nomeAluno;
+    document.getElementById('avaliacaoSelect').value = avaliacaoId;
+    document.getElementById('avaliacaoSelect').disabled = true;
+    document.getElementById('notaInput').value = notaAtual;
+    document.getElementById('btnSalvarNota').innerHTML = '<i class="fas fa-edit mr-2"></i>Atualizar Nota';
+    
+    atualizarIndicadorNota(notaAtual);
+    
+    document.getElementById('modalNota').classList.remove('hidden');
+    setTimeout(() => document.getElementById('notaInput').focus(), 100);
 }
 
 function fecharModalNota() {
     document.getElementById('modalNota').classList.add('hidden');
     document.getElementById('formNota').reset();
+    document.getElementById('avaliacaoSelect').disabled = false;
     alunoAtual = null;
+    modoEdicao = false;
+    avaliacaoEditando = null;
+    atualizarIndicadorNota('');
+}
+
+// Função para atualizar indicador visual da nota
+function atualizarIndicadorNota(nota) {
+    const notaAtualSpan = document.getElementById('notaAtual');
+    const barraNota = document.getElementById('barraNota');
+    
+    if (nota === '' || nota === null) {
+        notaAtualSpan.textContent = '-';
+        barraNota.style.width = '0%';
+        return;
+    }
+    
+    const notaNum = parseFloat(nota);
+    const porcentagem = (notaNum / 10) * 100;
+    
+    notaAtualSpan.textContent = notaNum.toFixed(1);
+    barraNota.style.width = porcentagem + '%';
+}
+
+// Event listener para atualizar indicador em tempo real
+document.getElementById('notaInput').addEventListener('input', function() {
+    atualizarIndicadorNota(this.value);
+});
+
+// Função para buscar alunos
+document.getElementById('alunoSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('.aluno-item');
+    let count = 0;
+
+    items.forEach(item => {
+        const nomeAluno = item.getAttribute('data-aluno-nome');
+        if (nomeAluno.includes(searchTerm)) {
+            item.style.display = 'block';
+            count++;
+        } else {
+            item.style.display = 'none';
+        }
+    });
+    
+    document.getElementById('countVisivel').textContent = count;
+});
+
+// Função para filtrar por avaliação
+document.getElementById('filtroAvaliacao').addEventListener('change', function() {
+    const avaliacaoId = this.value;
+    const items = document.querySelectorAll('.aluno-item');
+    let count = 0;
+    
+    items.forEach(item => {
+        if (avaliacaoId === '') {
+            item.style.display = 'block';
+            count++;
+        } else {
+            const hasNota = item.querySelector(`[data-avaliacao="${avaliacaoId}"]`);
+            if (hasNota) {
+                item.style.display = 'block';
+                count++;
+            } else {
+                item.style.display = 'none';
+            }
+        }
+    });
+    
+    document.getElementById('countVisivel').textContent = count;
+});
+
+// Função para limpar filtros
+function limparFiltros() {
+    document.getElementById('alunoSearch').value = '';
+    document.getElementById('filtroAvaliacao').value = '';
+    
+    const items = document.querySelectorAll('.aluno-item');
+    items.forEach(item => {
+        item.style.display = 'block';
+    });
+    
+    document.getElementById('countVisivel').textContent = items.length;
+}
+
+// Função placeholder para criar nova avaliação
+function criarNovaAvaliacao() {
+    alert('Funcionalidade para criar nova avaliação será implementada em breve.');
 }
 
 // Fechar modais ao clicar fora
@@ -242,20 +521,42 @@ document.addEventListener('keydown', function(e) {
     }
 });
 
+// Calcular estatísticas iniciais
+function calcularEstatisticas() {
+    const todasNotas = document.querySelectorAll('[data-avaliacao]');
+    const totalAlunos = document.querySelectorAll('.aluno-item').length;
+    const totalAvaliacoes = {{ avaliacoes|length }};
+    const totalPossivel = totalAlunos * totalAvaliacoes;
+    
+    document.getElementById('totalNotas').textContent = todasNotas.length;
+    
+    if (totalPossivel > 0) {
+        const progresso = (todasNotas.length / totalPossivel) * 100;
+        document.getElementById('progressoTexto').textContent = Math.round(progresso) + '%';
+        document.getElementById('progressoBarra').style.width = progresso + '%';
+    }
+}
+
 // Formulário de nota
 document.getElementById('formNota').addEventListener('submit', function(e) {
     e.preventDefault();
     
     const avaliacao = document.getElementById('avaliacaoSelect').value;
     const nota = document.getElementById('notaInput').value;
+    const observacao = document.getElementById('observacaoNota').value;
     
     if (!avaliacao || !nota) {
         alert('Por favor, selecione uma avaliação e digite a nota.');
         return;
     }
     
+    if (parseFloat(nota) < 0 || parseFloat(nota) > 10) {
+        alert('A nota deve estar entre 0 e 10.');
+        return;
+    }
+    
     // Desabilitar o botão para evitar envio duplo
-    const submitBtn = this.querySelector('button[type="submit"]');
+    const submitBtn = document.getElementById('btnSalvarNota');
     const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
@@ -270,39 +571,59 @@ document.getElementById('formNota').addEventListener('submit', function(e) {
         body: JSON.stringify({
             aluno_id: alunoAtual,
             avaliacao_id: avaliacao,
-            nota: nota
+            nota: nota,
+            observacao: observacao,
+            modo_edicao: modoEdicao
         })
     })
     .then(response => response.json())
     .then(data => {
         if (data.success) {
-            // Atualizar a célula de notas do aluno
-            const notasCell = document.getElementById(`notas-aluno-${alunoAtual}`);
+            // Atualizar a exibição da nota
+            const notasContainer = document.getElementById(`notas-aluno-${alunoAtual}`);
             const avaliacaoNome = document.getElementById('avaliacaoSelect').selectedOptions[0].text.split(' (')[0];
             
             // Verificar se já existe uma nota para esta avaliação
-            const existingBadge = notasCell.querySelector(`[data-avaliacao="${avaliacao}"]`);
-            if (existingBadge) {
-                existingBadge.textContent = `${avaliacaoNome.substring(0,8)}...: ${parseFloat(nota).toFixed(1)}`;
+            let existingDiv = notasContainer.querySelector(`[data-avaliacao="${avaliacao}"]`);
+            
+            if (existingDiv) {
+                // Atualizar nota existente
+                existingDiv.querySelector('.text-lg').textContent = parseFloat(nota).toFixed(1);
+                existingDiv.querySelector('.text-xs').textContent = new Date().toLocaleDateString('pt-BR');
             } else {
                 // Remover "Nenhuma nota" se existir
-                const noNoteText = notasCell.querySelector('.text-gray-400');
+                const noNoteText = notasContainer.querySelector('.text-gray-400');
                 if (noNoteText) {
                     noNoteText.remove();
                 }
                 
-                // Adicionar nova badge
-                const newBadge = document.createElement('span');
-                newBadge.className = 'inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800';
-                newBadge.setAttribute('data-avaliacao', avaliacao);
-                newBadge.textContent = `${avaliacaoNome.substring(0,8)}...: ${parseFloat(nota).toFixed(1)}`;
-                notasCell.appendChild(newBadge);
+                // Adicionar nova nota
+                const newDiv = document.createElement('div');
+                newDiv.className = 'flex items-center bg-green-50 border border-green-200 rounded-lg px-3 py-2';
+                newDiv.setAttribute('data-avaliacao', avaliacao);
+                newDiv.innerHTML = `
+                    <div class="flex-1">
+                        <div class="text-sm font-medium text-green-800">${avaliacaoNome}</div>
+                        <div class="text-xs text-green-600">${new Date().toLocaleDateString('pt-BR')}</div>
+                    </div>
+                    <div class="ml-3 flex items-center">
+                        <span class="text-lg font-bold text-green-800">${parseFloat(nota).toFixed(1)}</span>
+                        <button onclick="editarNota(${alunoAtual}, ${avaliacao}, ${nota}, '${document.getElementById('nomeAluno').value}', '${avaliacaoNome}')" 
+                                class="ml-2 text-green-600 hover:text-green-800 transition-colors">
+                            <i class="fas fa-edit text-xs"></i>
+                        </button>
+                    </div>
+                `;
+                notasContainer.appendChild(newDiv);
             }
             
-            alert(data.message);
+            // Recalcular estatísticas
+            calcularEstatisticas();
+            
+            alert(data.message || (modoEdicao ? 'Nota atualizada com sucesso!' : 'Nota salva com sucesso!'));
             fecharModalNota();
         } else {
-            alert('Erro: ' + data.message);
+            alert('Erro: ' + (data.message || 'Erro desconhecido.'));
         }
     })
     .catch(error => {
@@ -314,6 +635,11 @@ document.getElementById('formNota').addEventListener('submit', function(e) {
         submitBtn.disabled = false;
         submitBtn.innerHTML = originalText;
     });
+});
+
+// Calcular estatísticas ao carregar a página
+document.addEventListener('DOMContentLoaded', function() {
+    calcularEstatisticas();
 });
 </script>
 
