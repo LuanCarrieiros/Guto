@@ -38,31 +38,11 @@ urlpatterns = [
     # Relatórios
     path('relatorios/', views.relatorios, name='relatorios'),
     
-    # Diário Online
-    path('diario/', views.diario_online, name='diario_online'),
-    
     # Gerenciar disciplinas de uma turma específica
     path('turmas/<int:turma_id>/disciplinas/', views.gerenciar_disciplinas_turma, name='gerenciar_disciplinas_turma'),
     
-    # Diário online específico para uma turma
-    path('turmas/<int:turma_id>/diario/', views.diario_online_turma, name='diario_online_turma'),
+    # Diário Eletrônico (URLs movidas para /diario/)
     
-    # Diário Eletrônico - Electronic Class Journal
-    path('diario-dashboard/', views.diario_dashboard, name='diario_dashboard'),
-    path('turmas/<int:turma_id>/diario-completo/', views.turma_diario, name='turma_diario'),
-    path('aulas/registrar/', views.registrar_aula, name='registrar_aula'),
-    path('turmas/<int:turma_id>/aulas/registrar/', views.registrar_aula, name='registrar_aula_turma'),
-    path('aulas/<int:aula_id>/chamada/', views.fazer_chamada, name='fazer_chamada'),
-    path('avaliacoes/criar/<int:turma_id>/', views.criar_avaliacao, name='criar_avaliacao_turma'),
-    
-    # Reports and Analytics
-    path('relatorios/frequencia/', views.relatorio_frequencia, name='relatorio_frequencia'),
-    path('relatorios/frequencia/turma/<int:turma_id>/', views.relatorio_frequencia, name='relatorio_frequencia_turma'),
-    path('relatorios/frequencia/aluno/<int:aluno_id>/', views.relatorio_frequencia, name='relatorio_frequencia_aluno'),
-    path('relatorios/desempenho/', views.relatorio_desempenho, name='relatorio_desempenho'),
-    path('relatorios/boletim/<int:aluno_id>/', views.gerar_boletim, name='gerar_boletim'),
-    
-    # Bulk Operations
-    path('avaliacoes/<int:avaliacao_id>/bulk-notes/', views.bulk_grade_entry, name='bulk_grade_entry'),
-    path('turmas/<int:turma_id>/bulk-attendance/', views.bulk_attendance, name='bulk_attendance'),
+    # AJAX Endpoints
+    path('ajax/anos-series/', views.get_anos_series_por_tipo, name='get_anos_series_por_tipo'),
 ]
