@@ -22,10 +22,17 @@
                 {% endif %}
             </p>
         </div>
+        {% if is_create %}
         <a href="{% url 'alunos:aluno_list' %}" class="btn-secondary">
             <i class="fas fa-arrow-left mr-2"></i>
             Voltar à Lista
         </a>
+        {% else %}
+        <a href="{% url 'alunos:aluno_detail' aluno.codigo %}" class="btn-secondary">
+            <i class="fas fa-arrow-left mr-2"></i>
+            Voltar ao Aluno
+        </a>
+        {% endif %}
     </div>
 
     <!-- Formulário -->
