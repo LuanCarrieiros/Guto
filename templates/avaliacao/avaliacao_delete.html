@@ -361,8 +361,8 @@
         <!-- Form Actions -->
         <div class="bg-gray-50 px-8 py-6 border-t border-gray-200">
             <div class="flex items-center justify-between">
-                <a href="{% url 'avaliacao:avaliacao_detail' avaliacao.pk %}" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">
-                    <i class="fas fa-arrow-left mr-2"></i>Cancelar e Voltar
+                <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar text-gray-600 hover:text-gray-900 transition-colors duration-200" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar
                 </a>
                 
                 <div class="flex items-center space-x-4">
