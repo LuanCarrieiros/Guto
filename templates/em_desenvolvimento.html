@@ -71,10 +71,9 @@
 
         <!-- Botões de ação -->
         <div class="space-y-3">
-            <a href="javascript:history.back()" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-6 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 inline-block">
-                <i class="fas fa-arrow-left mr-2"></i>
-                Voltar
-            </a>
+            <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-6 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 inline-block" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar
+                </a>
             
             <a href="{% url 'dashboard:home' %}" class="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors inline-block">
                 <i class="fas fa-home mr-2"></i>
