@@ -1,0 +1,216 @@
+{% extends 'base.html' %}
+
+{% block title %}Diário Eletrônico - GUTO{% endblock %}
+
+{% block extra_css %}
+<style>
+    .diary-card {
+        transition: all 0.2s ease;
+        border-radius: 12px;
+        border: 1px solid #E5E7EB;
+        background: white;
+    }
+    
+    .diary-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.12);
+        border-color: #cbd5e1;
+    }
+    
+    .turma-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 1.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="p-6 max-w-7xl mx-auto">
+    <!-- Header with Breadcrumb -->
+    <div class="mb-6">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+            <a href="{% url 'avaliacao:avaliacao_home' %}" class="hover:text-blue-600 transition-colors">Avaliação</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-gray-900 font-medium">Diário Eletrônico</span>
+        </nav>
+        
+        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
+            <div class="bg-gradient-to-r from-slate-600 to-slate-700 px-8 py-12 text-white">
+                <div class="text-center">
+                    <div class="w-20 h-20 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-book text-3xl"></i>
+                    </div>
+                    <h1 class="text-4xl font-bold mb-3">Diário Eletrônico</h1>
+                    <p class="text-slate-200 text-lg max-w-2xl mx-auto">
+                        Gerencie a frequência e avaliações de suas turmas de forma prática e eficiente
+                    </p>
+                </div>
+            </div>
+            
+            <!-- Stats Row Simplificado -->
+            <div class="px-8 py-6 border-b border-gray-100">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-slate-700 mb-1">{{ turmas|length }}</div>
+                        <div class="text-sm text-gray-600">Turmas</div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-slate-700 mb-1">
+                            {% widthratio 0 1 0 as total_alunos %}
+                            {% for turma in turmas %}
+                                {% widthratio turma.get_total_alunos|default:0 1 1 as alunos %}
+                                {% widthratio total_alunos|add:alunos 1 1 as total_alunos %}
+                            {% endfor %}
+                            {{ total_alunos|default:0 }}
+                        </div>
+                        <div class="text-sm text-gray-600">Alunos</div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-slate-700 mb-1">87%</div>
+                        <div class="text-sm text-gray-600">Frequência</div>
+                    </div>
+                    
+                    <div class="text-center">
+                        <div class="text-3xl font-bold text-slate-700 mb-1">7.8</div>
+                        <div class="text-sm text-gray-600">Média</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search Simplificado -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+        <div class="max-w-md">
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-gray-400"></i>
+                </div>
+                <input type="text" id="turmaSearch" 
+                       placeholder="Buscar turmas..." 
+                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500">
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Turmas Melhorado -->
+    <div class="turma-grid">
+        {% for turma in turmas %}
+        <div class="diary-card p-6">
+            <!-- Header Simplificado -->
+            <div class="flex items-start justify-between mb-6">
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-1">{{ turma.nome }}</h3>
+                    <div class="flex items-center space-x-3 text-sm text-gray-600">
+                        <span>{{ turma.get_ano_serie_display }}</span>
+                        <span>•</span>
+                        <span>{{ turma.get_turno_display }}</span>
+                        <span>•</span>
+                        <span>{{ turma.get_total_alunos|default:0 }} alunos</span>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    <div class="w-3 h-3 rounded-full {% if turma.diario_fechado %}bg-red-400{% else %}bg-green-400{% endif %}"></div>
+                    <span class="text-sm {% if turma.diario_fechado %}text-red-600{% else %}text-green-600{% endif %}">
+                        {% if turma.diario_fechado %}Fechado{% else %}Ativo{% endif %}
+                    </span>
+                </div>
+            </div>
+
+            <!-- Botão Principal -->
+            <div class="mb-4">
+                <a href="{% url 'diario:turma' turma.pk %}" 
+                   class="block w-full text-center px-4 py-3 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors duration-200">
+                    <i class="fas fa-book mr-2"></i>
+                    Abrir Diário
+                </a>
+            </div>
+
+            <!-- Ações Rápidas -->
+            <div class="grid grid-cols-2 gap-3">
+                <a href="{% url 'diario:chamada' turma.pk %}" 
+                   class="text-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                    <i class="fas fa-user-check mr-1"></i>
+                    Chamada
+                </a>
+                <a href="{% url 'diario:notas' turma.pk %}" 
+                   class="text-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
+                    <i class="fas fa-pencil-alt mr-1"></i>
+                    Notas
+                </a>
+            </div>
+        </div>
+        {% empty %}
+        <!-- Estado Vazio -->
+        <div class="col-span-full">
+            <div class="bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300 p-12 text-center">
+                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-chalkboard-teacher text-blue-600 text-2xl"></i>
+                </div>
+                <h3 class="text-xl font-semibold text-gray-900 mb-2">Nenhuma turma encontrada</h3>
+                <p class="text-gray-600 mb-4">Crie sua primeira turma para começar a utilizar o diário eletrônico</p>
+                <a href="{% url 'avaliacao:turmas_list' %}" 
+                   class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium shadow-lg">
+                    <i class="fas fa-cog mr-2"></i>
+                    Gerenciar Turmas
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// Busca de turmas
+document.getElementById('turmaSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.diary-card');
+    
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            card.style.display = 'block';
+            card.style.opacity = '1';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+});
+
+// Filtros
+document.querySelectorAll('.filter-pill').forEach(pill => {
+    pill.addEventListener('click', function() {
+        // Remover classe active de todos
+        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+        
+        // Adicionar classe active ao clicado
+        this.classList.add('active');
+        
+        const filter = this.dataset.filter;
+        const cards = document.querySelectorAll('.diary-card');
+        
+        cards.forEach(card => {
+            if (filter === 'todos') {
+                card.style.display = 'block';
+            } else {
+                const tipo = card.dataset.turmaTipo;
+                if (tipo && tipo.includes(filter)) {
+                    card.style.display = 'block';
+                } else {
+                    card.style.display = 'none';
+                }
+            }
+        });
+    });
+});
+
+// Filtro de status
+document.getElementById('statusFilter').addEventListener('change', function(e) {
+    // Implementar lógica de filtro por status
+    console.log('Filtro de status:', e.target.value);
+});
+</script>
+{% endblock %}
