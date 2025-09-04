@@ -49,28 +49,31 @@ class Turma(models.Model):
         ('ENSINO_FUNDAMENTAL_I', 'Ensino Fundamental I'),
         ('ENSINO_FUNDAMENTAL_II', 'Ensino Fundamental II'),
         ('ENSINO_MEDIO', 'Ensino Médio'),
-        ('EJA', 'Educação de Jovens e Adultos'),
-        ('TECNICO', 'Técnico'),
     ]
     
+    # Choices organizados por nível de ensino
     ANO_SERIE_CHOICES = [
+        # Educação Infantil
         ('BERÇARIO', 'Berçário'),
         ('MATERNAL_I', 'Maternal I'),
         ('MATERNAL_II', 'Maternal II'),
         ('PRE_I', 'Pré I'),
         ('PRE_II', 'Pré II'),
+        # Ensino Fundamental I (1º ao 5º ano)
         ('1_ANO', '1º Ano'),
         ('2_ANO', '2º Ano'),
         ('3_ANO', '3º Ano'),
         ('4_ANO', '4º Ano'),
         ('5_ANO', '5º Ano'),
+        # Ensino Fundamental II (6º ao 9º ano)
         ('6_ANO', '6º Ano'),
         ('7_ANO', '7º Ano'),
         ('8_ANO', '8º Ano'),
         ('9_ANO', '9º Ano'),
-        ('1_SERIE', '1ª Série'),
-        ('2_SERIE', '2ª Série'),
-        ('3_SERIE', '3ª Série'),
+        # Ensino Médio (1º ao 3º ano)
+        ('1_ANO_EM', '1º Ano'),
+        ('2_ANO_EM', '2º Ano'),
+        ('3_ANO_EM', '3º Ano'),
     ]
     
     TURNO_CHOICES = [
@@ -111,16 +114,34 @@ class Turma(models.Model):
     
     def get_alunos_enturmados(self):
         """Retorna queryset dos alunos enturmados na turma"""
+        from alunos.models import Aluno
         return Aluno.objects.filter(
             enturmacoes__turma=self,
             enturmacoes__ativo=True
-        )
+        ).select_related('usuario_cadastro', 'documentacao', 'transporte')
     
     def get_percentual_ocupacao(self):
         """Retorna o percentual de ocupação da turma"""
         if self.vagas_total == 0:
             return 0
         return round((self.get_total_alunos() * 100) / self.vagas_total)
+    
+    @classmethod
+    def get_anos_series_por_tipo(cls, tipo_ensino):
+        """Retorna as opções de ano/série filtradas por tipo de ensino"""
+        if tipo_ensino == 'EDUCACAO_INFANTIL':
+            return [('BERÇARIO', 'Berçário'), ('MATERNAL_I', 'Maternal I'), 
+                   ('MATERNAL_II', 'Maternal II'), ('PRE_I', 'Pré I'), ('PRE_II', 'Pré II')]
+        elif tipo_ensino == 'ENSINO_FUNDAMENTAL_I':
+            return [('1_ANO', '1º Ano'), ('2_ANO', '2º Ano'), ('3_ANO', '3º Ano'), 
+                   ('4_ANO', '4º Ano'), ('5_ANO', '5º Ano')]
+        elif tipo_ensino == 'ENSINO_FUNDAMENTAL_II':
+            return [('6_ANO', '6º Ano'), ('7_ANO', '7º Ano'), ('8_ANO', '8º Ano'), 
+                   ('9_ANO', '9º Ano')]
+        elif tipo_ensino == 'ENSINO_MEDIO':
+            return [('1_ANO_EM', '1º Ano'), ('2_ANO_EM', '2º Ano'), ('3_ANO_EM', '3º Ano')]
+        else:
+            return []  # Retorna lista vazia para tipos inválidos
     
     def criar_diario_automatico(self):
         """Cria diário automático para a turma com todas as disciplinas ativas"""
