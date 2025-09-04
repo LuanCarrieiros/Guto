@@ -218,6 +218,15 @@ class FuncionarioForm(forms.ModelForm):
             cpf_numeros = ''.join(filter(str.isdigit, cpf))
             if len(cpf_numeros) != 11:
                 raise ValidationError("CPF deve conter 11 dígitos.")
+            
+            # PROTEÇÃO CONTRA DUPLICAÇÃO: Verificar CPF único
+            existing_cpf = DocumentacaoFuncionario.objects.filter(cpf=cpf)
+            if self.instance and self.instance.pk:
+                existing_cpf = existing_cpf.exclude(funcionario=self.instance)
+            
+            if existing_cpf.exists():
+                raise ValidationError("Já existe um funcionário cadastrado com este CPF.")
+                
         return cpf
     
     def clean_telefone(self):
@@ -238,8 +247,18 @@ class FuncionarioForm(forms.ModelForm):
     
     def clean_matricula(self):
         matricula = self.cleaned_data.get('matricula')
-        if matricula and not matricula.isdigit():
-            raise ValidationError("Matrícula deve conter apenas números.")
+        if matricula:
+            if not matricula.isdigit():
+                raise ValidationError("Matrícula deve conter apenas números.")
+            
+            # PROTEÇÃO CONTRA DUPLICAÇÃO: Verificar matrícula única
+            existing_matricula = DadosFuncionais.objects.filter(matricula=matricula)
+            if self.instance and self.instance.pk:
+                existing_matricula = existing_matricula.exclude(funcionario=self.instance)
+            
+            if existing_matricula.exists():
+                raise ValidationError("Já existe um funcionário cadastrado com esta matrícula.")
+                
         return matricula
     
     def clean_numero(self):
@@ -249,35 +268,57 @@ class FuncionarioForm(forms.ModelForm):
         return numero
     
     def save(self, commit=True, user=None):
+        from django.db import transaction
+        
         funcionario = super().save(commit=False)
         
         if user:
             funcionario.usuario_cadastro = user
         
         if commit:
-            funcionario.save()
-            
-            # Criar ou atualizar documentação
-            documentacao, created = DocumentacaoFuncionario.objects.update_or_create(
-                funcionario=funcionario,
-                defaults={
-                    'cpf': self.cleaned_data['cpf'],
-                    'rg': self.cleaned_data['rg']
-                }
-            )
-            
-            # Criar ou atualizar dados funcionais
-            dados_funcionais, created = DadosFuncionais.objects.update_or_create(
-                funcionario=funcionario,
-                defaults={
-                    'matricula': self.cleaned_data['matricula'],
-                    'funcao': self.cleaned_data['funcao'],
-                    'situacao_funcional': self.cleaned_data['situacao_funcional'],
-                    'tipo_vinculo': self.cleaned_data['tipo_vinculo'],
-                    'data_admissao': self.cleaned_data['data_admissao'],
-                    'observacoes': self.cleaned_data['observacoes']
-                }
-            )
+            # PROTEÇÃO CONTRA DUPLICAÇÃO: Usar transação atômica
+            with transaction.atomic():
+                # Verificação final antes de salvar
+                cpf = self.cleaned_data.get('cpf')
+                matricula = self.cleaned_data.get('matricula')
+                
+                if cpf:
+                    existing_cpf = DocumentacaoFuncionario.objects.filter(cpf=cpf)
+                    if self.instance and self.instance.pk:
+                        existing_cpf = existing_cpf.exclude(funcionario=self.instance)
+                    if existing_cpf.exists():
+                        raise ValidationError("CPF já cadastrado no sistema.")
+                
+                if matricula:
+                    existing_matricula = DadosFuncionais.objects.filter(matricula=matricula)
+                    if self.instance and self.instance.pk:
+                        existing_matricula = existing_matricula.exclude(funcionario=self.instance)
+                    if existing_matricula.exists():
+                        raise ValidationError("Matrícula já cadastrada no sistema.")
+                
+                funcionario.save()
+                
+                # Criar ou atualizar documentação
+                documentacao, created = DocumentacaoFuncionario.objects.update_or_create(
+                    funcionario=funcionario,
+                    defaults={
+                        'cpf': self.cleaned_data['cpf'],
+                        'rg': self.cleaned_data['rg']
+                    }
+                )
+                
+                # Criar ou atualizar dados funcionais
+                dados_funcionais, created = DadosFuncionais.objects.update_or_create(
+                    funcionario=funcionario,
+                    defaults={
+                        'matricula': self.cleaned_data['matricula'],
+                        'funcao': self.cleaned_data['funcao'],
+                        'situacao_funcional': self.cleaned_data['situacao_funcional'],
+                        'tipo_vinculo': self.cleaned_data['tipo_vinculo'],
+                        'data_admissao': self.cleaned_data['data_admissao'],
+                        'observacoes': self.cleaned_data['observacoes']
+                    }
+                )
         
         return funcionario
 
