@@ -41,7 +41,8 @@ urlpatterns = [
     # Gerenciar disciplinas de uma turma específica
     path('turmas/<int:turma_id>/disciplinas/', views.gerenciar_disciplinas_turma, name='gerenciar_disciplinas_turma'),
     
-    # Diário Eletrônico (URLs movidas para /diario/)
+    # Diário Eletrônico
+    path('diario/', views.diario_dashboard, name='diario_dashboard'),
     
     # AJAX Endpoints
     path('ajax/anos-series/', views.get_anos_series_por_tipo, name='get_anos_series_por_tipo'),
