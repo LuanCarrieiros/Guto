@@ -514,7 +514,10 @@ def lancar_notas_avaliacao(request, avaliacao_id):
                     nota, created = NotaAvaliacao.objects.get_or_create(
                         avaliacao=avaliacao,
                         aluno=enturmacao.aluno,
-                        defaults={'nota': nota_value}
+                        defaults={
+                            'nota': nota_value,
+                            'usuario_lancamento': request.user
+                        }
                     )
                     
                     if not created:
@@ -755,32 +758,101 @@ def fazer_chamada(request, turma_id):
         enturmacoes__ativo=True
     ).order_by('nome')
     
+    # Obter data da chamada (URL param ou hoje)
+    data_param = request.GET.get('data')
+    if data_param:
+        try:
+            data_chamada = datetime.strptime(data_param, '%Y-%m-%d').date()
+        except ValueError:
+            data_chamada = date.today()
+    else:
+        data_chamada = date.today()
+    
+    # Buscar aula da data específica para carregar status da chamada
+    aula_data = AulaRegistrada.objects.filter(
+        turma=turma,
+        data_aula=data_chamada
+    ).first()
+    
+    # Carregar registros de frequência existentes
+    registros_freq = {}
+    if aula_data:
+        registros = RegistroFrequencia.objects.filter(aula=aula_data)
+        for registro in registros:
+            registros_freq[registro.aluno.codigo] = registro.situacao
+    
+    # Adicionar status atual aos alunos
+    alunos_list = list(alunos)
+    for aluno in alunos_list:
+        aluno.status_atual = registros_freq.get(aluno.codigo, 'PRESENTE')
+    
     if request.method == 'POST':
         # Processar dados da chamada
-        data_aula = request.POST.get('data_aula', date.today())
+        data_aula = request.POST.get('data_aula', date.today().strftime('%Y-%m-%d'))
+        
+        # Debug: verificar dados recebidos
+        print(f"POST data: {request.POST}")
+        for key, value in request.POST.items():
+            if key.startswith('toggle_'):
+                print(f"{key}: {value}")
+        
+        # Primeiro, criar ou buscar uma aula para hoje
+        try:
+            # Criar uma disciplina genérica se não existir
+            disciplina, _ = Disciplina.objects.get_or_create(
+                codigo="CHAMADA",
+                defaults={
+                    'nome': 'Chamada Eletrônica',
+                    'avalia_por_conceito': False,
+                    'carga_horaria': 0,
+                    'ativo': True
+                }
+            )
+            
+            aula, aula_created = AulaRegistrada.objects.get_or_create(
+                turma=turma,
+                disciplina=disciplina,
+                data_aula=data_aula,
+                professor=request.user,
+                defaults={
+                    'horario_inicio': '08:00',
+                    'horario_fim': '12:00', 
+                    'conteudo_programatico': f'Registro de frequência - {date.today().strftime("%d/%m/%Y")}',
+                    'observacoes': 'Aula criada automaticamente pelo sistema de chamada eletrônica',
+                    'chamada_realizada': True
+                }
+            )
+        except Exception as e:
+            messages.error(request, f'Erro ao criar aula: {str(e)}')
+            return redirect('diario:chamada', turma_id=turma_id)
         
         for aluno in alunos:
-            presente = request.POST.get(f'presente_{aluno.pk}') == 'on'
+            # Novo sistema de toggle - o JavaScript envia o status do toggle
+            status_toggle = request.POST.get(f'toggle_{aluno.codigo}', 'presente')
+            presente = status_toggle == 'presente'
             
             # Registrar ou atualizar presença
             registro, created = RegistroFrequencia.objects.get_or_create(
+                aula=aula,  # Agora incluindo a aula obrigatória
                 aluno=aluno,
-                turma=turma,
-                data=data_aula,
-                defaults={'presente': presente}
+                defaults={
+                    'situacao': 'PRESENTE' if presente else 'AUSENTE',
+                    'usuario_registro': request.user
+                }
             )
             
             if not created:
-                registro.presente = presente
+                registro.situacao = 'PRESENTE' if presente else 'AUSENTE'
                 registro.save()
         
-        messages.success(request, 'Chamada registrada com sucesso!')
-        return redirect('avaliacao:diario_turma', turma_id=turma_id)
+        messages.success(request, f'Chamada do dia {date.today().strftime("%d/%m/%Y")} registrada com sucesso!')
+        return redirect('diario:turma', turma_id=turma_id)
     
     context = {
         'turma': turma,
-        'alunos': alunos,
+        'alunos': alunos_list,  # Usar lista com status
         'data_hoje': date.today(),
+        'data_atual': data_chamada.strftime('%Y-%m-%d'),  # Data para o input
         'page_title': f'Chamada - {turma.nome}'
     }
     
@@ -828,14 +900,17 @@ def lancar_notas_diario(request, turma_id):
             avaliacao_id = data.get('avaliacao_id')
             nota_valor = data.get('nota')
             
-            aluno = get_object_or_404(Aluno, id=aluno_id)
+            aluno = get_object_or_404(Aluno, codigo=aluno_id)  # Aluno usa 'codigo' como PK
             avaliacao = get_object_or_404(Avaliacao, id=avaliacao_id)
             
             # Criar ou atualizar a nota
             nota_obj, created = NotaAvaliacao.objects.get_or_create(
                 aluno=aluno,
                 avaliacao=avaliacao,
-                defaults={'nota': nota_valor}
+                defaults={
+                    'nota': nota_valor,
+                    'usuario_lancamento': request.user
+                }
             )
             
             if not created:
