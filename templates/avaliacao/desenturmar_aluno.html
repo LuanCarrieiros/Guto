@@ -1,0 +1,165 @@
+{% extends 'base.html' %}
+
+{% block title %}Desenturmar Aluno - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-red-500 to-pink-600 rounded-xl p-6 text-white shadow-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <span class="text-4xl mr-3">⚠️</span>
+                        Desenturmar Aluno
+                    </h1>
+                    <p class="mt-2 text-red-100">{{ turma.nome }} • {{ turma.get_turno_display }}</p>
+                </div>
+                <a href="{% url 'avaliacao:turma_detail' turma.pk %}" 
+                   class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar à Turma
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirmação de Desenturmação -->
+    <div class="bg-white rounded-xl shadow-xl border-2 border-red-200">
+        <div class="p-8">
+            <!-- Alerta -->
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <div class="flex items-start">
+                    <div class="flex-shrink-0">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-xl"></i>
+                    </div>
+                    <div class="ml-3">
+                        <h3 class="text-sm font-bold text-red-800">Atenção!</h3>
+                        <p class="text-sm text-red-700 mt-1">
+                            Esta ação irá remover o aluno da turma. Todas as notas e frequências serão mantidas no histórico, mas o aluno não aparecerá mais nas listas ativas da turma.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações do Aluno -->
+            <div class="bg-gradient-to-r from-gray-50 to-blue-50 rounded-lg p-6 mb-6">
+                <h3 class="text-lg font-bold text-gray-800 mb-4 flex items-center">
+                    <i class="fas fa-user text-blue-600 mr-2"></i>
+                    Informações do Aluno
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Nome:</label>
+                        <p class="text-lg font-bold text-gray-900">{{ aluno.nome }}</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Código:</label>
+                        <p class="text-lg font-bold text-gray-900">{{ aluno.codigo }}</p>
+                    </div>
+                    {% if aluno.data_nascimento %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Data de Nascimento:</label>
+                        <p class="text-lg text-gray-900">{{ aluno.data_nascimento|date:"d/m/Y" }}</p>
+                    </div>
+                    {% endif %}
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700">Turma:</label>
+                        <p class="text-lg text-gray-900">{{ turma.nome }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pergunta de Confirmação -->
+            <div class="text-center mb-8">
+                <h2 class="text-2xl font-bold text-gray-800 mb-3">
+                    Tem certeza que deseja desenturmar este aluno?
+                </h2>
+                <p class="text-gray-600">
+                    Esta ação pode ser revertida enturmando o aluno novamente.
+                </p>
+            </div>
+
+            <!-- Campo de Confirmação -->
+            <div class="mb-8">
+                <div class="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6">
+                    <label class="block text-sm font-bold text-gray-800 mb-3">
+                        <i class="fas fa-shield-alt text-yellow-600 mr-2"></i>
+                        Para confirmar a desenturmação, digite <strong class="text-red-600">"confirmo"</strong> no campo abaixo:
+                    </label>
+                    <input type="text" id="confirmacaoInput" 
+                           class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-red-500 focus:ring-2 focus:ring-red-200 transition-all duration-200 font-medium text-center text-lg"
+                           placeholder="Digite: confirmo"
+                           autocomplete="off">
+                </div>
+            </div>
+
+            <!-- Botões de Ação -->
+            <form method="post" id="formDesenturmar">
+                {% csrf_token %}
+                <div class="flex items-center justify-center gap-4">
+                    <a href="{% url 'avaliacao:turmas_list' %}" 
+                       class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium">
+                        <i class="fas fa-times mr-2"></i>
+                        Cancelar
+                    </a>
+                    
+                    <button type="submit" id="btnDesenturmar" disabled
+                            class="px-6 py-3 bg-gradient-to-r from-gray-400 to-gray-500 text-white rounded-lg font-bold shadow-lg cursor-not-allowed transition-all duration-200">
+                        <i class="fas fa-user-minus mr-2"></i>
+                        Confirmar Desenturmação
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const confirmacaoInput = document.getElementById('confirmacaoInput');
+    const btnDesenturmar = document.getElementById('btnDesenturmar');
+    
+    // Função para verificar se o texto está correto
+    function verificarConfirmacao() {
+        const texto = confirmacaoInput.value.trim().toLowerCase();
+        
+        if (texto === 'confirmo') {
+            // Habilitar botão
+            btnDesenturmar.disabled = false;
+            btnDesenturmar.classList.remove('from-gray-400', 'to-gray-500', 'cursor-not-allowed');
+            btnDesenturmar.classList.add('from-red-500', 'to-pink-600', 'hover:from-red-600', 'hover:to-pink-700', 'cursor-pointer');
+            
+            // Feedback visual positivo
+            confirmacaoInput.classList.remove('border-gray-300', 'border-red-500');
+            confirmacaoInput.classList.add('border-green-500', 'ring-2', 'ring-green-200');
+        } else {
+            // Desabilitar botão
+            btnDesenturmar.disabled = true;
+            btnDesenturmar.classList.remove('from-red-500', 'to-pink-600', 'hover:from-red-600', 'hover:to-pink-700', 'cursor-pointer');
+            btnDesenturmar.classList.add('from-gray-400', 'to-gray-500', 'cursor-not-allowed');
+            
+            // Feedback visual
+            confirmacaoInput.classList.remove('border-green-500', 'ring-green-200');
+            if (texto.length > 0) {
+                confirmacaoInput.classList.remove('border-gray-300');
+                confirmacaoInput.classList.add('border-red-500');
+            } else {
+                confirmacaoInput.classList.remove('border-red-500');
+                confirmacaoInput.classList.add('border-gray-300');
+            }
+        }
+    }
+    
+    // Event listener para verificar a cada tecla digitada
+    confirmacaoInput.addEventListener('input', verificarConfirmacao);
+    
+    // Verificar ao carregar a página
+    verificarConfirmacao();
+    
+    // Dar foco ao campo de confirmação
+    confirmacaoInput.focus();
+});
+</script>
+
+{% endblock %}
