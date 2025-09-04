@@ -428,7 +428,7 @@
                 <a href="{% url 'funcionarios:funcionario_list' %}" class="bg-gray-300 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-400 transition-colors">
                     Cancelar
                 </a>
-                <button type="submit" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200">
+                <button type="submit" id="btnSubmit" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200">
                     <i class="fas fa-save mr-2"></i>
                     {% if funcionario %}Atualizar{% else %}Cadastrar{% endif %}
                 </button>
@@ -606,6 +606,61 @@ document.addEventListener('DOMContentLoaded', function() {
                 }
             }, 100);
         });
+    }
+    
+    // PROTEÇÃO CONTRA DUPLICAÇÃO: Prevenir duplo clique e submissões múltiplas
+    const form = document.querySelector('form');
+    const submitBtn = document.getElementById('btnSubmit');
+    let isSubmitting = false;
+    
+    if (form && submitBtn) {
+        // Desabilitar botão ao clicar
+        submitBtn.addEventListener('click', function(e) {
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+            
+            isSubmitting = true;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+        });
+        
+        // Desabilitar no submit do form
+        form.addEventListener('submit', function(e) {
+            if (isSubmitting && e.submitter === submitBtn) {
+                return; // Deixar prosseguir se já está no processo
+            }
+            
+            if (isSubmitting) {
+                e.preventDefault();
+                return false;
+            }
+            
+            isSubmitting = true;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+            submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+            
+            // Timeout de segurança - reabilitar após 10 segundos se algo der errado
+            setTimeout(() => {
+                if (isSubmitting) {
+                    isSubmitting = false;
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>{% if funcionario %}Atualizar{% else %}Cadastrar{% endif %}';
+                    submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                }
+            }, 10000);
+        });
+        
+        // Reabilitar se houver erro de validação (página recarregou com erros)
+        if (document.querySelector('.bg-red-50')) {
+            isSubmitting = false;
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i class="fas fa-save mr-2"></i>{% if funcionario %}Atualizar{% else %}Cadastrar{% endif %}';
+            submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+        }
     }
 });
 </script>
