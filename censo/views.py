@@ -149,12 +149,12 @@ def exportar_dados(request, tipo):
             'status'
         ))
     elif tipo == 'funcionarios':
-        data = list(Funcionario.objects.values(
+        data = list(Funcionario.objects.select_related('documentacao').values(
             'nome',
-            'cpf',
+            'documentacao__cpf',
             'data_nascimento',
             'tipo_arquivo'
-        ))
+        ).filter(documentacao__isnull=False))
     else:
         data = {'erro': 'Tipo de exportação não reconhecido'}
     
