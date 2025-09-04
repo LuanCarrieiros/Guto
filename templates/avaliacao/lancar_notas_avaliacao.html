@@ -111,7 +111,7 @@
             <nav class="text-sm text-purple-100 mb-3">
                 <a href="{% url 'avaliacao:diario_dashboard' %}" class="hover:text-white">Diário Eletrônico</a>
                 <span class="mx-2">/</span>
-                <a href="{% url 'avaliacao:turma_diario' avaliacao.turma.id %}" class="hover:text-white">{{ avaliacao.turma.nome }}</a>
+                <a href="{% url 'avaliacao:turma_detail' avaliacao.turma.id %}" class="hover:text-white">{{ avaliacao.turma.nome }}</a>
                 <span class="mx-2">/</span>
                 <span>Lançar Notas</span>
             </nav>
@@ -409,7 +409,7 @@
                                 Salvar Notas
                             </button>
                             
-                            <a href="{% url 'avaliacao:turma_diario' avaliacao.turma.id %}" 
+                            <a href="{% url 'avaliacao:turma_detail' avaliacao.turma.id %}" 
                                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-lg transition-colors font-medium flex items-center justify-center space-x-2">
                                 <i class="fas fa-arrow-left"></i>
                                 <span>Voltar</span>
