@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ page_title }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-check-circle text-green-600 mr-3"></i>
+                    Fazer Chamada
+                </h1>
+                <p class="text-gray-600 mt-2">{{ turma.nome }} - Data: {% now "d/m/Y" %}</p>
+            </div>
+            <a href="{% url 'avaliacao:diario_turma' turma.pk %}" 
+               class="btn-voltar flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200" 
+               onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Formulário de Chamada -->
+    {% if alunos %}
+    <form method="post" class="bg-white rounded-xl shadow-lg p-6">
+        {% csrf_token %}
+        <input type="hidden" name="data_aula" value="{% now 'Y-m-d' %}">
+        
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-semibold text-gray-900">Lista de Presença ({{ alunos|length }} alunos)</h2>
+            <div class="flex space-x-3">
+                <button type="button" onclick="marcarTodosPresentes()" 
+                        class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    <i class="fas fa-check-double mr-2"></i>
+                    Todos Presentes
+                </button>
+                <button type="button" onclick="limparChamada()" 
+                        class="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors duration-200">
+                    <i class="fas fa-undo mr-2"></i>
+                    Limpar
+                </button>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            {% for aluno in alunos %}
+            <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors duration-200">
+                <div class="flex items-center">
+                    <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold text-sm">
+                        {{ forloop.counter }}
+                    </div>
+                    <div class="ml-4">
+                        <p class="font-medium text-gray-900">{{ aluno.nome_completo }}</p>
+                        <p class="text-sm text-gray-600">Matrícula: {{ aluno.codigo }}</p>
+                    </div>
+                </div>
+                
+                <!-- Toggle de Presença/Falta -->
+                <div class="flex items-center space-x-4">
+                    <label class="inline-flex items-center">
+                        <input type="checkbox" name="presente_{{ aluno.pk }}" value="on" checked
+                               class="sr-only peer"
+                               onchange="togglePresenca({{ aluno.pk }})">
+                        <div class="relative w-14 h-8 bg-red-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-green-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-7 after:w-6 after:transition-all peer-checked:bg-green-600">
+                        </div>
+                    </label>
+                    
+                    <span id="status_{{ aluno.pk }}" class="px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                        Presente
+                    </span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Resumo e Ações -->
+        <div class="mt-8 p-4 bg-blue-50 rounded-lg">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-6">
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-green-600" id="presentes-count">{{ alunos|length }}</div>
+                        <div class="text-sm text-gray-600">Presentes</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-red-600" id="ausentes-count">0</div>
+                        <div class="text-sm text-gray-600">Ausentes</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl font-bold text-blue-600">{{ alunos|length }}</div>
+                        <div class="text-sm text-gray-600">Total</div>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <a href="{% url 'avaliacao:diario_turma' turma.pk %}" 
+                       class="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                        Cancelar
+                    </a>
+                    <button type="submit" 
+                            class="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200">
+                        <i class="fas fa-save mr-2"></i>
+                        Salvar Chamada
+                    </button>
+                </div>
+            </div>
+        </div>
+    </form>
+    
+    {% else %}
+    <!-- Sem alunos -->
+    <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+        <i class="fas fa-user-slash text-4xl text-gray-400 mb-4"></i>
+        <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum aluno enturmado</h3>
+        <p class="text-gray-600 mb-6">Adicione alunos à turma para fazer a chamada.</p>
+        <a href="{% url 'avaliacao:enturmar_alunos' turma.pk %}" 
+           class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+            <i class="fas fa-user-plus mr-2"></i>
+            Enturmar Alunos
+        </a>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+function togglePresenca(alunoId) {
+    const checkbox = document.querySelector(`input[name="presente_${alunoId}"]`);
+    const status = document.getElementById(`status_${alunoId}`);
+    
+    if (checkbox.checked) {
+        status.textContent = 'Presente';
+        status.className = 'px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800';
+    } else {
+        status.textContent = 'Ausente';
+        status.className = 'px-3 py-1 rounded-full text-sm font-medium bg-red-100 text-red-800';
+    }
+    
+    atualizarContadores();
+}
+
+function marcarTodosPresentes() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = true;
+        const alunoId = checkbox.name.replace('presente_', '');
+        togglePresenca(alunoId);
+    });
+}
+
+function limparChamada() {
+    document.querySelectorAll('input[type="checkbox"]').forEach(checkbox => {
+        checkbox.checked = false;
+        const alunoId = checkbox.name.replace('presente_', '');
+        togglePresenca(alunoId);
+    });
+    // Volta para o padrão (todos presentes)
+    setTimeout(() => {
+        marcarTodosPresentes();
+    }, 100);
+}
+
+function atualizarContadores() {
+    const presentes = document.querySelectorAll('input[type="checkbox"]:checked').length;
+    const total = document.querySelectorAll('input[type="checkbox"]').length;
+    const ausentes = total - presentes;
+    
+    document.getElementById('presentes-count').textContent = presentes;
+    document.getElementById('ausentes-count').textContent = ausentes;
+}
+
+// Inicializar contadores
+document.addEventListener('DOMContentLoaded', function() {
+    atualizarContadores();
+});
+</script>
+
+{% endblock %}
