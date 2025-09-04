@@ -1,0 +1,291 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Fazer Chamada - {{ turma.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-user-check text-blue-600 mr-3"></i>
+                    Fazer Chamada
+                </h1>
+                <p class="text-gray-600 mt-2">{{ turma.nome }} • {{ turma.get_turno_display }}</p>
+            </div>
+            <a href="{% url 'diario:turma' turma.pk %}" 
+               class="btn-voltar flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200" 
+               onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-check text-green-600 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-gray-900" id="totalPresentes">0</div>
+            <div class="text-sm text-gray-600">Presentes</div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-times text-red-600 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-gray-900" id="totalAusentes">0</div>
+            <div class="text-sm text-gray-600">Ausentes</div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-exclamation text-yellow-600 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-gray-900" id="totalJustificadas">0</div>
+            <div class="text-sm text-gray-600">Justificadas</div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-percentage text-blue-600 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-gray-900" id="percentualPresenca">100%</div>
+            <div class="text-sm text-gray-600">Frequência</div>
+        </div>
+    </div>
+
+    <!-- Busca e Filtros -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <div class="flex flex-col lg:flex-row gap-4 items-center">
+            <div class="flex-1">
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" id="alunoSearch" 
+                           placeholder="Buscar aluno por nome ou código..." 
+                           class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                </div>
+            </div>
+            
+            <div class="flex gap-3">
+                <button onclick="marcarTodosPresentes()" 
+                        class="inline-flex items-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors border border-green-200 font-medium">
+                    <i class="fas fa-check-double mr-2"></i>
+                    Todos Presentes
+                </button>
+                
+                <button onclick="resetarChamada()" 
+                        class="inline-flex items-center px-4 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 font-medium">
+                    <i class="fas fa-undo mr-2"></i>
+                    Resetar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Alunos -->
+    <form method="post" id="chamadaForm">
+        {% csrf_token %}
+        
+        {% if alunos %}
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h2 class="text-xl font-semibold text-gray-900">Alunos da Turma ({{ alunos|length }})</h2>
+                <div class="text-sm text-gray-600">
+                    Data: <span id="dataAtual"></span>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                {% for aluno in alunos %}
+                <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow aluno-item" 
+                     data-aluno-id="{{ aluno.codigo }}" 
+                     data-status="presente">
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center space-x-4">
+                            <!-- Avatar/Número -->
+                            <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                {{ forloop.counter }}
+                            </div>
+                            
+                            <!-- Info do Aluno -->
+                            <div>
+                                <h3 class="font-medium text-gray-900">{{ aluno.nome }}</h3>
+                                <p class="text-sm text-gray-600">Código: {{ aluno.codigo }}</p>
+                            </div>
+                        </div>
+                        
+                        <!-- Controles de Presença -->
+                        <div class="flex items-center space-x-3">
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="presenca_{{ aluno.codigo }}" value="presente" 
+                                       class="text-green-600 focus:ring-green-500" checked
+                                       onchange="updatePresenca({{ aluno.codigo }}, 'presente')">
+                                <span class="ml-2 text-sm font-medium text-green-700">
+                                    <i class="fas fa-check mr-1"></i>Presente
+                                </span>
+                            </label>
+                            
+                            <label class="inline-flex items-center">
+                                <input type="radio" name="presenca_{{ aluno.codigo }}" value="ausente" 
+                                       class="text-red-600 focus:ring-red-500"
+                                       onchange="updatePresenca({{ aluno.codigo }}, 'ausente')">
+                                <span class="ml-2 text-sm font-medium text-red-700">
+                                    <i class="fas fa-times mr-1"></i>Ausente
+                                </span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Opções para Ausência (inicialmente oculta) -->
+                    <div class="mt-4 space-y-3 hidden opcoes-ausencia" id="opcoes_{{ aluno.codigo }}">
+                        <label class="inline-flex items-center">
+                            <input type="checkbox" name="justificada_{{ aluno.codigo }}" 
+                                   class="text-yellow-600 focus:ring-yellow-500 rounded">
+                            <span class="ml-2 text-sm text-yellow-700">
+                                <i class="fas fa-exclamation-triangle mr-1"></i>Falta Justificada
+                            </span>
+                        </label>
+                        
+                        <textarea name="observacao_{{ aluno.codigo }}" 
+                                  placeholder="Observação sobre a ausência (opcional)..."
+                                  class="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                  rows="2"></textarea>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Botões de Ação -->
+        <div class="flex justify-between mt-8">
+            <a href="{% url 'diario:turma' turma.pk %}" 
+               class="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar
+            </a>
+            
+            <button type="submit" 
+                    class="inline-flex items-center px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
+                <i class="fas fa-save mr-2"></i>Salvar Chamada
+            </button>
+        </div>
+        
+        {% else %}
+        <!-- Estado Vazio -->
+        <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+            <i class="fas fa-user-slash text-4xl text-gray-400 mb-4"></i>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum aluno enturmado</h3>
+            <p class="text-gray-600 mb-6">Adicione alunos à turma para fazer a chamada.</p>
+            <a href="{% url 'avaliacao:enturmar_alunos' turma.pk %}" 
+               class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-user-plus mr-2"></i>Enturmar Alunos
+            </a>
+        </div>
+        {% endif %}
+    </form>
+</div>
+
+<script>
+// Definir data atual
+document.getElementById('dataAtual').textContent = new Date().toLocaleDateString('pt-BR');
+
+// Função para atualizar presença
+function updatePresenca(alunoId, status) {
+    const alunoItem = document.querySelector(`[data-aluno-id="${alunoId}"]`);
+    const opcoes = document.getElementById(`opcoes_${alunoId}`);
+    
+    alunoItem.setAttribute('data-status', status);
+    
+    if (status === 'presente') {
+        alunoItem.classList.remove('border-red-300', 'bg-red-50');
+        alunoItem.classList.add('border-green-300', 'bg-green-50');
+        opcoes.classList.add('hidden');
+        
+        // Limpar justificativa e observação
+        const justificada = alunoItem.querySelector(`input[name="justificada_${alunoId}"]`);
+        const observacao = alunoItem.querySelector(`textarea[name="observacao_${alunoId}"]`);
+        if (justificada) justificada.checked = false;
+        if (observacao) observacao.value = '';
+    } else {
+        alunoItem.classList.remove('border-green-300', 'bg-green-50');
+        alunoItem.classList.add('border-red-300', 'bg-red-50');
+        opcoes.classList.remove('hidden');
+    }
+    
+    atualizarEstatisticas();
+}
+
+// Função para marcar todos como presentes
+function marcarTodosPresentes() {
+    const radiosPresente = document.querySelectorAll('input[type="radio"][value="presente"]');
+    radiosPresente.forEach(radio => {
+        radio.checked = true;
+        const match = radio.name.match(/presenca_(\d+)/);
+        if (match) {
+            updatePresenca(match[1], 'presente');
+        }
+    });
+}
+
+// Função para resetar chamada
+function resetarChamada() {
+    if (confirm('Tem certeza que deseja resetar toda a chamada?')) {
+        marcarTodosPresentes();
+    }
+}
+
+// Função para atualizar estatísticas
+function atualizarEstatisticas() {
+    const items = document.querySelectorAll('.aluno-item');
+    const justificadas = document.querySelectorAll('input[name^="justificada_"]:checked');
+    
+    let presentes = 0;
+    let ausentes = 0;
+    
+    items.forEach(item => {
+        const status = item.getAttribute('data-status');
+        if (status === 'presente') {
+            presentes++;
+        } else {
+            ausentes++;
+        }
+    });
+    
+    const totalJustificadas = justificadas.length;
+    const total = items.length;
+    const percentual = total > 0 ? Math.round((presentes / total) * 100) : 100;
+    
+    document.getElementById('totalPresentes').textContent = presentes;
+    document.getElementById('totalAusentes').textContent = ausentes;
+    document.getElementById('totalJustificadas').textContent = totalJustificadas;
+    document.getElementById('percentualPresenca').textContent = percentual + '%';
+}
+
+// Busca de alunos
+document.getElementById('alunoSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const items = document.querySelectorAll('.aluno-item');
+    
+    items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            item.style.display = 'block';
+        } else {
+            item.style.display = 'none';
+        }
+    });
+});
+
+// Inicializar estatísticas
+document.addEventListener('DOMContentLoaded', function() {
+    atualizarEstatisticas();
+});
+</script>
+{% endblock %}
