@@ -65,6 +65,19 @@
                         <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
                         <p class="text-sm font-medium">{{ avaliacoes.count }} avaliação{{ avaliacoes.count|pluralize:"ões" }} cadastrada{{ avaliacoes.count|pluralize:"s" }}</p>
                     </div>
+                    
+                    <!-- Botões de Ação -->
+                    <div class="flex items-center space-x-3 mt-4">
+                        <a href="{% url 'avaliacao:avaliacao_home' %}" class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all duration-200">
+                            <i class="fas fa-arrow-left mr-2"></i>Voltar
+                        </a>
+                        <a href="{% url 'avaliacao:relatorios' %}" class="bg-blue-600 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white px-4 py-2 rounded-lg hover:bg-opacity-100 transition-all duration-200">
+                            <i class="fas fa-chart-bar mr-2"></i>Relatórios
+                        </a>
+                        <a href="{% url 'avaliacao:avaliacao_create' %}" class="bg-purple-600 bg-opacity-90 backdrop-filter backdrop-blur-lg text-white px-4 py-2 rounded-lg hover:bg-opacity-100 transition-all duration-200">
+                            <i class="fas fa-plus mr-2"></i>Nova Avaliação
+                        </a>
+                    </div>
                 </div>
                 <div class="hidden lg:block no-print">
                     <div class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg rounded-3xl p-8 floating-element">
@@ -74,11 +87,6 @@
             </div>
         </div>
         
-        <div class="no-print absolute top-4 right-4">
-            <a href="{% url 'avaliacao:avaliacao_create' %}" class="bg-white bg-opacity-20 backdrop-filter backdrop-blur-lg text-white px-4 py-2 rounded-lg hover:bg-opacity-30 transition-all duration-200">
-                <i class="fas fa-plus mr-2"></i>Nova Avaliação
-            </a>
-        </div>
     </div>
 
     <!-- Filters Section -->
@@ -294,21 +302,6 @@
         </div>
     </div>
 
-    <!-- Navigation -->
-    <div class="no-print mt-8 flex items-center justify-between">
-        <a href="{% url 'avaliacao:avaliacao_home' %}" class="text-gray-600 hover:text-gray-900 transition-colors duration-200">
-            <i class="fas fa-arrow-left mr-2"></i>Voltar ao Dashboard
-        </a>
-        
-        <div class="flex space-x-4">
-            <a href="{% url 'avaliacao:relatorios' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
-                <i class="fas fa-chart-bar mr-2"></i>Relatórios
-            </a>
-            <a href="{% url 'avaliacao:avaliacao_create' %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors duration-200">
-                <i class="fas fa-plus mr-2"></i>Nova Avaliação
-            </a>
-        </div>
-    </div>
 </div>
 
 <script>
