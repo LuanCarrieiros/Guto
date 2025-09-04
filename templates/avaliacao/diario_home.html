@@ -1,161 +1,144 @@
 {% extends 'base.html' %}
 
-{% block title %}Diário Eletrônico - GUTO{% endblock %}
-
-{% block extra_css %}
-<style>
-    .diary-card {
-        transition: all 0.2s ease;
-        border-radius: 12px;
-        border: 1px solid #E5E7EB;
-        background: white;
-    }
-    
-    .diary-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 25px -8px rgba(0, 0, 0, 0.12);
-        border-color: #cbd5e1;
-    }
-    
-    .turma-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-        gap: 1.5rem;
-    }
-</style>
-{% endblock %}
+{% block title %}📚 Diário Eletrônico - GUTO{% endblock %}
 
 {% block content %}
-<div class="p-6 max-w-7xl mx-auto">
-    <!-- Header with Breadcrumb -->
-    <div class="mb-6">
+<div class="max-w-7xl mx-auto">
+    <!-- Header Alegre -->
+    <div class="mb-8">
         <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
-            <a href="{% url 'avaliacao:avaliacao_home' %}" class="hover:text-blue-600 transition-colors">Avaliação</a>
+            <a href="{% url 'avaliacao:avaliacao_home' %}" class="hover:text-blue-600 transition-colors">📊 Avaliação</a>
             <i class="fas fa-chevron-right text-xs"></i>
-            <span class="text-gray-900 font-medium">Diário Eletrônico</span>
+            <span class="text-gray-900 font-medium">📚 Diário Eletrônico</span>
         </nav>
         
-        <div class="bg-white rounded-xl shadow-lg border border-gray-100 overflow-hidden">
-            <div class="bg-gradient-to-r from-slate-600 to-slate-700 px-8 py-12 text-white">
-                <div class="text-center">
-                    <div class="w-20 h-20 bg-white bg-opacity-20 rounded-2xl flex items-center justify-center mx-auto mb-6">
-                        <i class="fas fa-book text-3xl"></i>
-                    </div>
-                    <h1 class="text-4xl font-bold mb-3">Diário Eletrônico</h1>
-                    <p class="text-slate-200 text-lg max-w-2xl mx-auto">
-                        Gerencie a frequência e avaliações de suas turmas de forma prática e eficiente
-                    </p>
-                </div>
-            </div>
-            
-            <!-- Stats Row Simplificado -->
-            <div class="px-8 py-6 border-b border-gray-100">
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-slate-700 mb-1">{{ turmas|length }}</div>
-                        <div class="text-sm text-gray-600">Turmas</div>
-                    </div>
-                    
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-slate-700 mb-1">
-                            {% widthratio 0 1 0 as total_alunos %}
-                            {% for turma in turmas %}
-                                {% widthratio turma.get_total_alunos|default:0 1 1 as alunos %}
-                                {% widthratio total_alunos|add:alunos 1 1 as total_alunos %}
-                            {% endfor %}
-                            {{ total_alunos|default:0 }}
-                        </div>
-                        <div class="text-sm text-gray-600">Alunos</div>
-                    </div>
-                    
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-slate-700 mb-1">87%</div>
-                        <div class="text-sm text-gray-600">Frequência</div>
-                    </div>
-                    
-                    <div class="text-center">
-                        <div class="text-3xl font-bold text-slate-700 mb-1">7.8</div>
-                        <div class="text-sm text-gray-600">Média</div>
-                    </div>
-                </div>
+        <div class="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl shadow-2xl p-8 text-white">
+            <div class="text-center">
+                <div class="text-8xl mb-4">📚</div>
+                <h1 class="text-4xl font-bold mb-3">🎉 Diário Eletrônico</h1>
+                <p class="text-white/90 text-lg max-w-2xl mx-auto">
+                    ✨ Gerencie suas turmas com alegria! Acompanhe frequência e notas de forma divertida e eficiente 🌟
+                </p>
             </div>
         </div>
     </div>
 
-    <!-- Search Simplificado -->
-    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
-        <div class="max-w-md">
+    <!-- Estatísticas Coloridas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl shadow-lg p-6 text-center text-white">
+            <div class="text-3xl mb-2">🏫</div>
+            <div class="text-2xl font-bold">{{ turmas|length }}</div>
+            <div class="text-sm text-blue-100">Turmas Ativas</div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg p-6 text-center text-white">
+            <div class="text-3xl mb-2">👥</div>
+            <div class="text-2xl font-bold">
+                {% widthratio 0 1 0 as total_alunos %}
+                {% for turma in turmas %}
+                    {% widthratio turma.get_total_alunos|default:0 1 1 as alunos %}
+                    {% widthratio total_alunos|add:alunos 1 1 as total_alunos %}
+                {% endfor %}
+                {{ total_alunos|default:0 }}
+            </div>
+            <div class="text-sm text-emerald-100">Estudantes</div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl shadow-lg p-6 text-center text-white">
+            <div class="text-3xl mb-2">📊</div>
+            <div class="text-2xl font-bold">95%</div>
+            <div class="text-sm text-purple-100">Frequência</div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-orange-400 to-red-500 rounded-xl shadow-lg p-6 text-center text-white">
+            <div class="text-3xl mb-2">⭐</div>
+            <div class="text-2xl font-bold">8.5</div>
+            <div class="text-sm text-orange-100">Média Geral</div>
+        </div>
+    </div>
+
+    <!-- Busca Colorida -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 mb-8">
+        <div class="max-w-md mx-auto">
+            <h3 class="text-white font-bold text-lg mb-4 text-center">🔍 Encontre sua turma</h3>
             <div class="relative">
-                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <i class="fas fa-search text-gray-400"></i>
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-indigo-300"></i>
                 </div>
                 <input type="text" id="turmaSearch" 
-                       placeholder="Buscar turmas..." 
-                       class="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-500 focus:border-slate-500">
+                       placeholder="Digite o nome da turma..." 
+                       class="w-full pl-12 pr-4 py-4 border-0 rounded-xl focus:outline-none focus:ring-4 focus:ring-white/30 text-lg font-medium shadow-lg">
             </div>
         </div>
     </div>
 
-    <!-- Grid de Turmas Melhorado -->
-    <div class="turma-grid">
+    <!-- Grid de Turmas Colorido -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {% for turma in turmas %}
-        <div class="diary-card p-6">
-            <!-- Header Simplificado -->
+        <div class="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-2xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-300 diary-card">
+            <!-- Header Colorido -->
             <div class="flex items-start justify-between mb-6">
                 <div>
-                    <h3 class="text-xl font-semibold text-gray-900 mb-1">{{ turma.nome }}</h3>
-                    <div class="flex items-center space-x-3 text-sm text-gray-600">
-                        <span>{{ turma.get_ano_serie_display }}</span>
-                        <span>•</span>
-                        <span>{{ turma.get_turno_display }}</span>
-                        <span>•</span>
-                        <span>{{ turma.get_total_alunos|default:0 }} alunos</span>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                        <span class="text-3xl mr-2">🎓</span>
+                        {{ turma.nome }}
+                    </h3>
+                    <div class="flex items-center space-x-2 text-sm">
+                        <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-medium">
+                            📚 {{ turma.get_ano_serie_display }}
+                        </span>
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+                            🕒 {{ turma.get_turno_display }}
+                        </span>
+                    </div>
+                    <div class="mt-2 text-gray-600 font-medium">
+                        👥 {{ turma.get_total_alunos|default:0 }} estudantes
                     </div>
                 </div>
                 <div class="flex items-center space-x-2">
-                    <div class="w-3 h-3 rounded-full {% if turma.diario_fechado %}bg-red-400{% else %}bg-green-400{% endif %}"></div>
-                    <span class="text-sm {% if turma.diario_fechado %}text-red-600{% else %}text-green-600{% endif %}">
-                        {% if turma.diario_fechado %}Fechado{% else %}Ativo{% endif %}
-                    </span>
+                    {% if turma.diario_fechado %}
+                        <div class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">
+                            🔒 Fechado
+                        </div>
+                    {% else %}
+                        <div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">
+                            ✅ Ativo
+                        </div>
+                    {% endif %}
                 </div>
             </div>
 
-            <!-- Botão Principal -->
+            <!-- Botão Principal Colorido -->
             <div class="mb-4">
                 <a href="{% url 'diario:turma' turma.pk %}" 
-                   class="block w-full text-center px-4 py-3 bg-slate-600 hover:bg-slate-700 text-white font-medium rounded-lg transition-colors duration-200">
-                    <i class="fas fa-book mr-2"></i>
-                    Abrir Diário
+                   class="block w-full text-center px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg transform hover:scale-105 text-lg">
+                    📖 Abrir Diário ✨
                 </a>
             </div>
 
-            <!-- Ações Rápidas -->
+            <!-- Ações Rápidas Coloridas -->
             <div class="grid grid-cols-2 gap-3">
                 <a href="{% url 'diario:chamada' turma.pk %}" 
-                   class="text-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
-                    <i class="fas fa-user-check mr-1"></i>
-                    Chamada
+                   class="text-center px-4 py-3 bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white font-bold rounded-xl transition-all duration-300 shadow-md transform hover:scale-105">
+                    📋 Chamada
                 </a>
                 <a href="{% url 'diario:notas' turma.pk %}" 
-                   class="text-center px-3 py-2 bg-gray-50 hover:bg-gray-100 text-gray-700 text-sm font-medium rounded-lg transition-colors duration-200">
-                    <i class="fas fa-pencil-alt mr-1"></i>
-                    Notas
+                   class="text-center px-4 py-3 bg-gradient-to-r from-orange-400 to-red-500 hover:from-orange-500 hover:to-red-600 text-white font-bold rounded-xl transition-all duration-300 shadow-md transform hover:scale-105">
+                    ⭐ Notas
                 </a>
             </div>
         </div>
         {% empty %}
-        <!-- Estado Vazio -->
+        <!-- Estado Vazio Alegre -->
         <div class="col-span-full">
-            <div class="bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300 p-12 text-center">
-                <div class="w-16 h-16 bg-blue-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                    <i class="fas fa-chalkboard-teacher text-blue-600 text-2xl"></i>
-                </div>
-                <h3 class="text-xl font-semibold text-gray-900 mb-2">Nenhuma turma encontrada</h3>
-                <p class="text-gray-600 mb-4">Crie sua primeira turma para começar a utilizar o diário eletrônico</p>
+            <div class="bg-gradient-to-br from-yellow-100 to-orange-100 rounded-3xl border-2 border-dashed border-orange-300 p-12 text-center shadow-lg">
+                <div class="text-8xl mb-6">🎪</div>
+                <h3 class="text-2xl font-bold text-orange-800 mb-3">🎉 Vamos começar a diversão!</h3>
+                <p class="text-orange-700 mb-6 text-lg">Que tal criar sua primeira turma? O diário eletrônico está esperando você! ✨</p>
                 <a href="{% url 'avaliacao:turmas_list' %}" 
-                   class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200 font-medium shadow-lg">
-                    <i class="fas fa-cog mr-2"></i>
-                    Gerenciar Turmas
+                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-xl transform hover:scale-105">
+                    <i class="fas fa-plus-circle mr-3"></i>
+                    🚀 Criar Primeira Turma
                 </a>
             </div>
         </div>
@@ -164,7 +147,7 @@
 </div>
 
 <script>
-// Busca de turmas
+// 🔍 Busca de turmas com animação
 document.getElementById('turmaSearch').addEventListener('input', function(e) {
     const searchTerm = e.target.value.toLowerCase();
     const cards = document.querySelectorAll('.diary-card');
@@ -173,44 +156,59 @@ document.getElementById('turmaSearch').addEventListener('input', function(e) {
         const text = card.textContent.toLowerCase();
         if (text.includes(searchTerm)) {
             card.style.display = 'block';
+            card.style.transform = 'scale(1)';
             card.style.opacity = '1';
         } else {
-            card.style.display = 'none';
+            card.style.transform = 'scale(0.8)';
+            card.style.opacity = '0.5';
+            setTimeout(() => {
+                if (!card.textContent.toLowerCase().includes(searchTerm)) {
+                    card.style.display = 'none';
+                }
+            }, 200);
         }
     });
 });
 
-// Filtros
-document.querySelectorAll('.filter-pill').forEach(pill => {
-    pill.addEventListener('click', function() {
-        // Remover classe active de todos
-        document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+// 🎉 Animação de entrada para os cards
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.diary-card');
+    
+    // Adicionar animação de entrada
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
         
-        // Adicionar classe active ao clicado
-        this.classList.add('active');
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 150);
+    });
+
+    // ✨ Efeitos de hover especiais
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+            this.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)';
+        });
         
-        const filter = this.dataset.filter;
-        const cards = document.querySelectorAll('.diary-card');
-        
-        cards.forEach(card => {
-            if (filter === 'todos') {
-                card.style.display = 'block';
-            } else {
-                const tipo = card.dataset.turmaTipo;
-                if (tipo && tipo.includes(filter)) {
-                    card.style.display = 'block';
-                } else {
-                    card.style.display = 'none';
-                }
-            }
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
         });
     });
 });
 
-// Filtro de status
-document.getElementById('statusFilter').addEventListener('change', function(e) {
-    // Implementar lógica de filtro por status
-    console.log('Filtro de status:', e.target.value);
+// 🎊 Efeito confete quando clica em "Abrir Diário" (só por diversão)
+document.querySelectorAll('a[href*="turma"]').forEach(link => {
+    link.addEventListener('click', function(e) {
+        // Pequena animação de "click"
+        this.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            this.style.transform = 'scale(1)';
+        }, 100);
+    });
 });
 </script>
 {% endblock %}
