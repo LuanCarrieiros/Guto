@@ -1,0 +1,978 @@
+http://127.0.0.1:8000/turmas/diario/turma/5/chamada/ essa aba ficou bem zoada, eu nada funciona nela direito, eu me arrependi de ter mandado voce se inspirar em um exemplo kkk esse ultimo todo preto e escuro nao       
+  achei legal, pode alterar e usar o design que voce achar melhor, normalmente voce acerta e eu corrijo alguns detalhes, deixa funcional e bonitinho e charmoso por favor? no caso me refiro tanto a chamada, quando o      
+  diario, o de lançar nota ta levemente melhor mas ainda nao gostei de algumas coisas
+
+● Read(fazer_chamada_diario.html)
+  ⎿  Read 429 lines (ctrl+r to expand)
+
+● Update(fazer_chamada_diario.html)
+  ⎿  Updated fazer_chamada_diario.html with 52 removals
+        3
+        4    {% block title %}Fazer Chamada - {{ turma.nome }} - GUTO{% endblock %}
+        5
+        6 -  {% block extra_css %}
+        7 -  <style>
+        8 -      .aluno-card {
+        9 -          transition: all 0.2s ease;
+       10 -          border-radius: 8px;
+       11 -          border: 1px solid #e5e7eb;
+       12 -          background: white;
+       13 -      }
+       14 -      
+       15 -      .aluno-card.presente {
+       16 -          border-color: #10b981;
+       17 -          background: #f0fdf4;
+       18 -      }
+       19 -      
+       20 -      .aluno-card.ausente {
+       21 -          border-color: #ef4444;
+       22 -          background: #fef2f2;
+       23 -      }
+       24 -      
+       25 -      .toggle-switch {
+       26 -          width: 44px;
+       27 -          height: 24px;
+       28 -          background: #ef4444;
+       29 -          border-radius: 12px;
+       30 -          cursor: pointer;
+       31 -          transition: all 0.2s ease;
+       32 -          position: relative;
+       33 -      }
+       34 -      
+       35 -      .toggle-switch.presente {
+       36 -          background: #10b981;
+       37 -      }
+       38 -      
+       39 -      .toggle-switch::after {
+       40 -          content: '';
+       41 -          position: absolute;
+       42 -          width: 18px;
+       43 -          height: 18px;
+       44 -          background: white;
+       45 -          border-radius: 50%;
+       46 -          top: 3px;
+       47 -          left: 3px;
+       48 -          transition: all 0.2s ease;
+       49 -          box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+       50 -      }
+       51 -      
+       52 -      .toggle-switch.presente::after {
+       53 -          transform: translateX(20px);
+       54 -      }
+       55 -  </style>
+       56 -  {% endblock %}
+       57 -  
+        6    {% block content %}
+        7    <div class="p-6 max-w-7xl mx-auto">
+        8        <!-- Header with Breadcrumb -->
+
+● Update(fazer_chamada_diario.html)
+  ⎿  Updated fazer_chamada_diario.html with 62 additions and 84 removals
+        4    {% block title %}Fazer Chamada - {{ turma.nome }} - GUTO{% endblock %}
+        5
+        6    {% block content %}
+        7 -  <div class="p-6 max-w-7xl mx-auto">
+        8 -      <!-- Header with Breadcrumb -->
+        9 -      <div class="mb-6">
+       10 -          <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+       11 -              <a href="{% url 'avaliacao:avaliacao_home' %}" class="hover:text-blue-600 transition-colors">Avaliação</a>
+       12 -              <i class="fas fa-chevron-right text-xs"></i>
+       13 -              <a href="{% url 'avaliacao:diario_dashboard' %}" class="hover:text-blue-600 transition-colors">Diário Eletrônico</a>
+       14 -              <i class="fas fa-chevron-right text-xs"></i>
+       15 -              <a href="{% url 'diario:turma' turma.pk %}" class="hover:text-blue-600 transition-colors">{{ turma.nome }}</a>
+       16 -              <i class="fas fa-chevron-right text-xs"></i>
+       17 -              <span class="text-gray-900 font-medium">Fazer Chamada</span>
+       18 -          </nav>
+        7 +  <div class="max-w-6xl mx-auto">
+        8 +      <!-- Header -->
+        9 +      <div class="mb-8">
+       10 +          <div class="flex items-center justify-between">
+       11 +              <div>
+       12 +                  <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+       13 +                      <i class="fas fa-user-check text-blue-600 mr-3"></i>
+       14 +                      Fazer Chamada
+       15 +                  </h1>
+       16 +                  <p class="text-gray-600 mt-2">{{ turma.nome }} • {{ turma.get_turno_display }}</p>
+       17 +              </div>
+       18 +              <a href="{% url 'diario:turma' turma.pk %}" 
+       19 +                 class="btn-voltar flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200" 
+       20 +                 onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+       21 +                  <i class="fas fa-arrow-left mr-2"></i>
+       22 +                  Voltar
+       23 +              </a>
+       24 +          </div>
+       25 +      </div>
+       26 +  
+       27 +      <!-- Estatísticas -->
+       28 +      <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+       29 +          <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+       30 +              <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+       31 +                  <i class="fas fa-check text-green-600 text-xl"></i>
+       32 +              </div>
+       33 +              <div class="text-2xl font-bold text-gray-900" id="totalPresentes">0</div>
+       34 +              <div class="text-sm text-gray-600">Presentes</div>
+       35 +          </div>
+       36
+       37 -          <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+       38 -              <div class="bg-gradient-to-r from-green-500 to-emerald-600 px-6 py-8 text-white">
+       39 -                  <div class="flex items-center justify-between">
+       40 -                      <div class="flex items-center space-x-4">
+       41 -                          <div class="w-16 h-16 bg-white bg-opacity-20 rounded-xl flex items-center justify-center">
+       42 -                              <i class="fas fa-user-check text-2xl"></i>
+       43 -                          </div>
+       44 -                          <div>
+       45 -                              <h1 class="text-3xl font-bold">Fazer Chamada</h1>
+       46 -                              <p class="text-green-100 mt-1">{{ turma.nome }} • {{ turma.get_turno_display }}</p>
+       47 -                              <p class="text-green-200 text-sm mt-1">Data: <span id="dataAtual"></span></p>
+       48 -                          </div>
+       49 -                      </div>
+       50 -                      <div class="text-right">
+       51 -                          <button onclick="history.back()" class="bg-white bg-opacity-20 hover:bg-opacity-30 px-6 py-3 rounded-xl transition-all duration-200 backdrop-blur">
+       52 -                              <i class="fas fa-arrow-left mr-2"></i>Voltar
+       53 -                          </button>
+       54 -                      </div>
+       55 -                  </div>
+       37 +          <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+       38 +              <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+       39 +                  <i class="fas fa-times text-red-600 text-xl"></i>
+       40                </div>
+       41 -
+       42 -              <!-- Stats Row -->
+       43 -              <div class="px-6 py-4 bg-gray-50">
+       44 -                  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+       45 -                      <div class="presenca-stats p-4 text-center">
+       46 -                          <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+       47 -                              <i class="fas fa-check text-green-600"></i>
+       48 -                          </div>
+       49 -                          <div class="text-2xl font-bold text-gray-900" id="totalPresentes">0</div>
+       50 -                          <div class="text-sm text-gray-600">Presentes</div>
+       51 -                      </div>
+       52 -
+       53 -                      <div class="presenca-stats p-4 text-center">
+       54 -                          <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+       55 -                              <i class="fas fa-times text-red-600"></i>
+       56 -                          </div>
+       57 -                          <div class="text-2xl font-bold text-gray-900" id="totalAusentes">0</div>
+       58 -                          <div class="text-sm text-gray-600">Ausentes</div>
+       59 -                      </div>
+       60 -
+       61 -                      <div class="presenca-stats p-4 text-center">
+       62 -                          <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+       63 -                              <i class="fas fa-exclamation text-yellow-600"></i>
+       64 -                          </div>
+       65 -                          <div class="text-2xl font-bold text-gray-900" id="totalJustificadas">0</div>
+       66 -                          <div class="text-sm text-gray-600">Justificadas</div>
+       67 -                      </div>
+       68 -
+       69 -                      <div class="presenca-stats p-4 text-center">
+       70 -                          <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-2">
+       71 -                              <i class="fas fa-percentage text-blue-600"></i>
+       72 -                          </div>
+       73 -                          <div class="text-2xl font-bold text-gray-900" id="percentualPresenca">100%</div>
+       74 -                          <div class="text-sm text-gray-600">Frequência</div>
+       75 -                      </div>
+       76 -                  </div>
+       41 +              <div class="text-2xl font-bold text-gray-900" id="totalAusentes">0</div>
+       42 +              <div class="text-sm text-gray-600">Ausentes</div>
+       43 +          </div>
+       44 +
+       45 +          <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+       46 +              <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+       47 +                  <i class="fas fa-exclamation text-yellow-600 text-xl"></i>
+       48                </div>
+       49 +              <div class="text-2xl font-bold text-gray-900" id="totalJustificadas">0</div>
+       50 +              <div class="text-sm text-gray-600">Justificadas</div>
+       51            </div>
+       52 +
+       53 +          <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+       54 +              <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+       55 +                  <i class="fas fa-percentage text-blue-600 text-xl"></i>
+       56 +              </div>
+       57 +              <div class="text-2xl font-bold text-gray-900" id="percentualPresenca">100%</div>
+       58 +              <div class="text-sm text-gray-600">Frequência</div>
+       59 +          </div>
+       60        </div>
+       61
+       62 -      <!-- Search and Filters -->
+       63 -      <div class="search-container p-6 mb-8">
+       64 -          <div class="flex flex-col lg:flex-row gap-4">
+       62 +      <!-- Busca e Filtros -->
+       63 +      <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+       64 +          <div class="flex flex-col lg:flex-row gap-4 items-center">
+       65                <div class="flex-1">
+       66                    <div class="relative">
+       67                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+     ...
+        87                        </div>
+        88                        <input type="text" id="alunoSearch"
+        89                               placeholder="Buscar aluno por nome ou código..."
+        90 -                             class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent">
+        90 +                             class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+        91                    </div>
+        92                </div>
+        93
+        94 -              <div class="flex gap-2">
+        95 -                  <button onclick="marcarTodosPresentes()" class="px-6 py-3 bg-green-50 text-green-700 rounded-xl hover:bg-green-100 transition-colors border border-green-200">
+        96 -                      <i class="fas fa-check-double mr-2"></i>Todos Presentes
+        94 +              <div class="flex gap-3">
+        95 +                  <button onclick="marcarTodosPresentes()" 
+        96 +                          class="inline-flex items-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors border border-green-200 font-medium">
+        97 +                      <i class="fas fa-check-double mr-2"></i>
+        98 +                      Todos Presentes
+        99                    </button>
+       100
+       101 -                  <button onclick="resetarChamada()" class="px-6 py-3 bg-gray-50 text-gray-700 rounded-xl hover:bg-gray-100 transition-colors border border-gray-200">
+       102 -                      <i class="fas fa-undo mr-2"></i>Resetar
+       101 +                  <button onclick="resetarChamada()" 
+       102 +                          class="inline-flex items-center px-4 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 font-medium">
+       103 +                      <i class="fas fa-undo mr-2"></i>
+       104 +                      Resetar
+       105                    </button>
+       106                </div>
+       107            </div>
+       108 -
+       109 -          <!-- Filter Pills -->
+       110 -          <div class="flex flex-wrap gap-2 mt-4">
+       111 -              <span class="filter-pill bg-gray-100 text-gray-700 active" data-filter="todos">Todos os Alunos</span>
+       112 -              <span class="filter-pill bg-green-100 text-green-700" data-filter="presentes">Presentes</span>
+       113 -              <span class="filter-pill bg-red-100 text-red-700" data-filter="ausentes">Ausentes</span>
+       114 -              <span class="filter-pill bg-yellow-100 text-yellow-700" data-filter="justificadas">Justificadas</span>
+       115 -          </div>
+       108        </div>
+       109
+       110        <!-- Formulário de Chamada -->
+
+● Update(fazer_chamada_diario.html)
+  ⎿  Updated fazer_chamada_diario.html with 86 additions and 82 removals
+        89            </div>
+        90        </div>
+        91
+        92 -      <!-- Formulário de Chamada -->
+        93 -      <form method="post" id="chamadaForm" class="space-y-4">
+        92 +      <!-- Lista de Alunos -->
+        93 +      <form method="post" id="chamadaForm">
+        94            {% csrf_token %}
+        95
+        96 -          <!-- Lista de Alunos -->
+        97 -          <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4" id="alunosContainer">
+        98 -              {% for aluno in alunos %}
+        99 -              <div class="aluno-card chamada-card p-4" data-aluno-id="{{ aluno.codigo }}">
+       100 -                  <div class="status-indicator status-presente"></div>
+       101 -
+       102 -                  <div class="flex items-center space-x-4">
+       103 -                      <!-- Avatar do Aluno -->
+       104 -                      <div class="aluno-avatar">
+       105 -                          {% if aluno.foto %}
+       106 -                              <img src="{{ aluno.foto.url }}" alt="{{ aluno.nome }}" class="w-12 h-12 rounded-xl object-cover">
+       107 -                          {% else %}
+       108 -                              {{ aluno.nome|slice:":2"|upper }}
+       109 -                          {% endif %}
+       110 -                      </div>
+        96 +          {% if alunos %}
+        97 +          <div class="bg-white rounded-xl shadow-lg p-6">
+        98 +              <div class="flex items-center justify-between mb-6">
+        99 +                  <h2 class="text-xl font-semibold text-gray-900">Alunos da Turma ({{ alunos|length }})</h2>
+       100 +                  <div class="text-sm text-gray-600">
+       101 +                      Data: <span id="dataAtual"></span>
+       102 +                  </div>
+       103 +              </div>
+       104 +  
+       105 +              <div class="space-y-3">
+       106 +                  {% for aluno in alunos %}
+       107 +                  <div class="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow aluno-item" 
+       108 +                       data-aluno-id="{{ aluno.codigo }}" 
+       109 +                       data-status="presente">
+       110
+       111 -                      <!-- Info do Aluno -->
+       112 -                      <div class="flex-1">
+       113 -                          <h3 class="font-semibold text-gray-900">{{ aluno.nome }}</h3>
+       114 -                          <p class="text-sm text-gray-600">Código: {{ aluno.codigo }}</p>
+       115 -                          {% if aluno.nome_social %}
+       116 -                              <p class="text-xs text-gray-500">Nome social: {{ aluno.nome_social }}</p>
+       117 -                          {% endif %}
+       111 +                      <div class="flex items-center justify-between">
+       112 +                          <div class="flex items-center space-x-4">
+       113 +                              <!-- Avatar/Número -->
+       114 +                              <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+       115 +                                  {{ forloop.counter }}
+       116 +                              </div>
+       117 +
+       118 +                              <!-- Info do Aluno -->
+       119 +                              <div>
+       120 +                                  <h3 class="font-medium text-gray-900">{{ aluno.nome }}</h3>
+       121 +                                  <p class="text-sm text-gray-600">Código: {{ aluno.codigo }}</p>
+       122 +                              </div>
+       123 +                          </div>
+       124 +
+       125 +                          <!-- Controles de Presença -->
+       126 +                          <div class="flex items-center space-x-3">
+       127 +                              <label class="inline-flex items-center">
+       128 +                                  <input type="radio" name="presenca_{{ aluno.codigo }}" value="presente" 
+       129 +                                         class="text-green-600 focus:ring-green-500" checked
+       130 +                                         onchange="updatePresenca({{ aluno.codigo }}, 'presente')">
+       131 +                                  <span class="ml-2 text-sm font-medium text-green-700">
+       132 +                                      <i class="fas fa-check mr-1"></i>Presente
+       133 +                                  </span>
+       134 +                              </label>
+       135 +
+       136 +                              <label class="inline-flex items-center">
+       137 +                                  <input type="radio" name="presenca_{{ aluno.codigo }}" value="ausente" 
+       138 +                                         class="text-red-600 focus:ring-red-500"
+       139 +                                         onchange="updatePresenca({{ aluno.codigo }}, 'ausente')">
+       140 +                                  <span class="ml-2 text-sm font-medium text-red-700">
+       141 +                                      <i class="fas fa-times mr-1"></i>Ausente
+       142 +                                  </span>
+       143 +                              </label>
+       144 +                          </div>
+       145                        </div>
+       146
+       147 -                      <!-- Toggle de Presença -->
+       148 -                      <div class="toggle-switch">
+       149 -                          <input type="checkbox" id="aluno_{{ aluno.codigo }}" 
+       150 -                                 name="presencas" value="{{ aluno.codigo }}" 
+       151 -                                 checked onchange="togglePresenca({{ aluno.codigo }})">
+       152 -                          <label for="aluno_{{ aluno.codigo }}" class="toggle-slider"></label>
+       153 -                      </div>
+       154 -                  </div>
+       155 -
+       156 -                  <!-- Opções Adicionais (aparecem quando ausente) -->
+       157 -                  <div class="mt-3 hidden" id="opcoes_{{ aluno.codigo }}">
+       158 -                      <div class="flex items-center space-x-2 text-sm">
+       159 -                          <label class="flex items-center">
+       147 +                      <!-- Opções para Ausência (inicialmente oculta) -->
+       148 +                      <div class="mt-4 space-y-3 hidden opcoes-ausencia" id="opcoes_{{ aluno.codigo }}">
+       149 +                          <label class="inline-flex items-center">
+       150                                <input type="checkbox" name="justificada_{{ aluno.codigo }}"
+       151 -                                     class="mr-2 rounded text-yellow-600 focus:ring-yellow-500"
+       152 -                                     onchange="toggleJustificada({{ aluno.codigo }})">
+       153 -                              <span class="text-yellow-700">Falta Justificada</span>
+       151 +                                     class="text-yellow-600 focus:ring-yellow-500 rounded">
+       152 +                              <span class="ml-2 text-sm text-yellow-700">
+       153 +                                  <i class="fas fa-exclamation-triangle mr-1"></i>Falta Justificada
+       154 +                              </span>
+       155                            </label>
+       156 +
+       157 +                          <textarea name="observacao_{{ aluno.codigo }}" 
+       158 +                                    placeholder="Observação sobre a ausência (opcional)..."
+       159 +                                    class="w-full p-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+       160 +                                    rows="2"></textarea>
+       161                        </div>
+       162 -
+       163 -                      <textarea name="observacao_{{ aluno.codigo }}" 
+       164 -                                placeholder="Observação (opcional)..."
+       165 -                                class="w-full mt-2 p-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-yellow-500 focus:border-transparent"
+       166 -                                rows="2"></textarea>
+       162                    </div>
+       163 -
+       164 -                  <!-- Histórico de Frequência -->
+       165 -                  <div class="mt-3 pt-3 border-t border-gray-200">
+       166 -                      <div class="flex items-center justify-between text-xs text-gray-500">
+       167 -                          <span>Freq. no mês:</span>
+       168 -                          <span class="font-medium">{{ aluno.frequencia_mes|default:"95" }}%</span>
+       169 -                      </div>
+       170 -                      <div class="w-full bg-gray-200 rounded-full h-1 mt-1">
+       171 -                          <div class="bg-gradient-to-r from-green-500 to-emerald-500 h-1 rounded-full" 
+       172 -                               style="width: {{ aluno.frequencia_mes|default:'95' }}%"></div>
+       173 -                      </div>
+       174 -                  </div>
+       163 +                  {% endfor %}
+       164                </div>
+       165 -              {% empty %}
+       166 -              <!-- Estado Vazio -->
+       167 -              <div class="col-span-full">
+       168 -                  <div class="bg-gray-50 rounded-2xl border-2 border-dashed border-gray-300 p-12 text-center">
+       169 -                      <div class="w-16 h-16 bg-green-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+       170 -                          <i class="fas fa-user-graduate text-green-600 text-2xl"></i>
+       171 -                      </div>
+       172 -                      <h3 class="text-xl font-semibold text-gray-900 mb-2">Nenhum aluno encontrado</h3>
+       173 -                      <p class="text-gray-600 mb-4">Esta turma ainda não possui alunos enturmados</p>
+       174 -                  </div>
+       175 -              </div>
+       176 -              {% endfor %}
+       165            </div>
+       166 -
+       166 +  
+       167            <!-- Botões de Ação -->
+       168 -          {% if alunos %}
+       169 -          <div class="flex justify-center mt-8">
+       170 -              <div class="flex space-x-4">
+       171 -                  <button type="submit" class="save-button px-8 py-4 text-white rounded-xl font-semibold text-lg shadow-lg">
+       172 -                      <i class="fas fa-save mr-3"></i>Salvar Chamada
+       173 -                  </button>
+       174 -
+       175 -                  <button type="button" onclick="history.back()" 
+       176 -                          class="px-8 py-4 bg-gray-100 text-gray-700 rounded-xl font-semibold text-lg hover:bg-gray-200 transition-colors">
+       177 -                      <i class="fas fa-times mr-3"></i>Cancelar
+       178 -                  </button>
+       179 -              </div>
+       168 +          <div class="flex justify-between mt-8">
+       169 +              <a href="{% url 'diario:turma' turma.pk %}" 
+       170 +                 class="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
+       171 +                  <i class="fas fa-arrow-left mr-2"></i>Voltar
+       172 +              </a>
+       173 +
+       174 +              <button type="submit" 
+       175 +                      class="inline-flex items-center px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
+       176 +                  <i class="fas fa-save mr-2"></i>Salvar Chamada
+       177 +              </button>
+       178            </div>
+       179 +
+       180 +          {% else %}
+       181 +          <!-- Estado Vazio -->
+       182 +          <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+       183 +              <i class="fas fa-user-slash text-4xl text-gray-400 mb-4"></i>
+       184 +              <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum aluno enturmado</h3>
+       185 +              <p class="text-gray-600 mb-6">Adicione alunos à turma para fazer a chamada.</p>
+       186 +              <a href="{% url 'avaliacao:enturmar_alunos' turma.pk %}" 
+       187 +                 class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+       188 +                  <i class="fas fa-user-plus mr-2"></i>Enturmar Alunos
+       189 +              </a>
+       190 +          </div>
+       191            {% endif %}
+       192        </form>
+       193    </div>
+
+● Update(fazer_chamada_diario.html)
+  ⎿  Updated fazer_chamada_diario.html with 32 additions and 100 removals
+       196    // Definir data atual
+       197    document.getElementById('dataAtual').textContent = new Date().toLocaleDateString('pt-BR');
+       198
+       199 -  // Função para alternar presença
+       200 -  function togglePresenca(alunoId) {
+       201 -      const checkbox = document.getElementById(`aluno_${alunoId}`);
+       202 -      const card = checkbox.closest('.aluno-card');
+       199 +  // Função para atualizar presença
+       200 +  function updatePresenca(alunoId, status) {
+       201 +      const alunoItem = document.querySelector(`[data-aluno-id="${alunoId}"]`);
+       202        const opcoes = document.getElementById(`opcoes_${alunoId}`);
+       203 -      const statusIndicator = card.querySelector('.status-indicator');
+       203
+       204 -      if (checkbox.checked) {
+       205 -          // Presente
+       206 -          card.className = 'aluno-card chamada-card p-4 presente';
+       204 +      alunoItem.setAttribute('data-status', status);
+       205 +      
+       206 +      if (status === 'presente') {
+       207 +          alunoItem.classList.remove('border-red-300', 'bg-red-50');
+       208 +          alunoItem.classList.add('border-green-300', 'bg-green-50');
+       209            opcoes.classList.add('hidden');
+       210 -          statusIndicator.className = 'status-indicator status-presente';
+       210
+       211 -          // Limpar justificativa se estava marcada
+       212 -          const justificada = card.querySelector(`input[name="justificada_${alunoId}"]`);
+       211 +          // Limpar justificativa e observação
+       212 +          const justificada = alunoItem.querySelector(`input[name="justificada_${alunoId}"]`);
+       213 +          const observacao = alunoItem.querySelector(`textarea[name="observacao_${alunoId}"]`);
+       214            if (justificada) justificada.checked = false;
+       215 +          if (observacao) observacao.value = '';
+       216        } else {
+       217 -          // Ausente
+       218 -          card.className = 'aluno-card chamada-card p-4 ausente';
+       217 +          alunoItem.classList.remove('border-green-300', 'bg-green-50');
+       218 +          alunoItem.classList.add('border-red-300', 'bg-red-50');
+       219            opcoes.classList.remove('hidden');
+       220 -          statusIndicator.className = 'status-indicator status-ausente';
+       220        }
+       221
+       222        atualizarEstatisticas();
+       223    }
+       224
+       225 -  // Função para alternar justificativa
+       226 -  function toggleJustificada(alunoId) {
+       227 -      const justificada = document.querySelector(`input[name="justificada_${alunoId}"]`);
+       228 -      const card = justificada.closest('.aluno-card');
+       229 -      const statusIndicator = card.querySelector('.status-indicator');
+       230 -      
+       231 -      if (justificada.checked) {
+       232 -          card.className = 'aluno-card chamada-card p-4 falta-justificada';
+       233 -          statusIndicator.className = 'status-indicator status-justificada';
+       234 -      } else {
+       235 -          card.className = 'aluno-card chamada-card p-4 ausente';
+       236 -          statusIndicator.className = 'status-indicator status-ausente';
+       237 -      }
+       238 -      
+       239 -      atualizarEstatisticas();
+       240 -  }
+       241 -  
+       225    // Função para marcar todos como presentes
+       226    function marcarTodosPresentes() {
+       227 -      const checkboxes = document.querySelectorAll('input[name="presencas"]');
+       228 -      checkboxes.forEach(checkbox => {
+       229 -          if (!checkbox.checked) {
+       230 -              checkbox.checked = true;
+       231 -              const alunoId = checkbox.value;
+       232 -              togglePresenca(alunoId);
+       227 +      const radiosPresente = document.querySelectorAll('input[type="radio"][value="presente"]');
+       228 +      radiosPresente.forEach(radio => {
+       229 +          radio.checked = true;
+       230 +          const match = radio.name.match(/presenca_(\d+)/);
+       231 +          if (match) {
+       232 +              updatePresenca(match[1], 'presente');
+       233            }
+       234        });
+       235    }
+     ...
+       254    // Função para resetar chamada
+       255    function resetarChamada() {
+       256        if (confirm('Tem certeza que deseja resetar toda a chamada?')) {
+       257 -          const checkboxes = document.querySelectorAll('input[name="presencas"]');
+       258 -          checkboxes.forEach(checkbox => {
+       259 -              checkbox.checked = true;
+       260 -              const alunoId = checkbox.value;
+       261 -              togglePresenca(alunoId);
+       262 -          });
+       263 -
+       264 -          // Limpar todas as observações
+       265 -          const textareas = document.querySelectorAll('textarea[name^="observacao_"]');
+       266 -          textareas.forEach(textarea => textarea.value = '');
+       257 +          marcarTodosPresentes();
+       258        }
+       259    }
+       260
+       261    // Função para atualizar estatísticas
+       262    function atualizarEstatisticas() {
+       263 -      const checkboxes = document.querySelectorAll('input[name="presencas"]');
+       263 +      const items = document.querySelectorAll('.aluno-item');
+       264        const justificadas = document.querySelectorAll('input[name^="justificada_"]:checked');
+       265
+       266        let presentes = 0;
+       267        let ausentes = 0;
+       268 -      let totalJustificadas = 0;
+       268
+       269 -      checkboxes.forEach(checkbox => {
+       270 -          if (checkbox.checked) {
+       269 +      items.forEach(item => {
+       270 +          const status = item.getAttribute('data-status');
+       271 +          if (status === 'presente') {
+       272                presentes++;
+       273            } else {
+       274                ausentes++;
+       275            }
+       276        });
+       277
+       278 -      totalJustificadas = justificadas.length;
+       279 -      const total = checkboxes.length;
+       278 +      const totalJustificadas = justificadas.length;
+       279 +      const total = items.length;
+       280        const percentual = total > 0 ? Math.round((presentes / total) * 100) : 100;
+       281
+       282        document.getElementById('totalPresentes').textContent = presentes;
+     ...
+       297    // Busca de alunos
+       298    document.getElementById('alunoSearch').addEventListener('input', function(e) {
+       299        const searchTerm = e.target.value.toLowerCase();
+       300 -      const cards = document.querySelectorAll('.aluno-card');
+       300 +      const items = document.querySelectorAll('.aluno-item');
+       301
+       302 -      cards.forEach(card => {
+       303 -          const text = card.textContent.toLowerCase();
+       302 +      items.forEach(item => {
+       303 +          const text = item.textContent.toLowerCase();
+       304            if (text.includes(searchTerm)) {
+       305 -              card.style.display = 'block';
+       306 -              card.style.opacity = '1';
+       305 +              item.style.display = 'block';
+       306            } else {
+       307 -              card.style.display = 'none';
+       307 +              item.style.display = 'none';
+       308            }
+       309        });
+       310    });
+       311
+       312 -  // Filtros
+       313 -  document.querySelectorAll('.filter-pill').forEach(pill => {
+       314 -      pill.addEventListener('click', function() {
+       315 -          // Remover classe active de todos
+       316 -          document.querySelectorAll('.filter-pill').forEach(p => p.classList.remove('active'));
+       317 -
+       318 -          // Adicionar classe active ao clicado
+       319 -          this.classList.add('active');
+       320 -
+       321 -          const filter = this.dataset.filter;
+       322 -          const cards = document.querySelectorAll('.aluno-card');
+       323 -
+       324 -          cards.forEach(card => {
+       325 -              switch(filter) {
+       326 -                  case 'todos':
+       327 -                      card.style.display = 'block';
+       328 -                      break;
+       329 -                  case 'presentes':
+       330 -                      card.style.display = card.classList.contains('presente') ? 'block' : 'none';
+       331 -                      break;
+       332 -                  case 'ausentes':
+       333 -                      card.style.display = card.classList.contains('ausente') ? 'block' : 'none';
+       334 -                      break;
+       335 -                  case 'justificadas':
+       336 -                      card.style.display = card.classList.contains('falta-justificada') ? 'block' : 'none';
+       337 -                      break;
+       338 -              }
+       339 -          });
+       340 -      });
+       341 -  });
+       342 -  
+       312    // Inicializar estatísticas
+       313    document.addEventListener('DOMContentLoaded', function() {
+       314        atualizarEstatisticas();
+       315    });
+       316 -  
+       317 -  // Confirmação antes de sair da página
+       318 -  window.addEventListener('beforeunload', function(e) {
+       319 -      const checkboxes = document.querySelectorAll('input[name="presencas"]:not(:checked)');
+       320 -      if (checkboxes.length > 0) {
+       321 -          e.preventDefault();
+       322 -          e.returnValue = '';
+       323 -          return 'Há alterações não salvas. Deseja realmente sair?';
+       324 -      }
+       325 -  });
+       316    </script>
+       317    {% endblock %}
+       318   \ No newline at end of file
+
+● Read(diario_eletronico_dashboard.html)
+  ⎿  Read 306 lines (ctrl+r to expand)
+
+● Update(diario_eletronico_dashboard.html)
+  ⎿  Updated diario_eletronico_dashboard.html with 1 addition and 36 removals
+        1    {% extends 'base.html' %}
+        2    {% load static %}
+        3
+        4 -  {% block title %}Diário Eletrônico - Dashboard{% endblock %}
+        4 +  {% block title %}Diário Eletrônico - GUTO{% endblock %}
+        5
+        6 -  {% block extra_css %}
+        7 -  <style>
+        8 -  .hero-gradient {
+        9 -      background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #5B73D9 100%);
+       10 -  }
+       11 -  .card-hover {
+       12 -      transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+       13 -  }
+       14 -  .card-hover:hover {
+       15 -      transform: translateY(-8px) scale(1.02);
+       16 -      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+       17 -  }
+       18 -  .floating-animation {
+       19 -      animation: float 6s ease-in-out infinite;
+       20 -  }
+       21 -  @keyframes float {
+       22 -      0%, 100% { transform: translateY(0px); }
+       23 -      50% { transform: translateY(-10px); }
+       24 -  }
+       25 -  .pulse-dot {
+       26 -      animation: pulse 2s infinite;
+       27 -  }
+       28 -  @keyframes pulse {
+       29 -      0%, 100% { opacity: 1; }
+       30 -      50% { opacity: 0.5; }
+       31 -  }
+       32 -  .gradient-text {
+       33 -      background: linear-gradient(135deg, #667eea, #764ba2);
+       34 -      -webkit-background-clip: text;
+       35 -      -webkit-text-fill-color: transparent;
+       36 -      background-clip: text;
+       37 -  }
+       38 -  </style>
+       39 -  {% endblock %}
+       40 -  
+        6    {% block content %}
+        7    <div class="space-y-8">
+        8        <!-- Hero Section -->
+
+● Update(diario_eletronico_dashboard.html)
+  ⎿  Updated diario_eletronico_dashboard.html with 31 additions and 69 removals
+        4    {% block title %}Diário Eletrônico - GUTO{% endblock %}
+        5
+        6    {% block content %}
+        7 -  <div class="space-y-8">
+        8 -      <!-- Hero Section -->
+        9 -      <div class="hero-gradient rounded-3xl p-8 text-white shadow-2xl relative overflow-hidden">
+       10 -          <div class="absolute top-0 right-0 w-64 h-64 bg-white bg-opacity-10 rounded-full -translate-y-32 translate-x-32 floating-animation"></div>
+       11 -          <div class="absolute bottom-0 left-0 w-48 h-48 bg-white bg-opacity-10 rounded-full translate-y-24 -translate-x-24 floating-animation" style="animation-delay: -2s;"></div>
+       12 -
+       13 -          <div class="relative z-10 flex items-center justify-between">
+       14 -              <div class="flex items-center space-x-6">
+       15 -                  <div class="bg-white bg-opacity-20 rounded-2xl p-4 backdrop-blur-sm">
+       16 -                      <i class="fas fa-book-open text-4xl"></i>
+       17 -                  </div>
+       18 -                  <div>
+       19 -                      <h1 class="text-5xl font-bold mb-2">📚 Diário Eletrônico</h1>
+       20 -                      <p class="text-xl text-white text-opacity-90">Sistema integrado para chamada e lançamento de notas</p>
+       21 -                      <div class="flex items-center mt-3 space-x-4">
+       22 -                          <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm backdrop-blur-sm">
+       23 -                              <span class="pulse-dot inline-block w-2 h-2 bg-green-400 rounded-full mr-2"></span>
+       24 -                              Sistema Online
+       25 -                          </span>
+       26 -                          <span class="bg-white bg-opacity-20 px-3 py-1 rounded-full text-sm backdrop-blur-sm">
+       27 -                              {{ user.get_full_name|default:user.username }}
+       28 -                          </span>
+       29 -                      </div>
+       30 -                  </div>
+       31 -              </div>
+        7 +  <div class="max-w-6xl mx-auto">
+        8 +      <!-- Header -->
+        9 +      <div class="mb-8">
+       10 +          <div class="flex items-center justify-between">
+       11                <div>
+       12 -                  <a href="{% url 'avaliacao:avaliacao_home' %}" class="bg-white text-purple-700 px-8 py-4 rounded-2xl font-semibold hover:bg-gray-50 transition-all duration-300 shadow-lg 
+          - hover:shadow-xl transform hover:scale-105">
+       13 -                      <i class="fas fa-arrow-left mr-2"></i> Voltar ao Dashboard
+       14 -                  </a>
+       12 +                  <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+       13 +                      <i class="fas fa-clipboard-list text-blue-600 mr-3"></i>
+       14 +                      Diário Eletrônico
+       15 +                  </h1>
+       16 +                  <p class="text-gray-600 mt-2">Sistema integrado para chamada e lançamento de notas</p>
+       17                </div>
+       18 +              <a href="{% url 'avaliacao:avaliacao_home' %}" 
+       19 +                 class="btn-voltar flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+       20 +                  <i class="fas fa-arrow-left mr-2"></i>
+       21 +                  Voltar
+       22 +              </a>
+       23            </div>
+       24        </div>
+       25
+       26 -      <!-- Estatísticas Rápidas -->
+       27 -      <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+       28 -          <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white card-hover">
+       29 -              <div class="flex items-center justify-between">
+       30 -                  <div>
+       31 -                      <p class="text-blue-100 text-sm font-medium">Turmas Disponíveis</p>
+       32 -                      <p class="text-3xl font-bold">{{ total_turmas }}</p>
+       33 -                  </div>
+       34 -                  <div class="bg-white bg-opacity-20 rounded-xl p-3">
+       35 -                      <i class="fas fa-users text-2xl"></i>
+       36 -                  </div>
+       26 +      <!-- Estatísticas -->
+       27 +      <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+       28 +          <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+       29 +              <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+       30 +                  <i class="fas fa-users text-blue-600 text-xl"></i>
+       31                </div>
+       32 +              <div class="text-2xl font-bold text-gray-900">{{ total_turmas }}</div>
+       33 +              <div class="text-sm text-gray-600">Turmas Ativas</div>
+       34            </div>
+       35
+       36 -          <div class="bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white card-hover">
+       37 -              <div class="flex items-center justify-between">
+       38 -                  <div>
+       39 -                      <p class="text-green-100 text-sm font-medium">Diários Ativos</p>
+       40 -                      <p class="text-3xl font-bold">{{ diarios_ativos }}</p>
+       41 -                  </div>
+       42 -                  <div class="bg-white bg-opacity-20 rounded-xl p-3">
+       43 -                      <i class="fas fa-book text-2xl"></i>
+       44 -                  </div>
+       36 +          <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+       37 +              <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+       38 +                  <i class="fas fa-calendar-check text-green-600 text-xl"></i>
+       39                </div>
+       40 +              <div class="text-2xl font-bold text-gray-900">{{ diarios_ativos|default:total_turmas }}</div>
+       41 +              <div class="text-sm text-gray-600">Diários Ativos</div>
+       42            </div>
+       43
+       44 -          <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white card-hover">
+       45 -              <div class="flex items-center justify-between">
+       46 -                  <div>
+       47 -                      <p class="text-purple-100 text-sm font-medium">Período Atual</p>
+       48 -                      <p class="text-xl font-bold">2025</p>
+       49 -                  </div>
+       50 -                  <div class="bg-white bg-opacity-20 rounded-xl p-3">
+       51 -                      <i class="fas fa-calendar text-2xl"></i>
+       52 -                  </div>
+       44 +          <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+       45 +              <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+       46 +                  <i class="fas fa-graduation-cap text-purple-600 text-xl"></i>
+       47                </div>
+       48 +              <div class="text-2xl font-bold text-gray-900">2025</div>
+       49 +              <div class="text-sm text-gray-600">Período Letivo</div>
+       50            </div>
+       51 -
+       52 -          <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl p-6 text-white card-hover">
+       53 -              <div class="flex items-center justify-between">
+       54 -                  <div>
+       55 -                      <p class="text-orange-100 text-sm font-medium">Status</p>
+       56 -                      <p class="text-lg font-bold">Online</p>
+       57 -                  </div>
+       58 -                  <div class="bg-white bg-opacity-20 rounded-xl p-3">
+       59 -                      <i class="fas fa-wifi text-2xl pulse-dot"></i>
+       60 -                  </div>
+       61 -              </div>
+       62 -          </div>
+       51        </div>
+       52
+       53        <!-- Turmas Layout -->
+
+● Update(diario_eletronico_dashboard.html)
+  ⎿  Updated diario_eletronico_dashboard.html with 53 additions and 104 removals
+        50            </div>
+        51        </div>
+        52
+        53 -      <!-- Turmas Layout -->
+        54 -      <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+        55 -          <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-8 py-6 border-b border-gray-200">
+        56 -              <div class="flex items-center justify-between">
+        57 -                  <div>
+        58 -                      <h2 class="text-3xl font-bold gradient-text flex items-center">
+        59 -                          <i class="fas fa-graduation-cap mr-3 text-blue-600"></i>
+        60 -                          Minhas Turmas
+        61 -                      </h2>
+        62 -                      <p class="text-gray-600 mt-1">Selecione uma turma para acessar o diário eletrônico</p>
+        63 -                  </div>
+        64 -                  <div class="text-right">
+        65 -                      <div class="text-2xl font-bold text-blue-600">{{ total_turmas }}</div>
+        66 -                      <div class="text-sm text-gray-500">Turmas</div>
+        67 -                  </div>
+        68 -              </div>
+        53 +      <!-- Lista de Turmas -->
+        54 +      {% if turmas %}
+        55 +      <div class="bg-white rounded-xl shadow-lg p-6">
+        56 +          <div class="flex items-center justify-between mb-6">
+        57 +              <h2 class="text-xl font-semibold text-gray-900">Turmas Disponíveis</h2>
+        58 +              <span class="text-sm text-gray-600">{{ total_turmas }} turma{{ total_turmas|pluralize }}</span>
+        59            </div>
+        60 -
+        61 -          <div class="p-8">
+        62 -              {% if turmas %}
+        63 -                  <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-8">
+        64 -                      {% for turma in turmas %}
+        65 -                      <div class="group bg-white rounded-2xl border-2 border-gray-200 p-6 card-hover hover:border-blue-300 hover:shadow-2xl relative overflow-hidden">
+        66 -                          <!-- Background Pattern -->
+        67 -                          <div class="absolute top-0 right-0 w-20 h-20 bg-gradient-to-br from-blue-100 to-purple-100 rounded-full -translate-y-10 translate-x-10 opacity-50"></div>
+        68 -
+        69 -                          <div class="relative z-10">
+        70 -                              <!-- Header da Turma -->
+        71 -                              <div class="flex justify-between items-start mb-4">
+        72 -                                  <div class="flex-1">
+        73 -                                      <div class="flex items-center mb-2">
+        74 -                                          <div class="bg-blue-100 rounded-lg p-2 mr-3 group-hover:bg-blue-200 transition-colors">
+        75 -                                              <i class="fas fa-users text-blue-600"></i>
+        76 -                                          </div>
+        77 -                                          <h3 class="text-xl font-bold text-gray-900 group-hover:text-blue-700 transition-colors">{{ turma.nome }}</h3>
+        78 -                                      </div>
+        79 -                                      <p class="text-gray-600 text-sm flex items-center">
+        80 -                                          <i class="fas fa-tag mr-2 text-gray-400"></i>
+        81 -                                          {{ turma.get_tipo_ensino_display }}
+        82 -                                      </p>
+        83 -                                      <p class="text-gray-600 text-sm flex items-center mt-1">
+        84 -                                          <i class="fas fa-clock mr-2 text-gray-400"></i>
+        85 -                                          {{ turma.get_turno_display }}
+        86 -                                      </p>
+        87 -                                  </div>
+        88 -                                  <span class="bg-gray-100 text-gray-800 px-3 py-1 rounded-full text-xs font-semibold group-hover:bg-blue-100 group-hover:text-blue-800 transition-colors">
+        89 -                                      {{ turma.periodo_letivo }}
+        90 -                                  </span>
+        91 -                              </div>
+        60
+        61 -                              <!-- Estatísticas da Turma -->
+        62 -                              <div class="bg-gray-50 rounded-xl p-4 mb-6 group-hover:bg-blue-50 transition-colors">
+        63 -                                  <div class="grid grid-cols-3 gap-4 text-center">
+        64 -                                      <div>
+        65 -                                          <div class="text-2xl font-bold text-green-600">{{ turma.get_total_alunos }}</div>
+        66 -                                          <div class="text-xs text-gray-500 font-medium">Alunos</div>
+        67 -                                      </div>
+        68 -                                      <div>
+        69 -                                          <div class="text-2xl font-bold text-blue-600">{{ turma.vagas_total }}</div>
+        70 -                                          <div class="text-xs text-gray-500 font-medium">Vagas</div>
+        71 -                                      </div>
+        72 -                                      <div>
+        73 -                                          <div class="text-2xl font-bold text-purple-600">{{ turma.get_percentual_ocupacao }}%</div>
+        74 -                                          <div class="text-xs text-gray-500 font-medium">Ocupação</div>
+        75 -                                      </div>
+        76 -                                  </div>
+        77 -
+        78 -                                  <!-- Barra de Progresso -->
+        79 -                                  <div class="mt-3">
+        80 -                                      <div class="w-full bg-gray-200 rounded-full h-2 group-hover:bg-blue-200 transition-colors">
+        81 -                                          <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-1000 group-hover:from-blue-600 group-hover:to-purple-600" 
+        82 -                                               style="width: {{ turma.get_percentual_ocupacao }}%"></div>
+        83 -                                      </div>
+        84 -                                  </div>
+        85 -                              </div>
+        86 -  
+        87 -                              <!-- Ações da Turma -->
+        88 -                              <div class="space-y-3">
+        89 -                                  <a href="{% url 'avaliacao:turma_detail' turma.id %}" 
+        90 -                                     class="block w-full bg-gradient-to-r from-blue-600 to-blue-700 text-white text-center py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-blue-800 
+           - transition-all duration-200 transform hover:scale-105 shadow-lg">
+        91 -                                      <i class="fas fa-book-open mr-2"></i> Acessar Diário
+        92 -                                  </a>
+        93 -
+        94 -                                  <div class="grid grid-cols-2 gap-3">
+        95 -                                      <a href="{% url 'avaliacao:lancar_notas' %}" 
+        96 -                                         class="bg-gray-100 text-gray-700 text-center py-2 rounded-xl text-sm font-medium hover:bg-green-100 hover:text-green-700 transition-all duration-200">
+        97 -                                          <i class="fas fa-star mr-1"></i> Notas
+        98 -                                      </a>
+        99 -                                      <a href="{% url 'avaliacao:avaliacoes_list' %}" 
+       100 -                                         class="bg-gray-100 text-gray-700 text-center py-2 rounded-xl text-sm font-medium hover:bg-purple-100 hover:text-purple-700 transition-all duration-200">
+       101 -                                          <i class="fas fa-clipboard-list mr-1"></i> Avaliações
+       102 -                                      </a>
+       103 -                                  </div>
+       104 -                              </div>
+       105 -                          </div>
+        61 +          <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        62 +              {% for turma in turmas %}
+        63 +              <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow">
+        64 +                  <div class="flex items-center justify-between mb-4">
+        65 +                      <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-semibold">
+        66 +                          {{ forloop.counter }}
+        67                        </div>
+        68 -                      {% endfor %}
+        68 +                      <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+        69 +                          {{ turma.periodo_letivo }}
+        70 +                      </span>
+        71                    </div>
+        72 -              {% else %}
+        73 -                  <div class="text-center py-16">
+        74 -                      <div class="floating-animation">
+        75 -                          <i class="fas fa-book text-gray-300 text-8xl mb-6"></i>
+        76 -                      </div>
+        77 -                      <h3 class="text-2xl font-bold text-gray-700 mb-3">Nenhuma turma disponível</h3>
+        78 -                      <p class="text-gray-500 mb-8 max-w-md mx-auto">Você não possui turmas atribuídas ou não há turmas cadastradas no sistema.</p>
+        79 -                      <a href="{% url 'avaliacao:turmas_list' %}" class="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-8 py-4 rounded-2xl font-semibold hover:from-blue-700 
+           - hover:to-purple-700 transition-all duration-300 shadow-lg hover:shadow-xl transform hover:scale-105">
+        80 -                          <i class="fas fa-plus mr-2"></i> Gerenciar Turmas
+        72 +
+        73 +                  <h3 class="text-lg font-semibold text-gray-900 mb-2">{{ turma.nome }}</h3>
+        74 +                  <div class="space-y-1 text-sm text-gray-600 mb-4">
+        75 +                      <p><i class="fas fa-graduation-cap w-4"></i> {{ turma.get_tipo_ensino_display }}</p>
+        76 +                      <p><i class="fas fa-clock w-4"></i> {{ turma.get_turno_display }}</p>
+        77 +                      <p><i class="fas fa-users w-4"></i> {{ turma.get_total_alunos|default:0 }} aluno{{ turma.get_total_alunos|pluralize }}</p>
+        78 +                  </div>
+        79 +
+        80 +                  <div class="space-y-2">
+        81 +                      <a href="{% url 'diario:turma' turma.id %}" 
+        82 +                         class="block w-full text-center bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium">
+        83 +                          <i class="fas fa-book-open mr-2"></i>Acessar Diário
+        84                        </a>
+        85 +
+        86 +                      <div class="grid grid-cols-2 gap-2">
+        87 +                          <a href="{% url 'diario:chamada' turma.id %}" 
+        88 +                             class="text-center bg-green-50 text-green-700 py-2 rounded-lg hover:bg-green-100 transition-colors text-sm font-medium">
+        89 +                              <i class="fas fa-user-check mr-1"></i>Chamada
+        90 +                          </a>
+        91 +                          <a href="{% url 'diario:notas' turma.id %}" 
+        92 +                             class="text-center bg-purple-50 text-purple-700 py-2 rounded-lg hover:bg-purple-100 transition-colors text-sm font-medium">
+        93 +                              <i class="fas fa-edit mr-1"></i>Notas
+        94 +                          </a>
+        95 +                      </div>
+        96                    </div>
+        97 -              {% endif %}
+        97 +              </div>
+        98 +              {% endfor %}
+        99            </div>
+       100        </div>
+       101 +      
+       102 +      {% else %}
+       103 +      <!-- Estado Vazio -->
+       104 +      <div class="bg-white rounded-xl shadow-lg p-12 text-center">
+       105 +          <i class="fas fa-clipboard-list text-4xl text-gray-400 mb-4"></i>
+       106 +          <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhuma turma disponível</h3>
+       107 +          <p class="text-gray-600 mb-6">Você não possui turmas atribuídas no momento.</p>
+       108 +          <a href="{% url 'avaliacao:turmas_list' %}" 
+       109 +             class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+       110 +              <i class="fas fa-cog mr-2"></i>Gerenciar Turmas
+       111 +          </a>
+       112 +      </div>
+       113 +      {% endif %}
+       114
+       115        <!-- Ações Rápidas -->
+       116        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
