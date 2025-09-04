@@ -2,7 +2,7 @@
  * GUTO - Sistema de Utilitários
  * Biblioteca JavaScript centralizada para funcionalidades administrativas
  * 
- * @author Claude AI Assistant
+ * @author Equipe GUTO
  * @version 2.0
  * @since 2025-09-01
  */
