@@ -25,12 +25,10 @@ urlpatterns = [
     # Lançamento de Notas e Avaliações  
     path('notas/', views.notas_list, name='notas_list'),
     path('notas/lancar/', views.lancar_notas, name='lancar_notas'),
+    
+    # NOTA: Espelho do Diário - Para visualização de coordenação
     path('avaliacoes/', views.avaliacoes_list, name='avaliacoes_list'),
-    path('avaliacoes/criar/', views.avaliacao_create, name='avaliacao_create'),
-    path('avaliacoes/<int:pk>/editar/', views.avaliacao_edit, name='avaliacao_edit'),
-    path('avaliacoes/<int:pk>/excluir/', views.avaliacao_delete, name='avaliacao_delete'),
-    path('avaliacoes/<int:pk>/', views.avaliacao_detail, name='avaliacao_detail'),
-    path('avaliacoes/<int:avaliacao_id>/lancar-notas/', views.lancar_notas_avaliacao, name='lancar_notas_avaliacao'),
+    
     
     # Conceitos
     path('conceitos/', views.conceitos_list, name='conceitos_list'),
