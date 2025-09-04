@@ -413,19 +413,37 @@ programa/
 
 ### **🔥 PRÓXIMA ETAPA - TESTAR SISTEMA**
 
-#### **1. Comandos para Executar**
+#### **1. Como Executar (Windows)**
+```powershell
+# 1. Navegar para o diretório do projeto
+cd "C:\caminho\para\Guto"
+
+# 2. Criar ambiente virtual limpo
+python -m venv venv_windows
+
+# 3. Ativar ambiente virtual
+venv_windows\Scripts\Activate.ps1
+
+# 4. Se houver erro de execução de scripts:
+Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
+
+# 5. Instalar dependências do requirements.txt
+pip install -r requirements.txt
+
+# 6. Executar servidor
+python manage.py runserver
+```
+
+#### **Para Usuários Linux/WSL**
 ```bash
+# Criar ambiente virtual
+python3 -m venv venv
+
 # Ativar ambiente virtual
 source venv/bin/activate
 
-# Criar migrações
-python manage.py makemigrations
-
-# Aplicar migrações
-python manage.py migrate
-
-# Criar superuser para admin
-python manage.py createsuperuser
+# Instalar dependências
+pip install -r requirements.txt
 
 # Executar servidor
 python manage.py runserver
