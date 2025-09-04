@@ -19,12 +19,9 @@
             </div>
         </div>
         <div class="flex space-x-3">
-            <a href="{% url 'avaliacao:turma_edit' turma.pk %}" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
-                <i class="fas fa-edit mr-2"></i>Editar
-            </a>
-            <a href="{% url 'avaliacao:turmas_list' %}" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
-                <i class="fas fa-arrow-left mr-2"></i>Voltar
-            </a>
+            <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar
+                </a>
         </div>
     </div>
 
@@ -80,11 +77,11 @@
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-600">Alunos Enturmados</span>
-                        <span class="text-lg font-semibold text-blue-600">{{ total_enturmados }}</span>
+                        <span class="text-lg font-semibold text-blue-600">{{ total_alunos }}</span>
                     </div>
                     <div class="flex items-center justify-between">
                         <span class="text-sm text-gray-600">Vagas Disponíveis</span>
-                        <span class="text-lg font-semibold text-green-600">{{ vagas_disponiveis }}</span>
+                        <span class="text-lg font-semibold text-green-600">{{ turma.get_vagas_disponiveis }}</span>
                     </div>
                     
                     <!-- Barra de Progresso -->
@@ -112,10 +109,6 @@
                         <i class="fas fa-book mr-2"></i>
                         Gerenciar Disciplinas
                     </a>
-                    <a href="{% url 'avaliacao:diario_online_turma' turma.id %}" class="w-full flex items-center justify-center px-4 py-3 bg-purple-50 text-purple-700 rounded-lg hover:bg-purple-100 transition-colors">
-                        <i class="fas fa-chart-line mr-2"></i>
-                        Diário Online
-                    </a>
                 </div>
             </div>
         </div>
@@ -132,7 +125,7 @@
             </div>
         </div>
         
-        {% if enturmacoes %}
+        {% if alunos_enturmados %}
             <div class="overflow-x-auto">
                 <table class="w-full">
                     <thead class="bg-gray-50">
@@ -140,47 +133,47 @@
                             <th class="text-left py-3 px-6 font-semibold text-gray-700">Código</th>
                             <th class="text-left py-3 px-6 font-semibold text-gray-700">Nome</th>
                             <th class="text-left py-3 px-6 font-semibold text-gray-700">Data de Nascimento</th>
-                            <th class="text-left py-3 px-6 font-semibold text-gray-700">Data de Enturmação</th>
+                            <th class="text-left py-3 px-6 font-semibold text-gray-700">Idade</th>
                             <th class="text-left py-3 px-6 font-semibold text-gray-700">Ações</th>
                         </tr>
                     </thead>
                     <tbody class="divide-y divide-gray-100">
-                        {% for enturmacao in enturmacoes %}
+                        {% for aluno in alunos_enturmados %}
                         <tr class="hover:bg-gray-50 transition-colors">
                             <td class="py-4 px-6">
-                                <span class="font-mono text-sm text-blue-600">{{ enturmacao.aluno.codigo }}</span>
+                                <span class="font-mono text-sm text-blue-600">{{ aluno.codigo }}</span>
                             </td>
                             <td class="py-4 px-6">
                                 <div class="flex items-center space-x-3">
-                                    {% if enturmacao.aluno.foto %}
-                                        <img src="{{ enturmacao.aluno.foto.url }}" alt="{{ enturmacao.aluno.nome }}" class="w-8 h-8 rounded-full object-cover">
+                                    {% if aluno.foto %}
+                                        <img src="{{ aluno.foto.url }}" alt="{{ aluno.nome }}" class="w-8 h-8 rounded-full object-cover">
                                     {% else %}
                                         <div class="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center">
                                             <i class="fas fa-user text-blue-600 text-xs"></i>
                                         </div>
                                     {% endif %}
                                     <div>
-                                        <p class="text-sm font-medium text-gray-900">{{ enturmacao.aluno.nome }}</p>
-                                        {% if enturmacao.aluno.nome_social %}
-                                            <p class="text-xs text-gray-500">{{ enturmacao.aluno.nome_social }}</p>
+                                        <p class="text-sm font-medium text-gray-900">{{ aluno.nome }}</p>
+                                        {% if aluno.nome_social %}
+                                            <p class="text-xs text-gray-500">{{ aluno.nome_social }}</p>
                                         {% endif %}
                                     </div>
                                 </div>
                             </td>
                             <td class="py-4 px-6">
-                                <span class="text-sm text-gray-700">{{ enturmacao.aluno.data_nascimento|date:"d/m/Y" }}</span>
+                                <span class="text-sm text-gray-700">{{ aluno.data_nascimento|date:"d/m/Y" }}</span>
                             </td>
                             <td class="py-4 px-6">
-                                <span class="text-sm text-gray-700">{{ enturmacao.data_enturmacao|date:"d/m/Y" }}</span>
+                                <span class="text-sm text-gray-700">{{ aluno.idade }} anos</span>
                             </td>
                             <td class="py-4 px-6">
                                 <div class="flex items-center space-x-2">
-                                    <a href="{% url 'alunos:aluno_detail' enturmacao.aluno.codigo %}" 
+                                    <a href="{% url 'alunos:aluno_detail' aluno.codigo %}" 
                                        class="text-blue-600 hover:text-blue-900 p-1 rounded hover:bg-blue-50 transition-colors" 
                                        title="Ver aluno">
                                         <i class="fas fa-eye text-sm"></i>
                                     </a>
-                                    <a href="{% url 'avaliacao:desenturmar_aluno' turma.pk enturmacao.aluno.codigo %}" 
+                                    <a href="{% url 'avaliacao:desenturmar_aluno' turma.pk aluno.codigo %}" 
                                        class="text-red-600 hover:text-red-900 p-1 rounded hover:bg-red-50 transition-colors" 
                                        title="Desenturmar">
                                         <i class="fas fa-user-times text-sm"></i>
