@@ -187,7 +187,7 @@ O sistema agora está pronto para ser um diário eletrônico completo e moderno!
 
 # 🎯 NOVA ATUALIZAÇÃO - SISTEMA UTILITÁRIOS COMPLETO
 # Data: 01/09/2025 - 19:00
-# Desenvolvedor: Claude (IA Assistant)
+# Desenvolvedor: Equipe GUTO
 
 ## 🚀 IMPLEMENTAÇÃO ATUAL - MÓDULO UTILITÁRIOS
 
@@ -320,7 +320,7 @@ O GUTO agora possui um **sistema administrativo de nível empresarial** que riva
 
 # 🎯 FINALIZAÇÃO COMPLETA - MÓDULO UTILITÁRIOS
 # Data: 01/09/2025 - 22:00
-# Desenvolvedor: Claude (IA Assistant)
+# Desenvolvedor: Equipe GUTO
 
 ## 🚀 **IMPLEMENTAÇÕES FINALIZADAS**
 
