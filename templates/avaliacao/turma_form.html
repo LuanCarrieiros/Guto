@@ -13,6 +13,7 @@
     <div class="bg-white rounded-lg shadow-lg p-6">
         <form method="POST" class="space-y-6">
             {% csrf_token %}
+            {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
             
             <!-- Informações Básicas -->
             <div>
@@ -97,10 +98,17 @@
 
             <!-- Botões de Ação -->
             <div class="flex items-center justify-between pt-6 border-t border-gray-200">
-                <a href="{% if turma %}{% url 'avaliacao:turma_detail' turma.pk %}{% else %}{% url 'avaliacao:turmas_list' %}{% endif %}" 
-                   class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i>Cancelar
-                </a>
+                {% if next_url and 'diario' in next_url %}
+                    <a href="{% url 'diario:home' %}" 
+                       class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </a>
+                {% else %}
+                    <a href="{% url 'avaliacao:turmas_list' %}" 
+                       class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </a>
+                {% endif %}
                 
                 <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
                     <i class="fas fa-save mr-2"></i>
@@ -130,4 +138,66 @@
         </div>
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoEnsinoSelect = document.getElementById('id_tipo_ensino');
+    const anoSerieSelect = document.getElementById('id_ano_serie');
+    
+    if (!tipoEnsinoSelect || !anoSerieSelect) return;
+    
+    // Função para atualizar as opções de ano/série
+    function atualizarAnosSeries(tipoEnsino) {
+        if (!tipoEnsino) {
+            // Limpar opções se nenhum tipo selecionado
+            anoSerieSelect.innerHTML = '<option value="">---------</option>';
+            return;
+        }
+        
+        // Fazer requisição AJAX
+        fetch(`{% url 'avaliacao:get_anos_series_por_tipo' %}?tipo_ensino=${tipoEnsino}`)
+            .then(response => response.json())
+            .then(data => {
+                // Limpar opções existentes
+                anoSerieSelect.innerHTML = '<option value="">---------</option>';
+                
+                // Adicionar novas opções
+                data.anos_series.forEach(opcao => {
+                    const option = document.createElement('option');
+                    option.value = opcao[0];  // primeiro elemento é o valor
+                    option.textContent = opcao[1];  // segundo elemento é o texto
+                    anoSerieSelect.appendChild(option);
+                });
+                
+                // Restaurar valor selecionado se estiver editando
+                const valorSelecionado = anoSerieSelect.getAttribute('data-selected');
+                if (valorSelecionado) {
+                    anoSerieSelect.value = valorSelecionado;
+                    anoSerieSelect.removeAttribute('data-selected');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar anos/séries:', error);
+            });
+    }
+    
+    // Salvar valor atual se estiver editando
+    const valorAtual = anoSerieSelect.value;
+    if (valorAtual) {
+        anoSerieSelect.setAttribute('data-selected', valorAtual);
+    }
+    
+    // Event listener para mudanças no tipo de ensino
+    tipoEnsinoSelect.addEventListener('change', function() {
+        atualizarAnosSeries(this.value);
+    });
+    
+    // Carregar opções iniciais
+    if (tipoEnsinoSelect.value) {
+        atualizarAnosSeries(tipoEnsinoSelect.value);
+    }
+});
+</script>
 {% endblock %}
