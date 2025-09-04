@@ -39,37 +39,39 @@ class TurmaForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         
-        # Choices para tipo de ensino
+        # Choices para tipo de ensino (atualizados sem EJA e TÉCNICO)
         self.fields['tipo_ensino'].choices = [
             ('', 'Selecione o tipo de ensino'),
             ('EDUCACAO_INFANTIL', 'Educação Infantil'),
             ('ENSINO_FUNDAMENTAL_I', 'Ensino Fundamental I'),
             ('ENSINO_FUNDAMENTAL_II', 'Ensino Fundamental II'),
             ('ENSINO_MEDIO', 'Ensino Médio'),
-            ('EJA', 'Educação de Jovens e Adultos'),
-            ('TECNICO', 'Técnico'),
         ]
         
-        # Choices para ano/série
+        # Choices para ano/série (atualizados com novas opções)
         self.fields['ano_serie'].choices = [
             ('', 'Selecione o ano/série'),
+            # Educação Infantil
             ('BERÇARIO', 'Berçário'),
             ('MATERNAL_I', 'Maternal I'),
             ('MATERNAL_II', 'Maternal II'),
             ('PRE_I', 'Pré I'),
             ('PRE_II', 'Pré II'),
+            # Ensino Fundamental I
             ('1_ANO', '1º Ano'),
             ('2_ANO', '2º Ano'),
             ('3_ANO', '3º Ano'),
             ('4_ANO', '4º Ano'),
             ('5_ANO', '5º Ano'),
+            # Ensino Fundamental II
             ('6_ANO', '6º Ano'),
             ('7_ANO', '7º Ano'),
             ('8_ANO', '8º Ano'),
             ('9_ANO', '9º Ano'),
-            ('1_SERIE', '1ª Série'),
-            ('2_SERIE', '2ª Série'),
-            ('3_SERIE', '3ª Série'),
+            # Ensino Médio
+            ('1_ANO_EM', '1º Ano'),
+            ('2_ANO_EM', '2º Ano'),
+            ('3_ANO_EM', '3º Ano'),
         ]
         
         # Choices para turno
