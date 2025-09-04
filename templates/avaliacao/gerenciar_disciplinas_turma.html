@@ -111,7 +111,7 @@
                                title="Registrar Aula">
                                 <i class="fas fa-chalkboard-teacher"></i>
                             </a>
-                            <a href="{% url 'avaliacao:criar_avaliacao' turma.id %}" 
+                            <a href="{% url 'avaliacao:criar_avaliacao_turma' turma.id %}" 
                                class="bg-purple-100 text-purple-800 px-3 py-2 rounded-lg text-sm hover:bg-purple-200 transition-colors"
                                title="Criar Avaliação">
                                 <i class="fas fa-clipboard-check"></i>
@@ -185,7 +185,7 @@
                                    title="Registrar Aula">
                                     <i class="fas fa-chalkboard-teacher"></i>
                                 </a>
-                                <a href="{% url 'avaliacao:criar_avaliacao' turma.id %}?disciplina={{ disciplina.id }}" 
+                                <a href="{% url 'avaliacao:criar_avaliacao_turma' turma.id %}?disciplina={{ disciplina.id }}" 
                                    class="bg-purple-100 text-purple-800 px-3 py-2 rounded-lg text-sm hover:bg-purple-200 transition-colors"
                                    title="Criar Avaliação">
                                     <i class="fas fa-clipboard-check"></i>
@@ -236,7 +236,7 @@
                     <a href="{% url 'avaliacao:registrar_aula_turma' turma_id=turma.id %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-sm">
                         <i class="fas fa-chalkboard-teacher mr-2"></i>Registrar Aula
                     </a>
-                    <a href="{% url 'avaliacao:criar_avaliacao' turma.id %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm">
+                    <a href="{% url 'avaliacao:criar_avaliacao_turma' turma.id %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors text-sm">
                         <i class="fas fa-clipboard-check mr-2"></i>Criar Avaliação
                     </a>
                     <a href="{% url 'avaliacao:disciplinas_list' %}" class="bg-gray-600 text-white px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors text-sm">
