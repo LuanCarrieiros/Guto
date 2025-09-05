@@ -427,12 +427,59 @@ def enturmar_alunos(request, pk):
     
     if request.method == 'POST':
         alunos_ids = request.POST.getlist('alunos')
+        confirmar_transferencia = request.POST.get('confirmar_transferencia')
         
+        # Primeira passagem: verificar se há alunos já enturmados
+        alunos_ja_enturmados = []
+        for aluno_id in alunos_ids:
+            aluno = get_object_or_404(Aluno, codigo=aluno_id)
+            enturmacao_existente = Enturmacao.objects.filter(aluno=aluno, ativo=True).first()
+            if enturmacao_existente:
+                alunos_ja_enturmados.append({
+                    'aluno': aluno,
+                    'turma_atual': enturmacao_existente.turma
+                })
+        
+        # Se há alunos já enturmados e não foi confirmado, mostrar confirmação
+        if alunos_ja_enturmados and not confirmar_transferencia:
+            context = {
+                'turma': turma,
+                'alunos_ja_enturmados': alunos_ja_enturmados,
+                'alunos_ids': alunos_ids,
+                'mostrar_confirmacao': True,
+            }
+            return render(request, 'avaliacao/enturmar_alunos.html', context)
+        
+        # Processar enturmações (normal ou com confirmação)
         for aluno_id in alunos_ids:
             aluno = get_object_or_404(Aluno, codigo=aluno_id)
             
-            # Verificar se o aluno já está enturmado
-            if not Enturmacao.objects.filter(turma=turma, aluno=aluno, ativo=True).exists():
+            # Verificar se o aluno já está enturmado em QUALQUER turma ativa
+            if not Enturmacao.objects.filter(aluno=aluno, ativo=True).exists():
+                Enturmacao.objects.create(
+                    turma=turma,
+                    aluno=aluno,
+                    data_enturmacao=date.today(),
+                    ativo=True,
+                    usuario_enturmacao=request.user
+                )
+            else:
+                # Se aluno já está em outra turma, desenturmar da anterior
+                enturmacao_anterior = Enturmacao.objects.get(aluno=aluno, ativo=True)
+                
+                # Verificar se já existe enturmação inativa para este aluno
+                if Enturmacao.objects.filter(aluno=aluno, ativo=False).exists():
+                    # Se já existe, deletar a enturmação anterior em vez de desativar
+                    enturmacao_anterior.delete()
+                else:
+                    # Se não existe, pode desativar normalmente
+                    enturmacao_anterior.ativo = False
+                    enturmacao_anterior.data_desenturmacao = date.today()
+                    enturmacao_anterior.motivo_desenturmacao = f"Transferido para {turma.nome}"
+                    enturmacao_anterior.usuario_desenturmacao = request.user
+                    enturmacao_anterior.save()
+                
+                # Criar nova enturmação
                 Enturmacao.objects.create(
                     turma=turma,
                     aluno=aluno,
@@ -480,12 +527,19 @@ def desenturmar_aluno(request, pk, aluno_id):
             ativo=True
         )
         
-        enturmacao.ativo = False
-        enturmacao.data_desenturmacao = date.today()
-        enturmacao.save()
+        # Verificar se já existe enturmação inativa para este aluno
+        if Enturmacao.objects.filter(aluno=aluno, ativo=False).exists():
+            # Se já existe, deletar esta enturmação em vez de desativar
+            enturmacao.delete()
+        else:
+            # Se não existe, pode desativar normalmente
+            enturmacao.ativo = False
+            enturmacao.data_desenturmacao = date.today()
+            enturmacao.usuario_desenturmacao = request.user
+            enturmacao.save()
         
         messages.success(request, f'Aluno {aluno.nome} desenturmado da turma {turma.nome}!')
-        return redirect('avaliacao:turmas_list')
+        return redirect('avaliacao:turma_detail', pk=turma.pk)
     
     context = {
         'turma': turma,
