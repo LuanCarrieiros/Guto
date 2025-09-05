@@ -495,7 +495,7 @@ class Enturmacao(models.Model):
     class Meta:
         verbose_name = "Enturmação"
         verbose_name_plural = "Enturmações"
-        unique_together = ['turma', 'aluno', 'ativo']
+        unique_together = ['aluno', 'ativo']
         ordering = ['turma', 'aluno__nome']
     
     def __str__(self):
