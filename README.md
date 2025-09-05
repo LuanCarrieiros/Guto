@@ -224,6 +224,79 @@ avaliacoes = Avaliacao.objects.filter(
 
 ---
 
+## 🎯 **CORREÇÃO CRÍTICA: SISTEMA DE ENTURMAÇÃO**
+
+### **🚨 Problema Identificado e Corrigido**
+
+#### **SITUAÇÃO ANTERIOR**
+- ❌ **Alunos duplicados**: Estudantes enturmados simultaneamente em múltiplas turmas (ex: 2º ano A + 3º ano B)
+- ❌ **Constraint inadequado**: `unique_together = ['turma', 'aluno', 'ativo']` permitia enturmação múltipla
+- ❌ **Views desatualizadas**: Lógica não adaptada ao novo requisito de unicidade
+
+#### **SOLUÇÃO IMPLEMENTADA**
+
+##### **1. 🔧 Correção do Model (avaliacao/models.py:498)**
+```python
+# ANTES (INCORRETO):
+unique_together = ['turma', 'aluno', 'ativo']  # ❌ Permitia múltiplas turmas
+
+# AGORA (CORRETO):
+unique_together = ['aluno', 'ativo']  # ✅ Um aluno = uma turma ativa
+```
+
+##### **2. 🗑️ Limpeza de Dados**
+- ✅ **Removidas 16 enturmações duplicadas** (13 ativas + 3 inativas)
+- ✅ **Mantida sempre a mais recente** para preservar histórico escolar
+- ✅ **Dados consistentes** após migração
+
+##### **3. 🔄 Migração Aplicada**
+```bash
+python manage.py makemigrations avaliacao --name "fix_enturmacao_unique_constraint"
+python manage.py migrate avaliacao
+```
+
+##### **4. 🛠️ Views Corrigidas**
+
+###### **View `enturmar_alunos` (avaliacao/views.py:434-489)**
+- ✅ **Sistema de confirmação implementado**: Interface pergunta antes de transferir aluno
+- ✅ **Transferência inteligente**: Desenturma automaticamente da turma anterior
+- ✅ **Preservação de histórico**: Usa `delete()` quando necessário para evitar constraint violations
+
+###### **View `desenturmar_aluno` (avaliacao/views.py:500-509)**
+- ✅ **Lógica adaptada**: Verifica histórico antes de desativar enturmação
+- ✅ **Constraint-safe**: Usa `delete()` quando aluno já possui histórico inativo
+
+##### **5. 🎨 Interface de Confirmação**
+
+###### **Tela de Confirmação de Transferência**
+- 🚨 **Aviso claro**: "Os seguintes alunos já estão enturmados em outras turmas"
+- 📋 **Lista visual**: Alunos com foto, turma atual → turma destino
+- ⚠️ **Alerta de irreversibilidade**: Ação não pode ser desfeita automaticamente
+- ✅ **Botões distintos**: "Cancelar" (cinza) vs "Confirmar Transferência" (laranja)
+
+#### **🎯 REGRAS DE NEGÓCIO IMPLEMENTADAS**
+- **RN-ENT001**: Um aluno só pode estar ativo em uma turma por vez ✅
+- **RN-ENT002**: Transferência entre turmas preserva histórico escolar ✅
+- **RN-ENT003**: Sistema solicita confirmação antes de transferir aluno ✅
+- **RN-ENT004**: Constraint garante integridade dos dados no banco ✅
+- **RN-ENT005**: Interface clara sobre ações que serão executadas ✅
+
+#### **🔒 REQUISITOS CORRIGIDOS**
+- **RF-ENT301**: Enturmação única por aluno ✅
+- **RF-ENT302**: Sistema de confirmação para transferências ✅
+- **RF-ENT303**: Preservação do histórico escolar ✅
+- **RNF-ENT401**: Constraint de integridade no banco ✅
+- **RNF-ENT402**: Interface intuitiva com feedback claro ✅
+
+### **✅ RESULTADO FINAL**
+- **🚫 Zero duplicações**: Sistema impede enturmação múltipla
+- **🔄 Transferências controladas**: Processo com confirmação prévia
+- **📚 Histórico preservado**: Enturmações anteriores mantidas como registro
+- **🛡️ Integridade garantida**: Constraint no banco + validações nas views
+- **👥 UX melhorada**: Interface clara sobre consequências das ações
+
+---
+
 ## 📊 **ANÁLISE DETALHADA DE IMPLEMENTAÇÃO**
 
 ### **📈 Estatísticas do Projeto**
