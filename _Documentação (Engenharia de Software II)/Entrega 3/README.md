@@ -400,4 +400,3 @@ O sistema Django está configurado de forma agnóstica ao banco, permitindo migr
 
 **Desenvolvido para demonstração dos conceitos de Orientação a Objetos**  
 **Disciplina: Engenharia de Software II**  
-**Sistema funcional e operacional para gestão escolar completa**
