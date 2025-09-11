@@ -44,7 +44,7 @@ Sistema GUTO/
 - **Linguagem:** Python 3.12+
 - **Framework:** Django 5.2.5
 - **Paradigma:** Programação Orientada a Objetos
-- **Database:** SQLite3 (operacional)
+- **Database:** SQLite3 (desenvolvimento/testes) - **Migração futura:** PostgreSQL ou Azure Database for PostgreSQL
 - **Frontend:** HTML5, CSS3, Tailwind CSS, JavaScript
 - **Arquitetura:** MVT (Model-View-Template) com Domain-Driven Design
 
@@ -291,7 +291,7 @@ class Matricula(models.Model):
 
 - Python 3.12 ou superior
 - Django 5.2.5
-- SQLite3 (incluso no Python)
+- SQLite3 (incluso no Python) - **Banco atual para desenvolvimento/testes**
 
 ### ▶️ **Execução**
 
@@ -377,6 +377,24 @@ O **Sistema GUTO** demonstra com excelência a aplicação dos conceitos de Orie
 - ✅ **Fornece base sólida** para expansões futuras
 
 Este sistema serve como exemplo prático de como os conceitos teóricos de Orientação a Objetos podem ser aplicados para criar soluções robustas, escaláveis e funcionais que resolvem problemas reais do mundo educacional.
+
+## 🗄️ Estratégia de Banco de Dados
+
+### **Configuração Atual (Desenvolvimento)**
+- **SQLite3:** Utilizado para desenvolvimento, testes e prototipação
+- **Vantagens:** Simplicidade, sem configuração adicional, ideal para desenvolvimento local
+- **Localização:** `db.sqlite3` na raiz do projeto
+
+### **Migração Futura (Produção)**
+- **PostgreSQL:** Planejado para ambiente de produção
+- **Azure Database for PostgreSQL:** Opção cloud para escalabilidade
+- **Benefícios:** Melhor performance, suporte a transações complexas, escalabilidade horizontal
+
+### **Arquitetura Preparada**
+O sistema Django está configurado de forma agnóstica ao banco, permitindo migração transparente através de:
+- **Models abstratos** que funcionam em qualquer SGBD compatível com Django ORM
+- **Migrations automáticas** para versionamento de schema
+- **Settings configuráveis** para diferentes ambientes (dev/test/prod)
 
 ---
 
