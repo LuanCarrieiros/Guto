@@ -182,5 +182,5 @@ A tela foi redesenhada com:
 
 ---
 **Data de criação:** $(date)
-**Autor:** Sistema GUTO - Assistente Claude
+**Autor:** Sistema GUTO - Equipe de desenvolvimento
 **Propósito:** Documentação para reverter proteções pós-entrega acadêmica
