@@ -102,6 +102,33 @@ CREATE TABLE "funcionarios_funcionario" (
     "usuario_cadastro_id" INTEGER NOT NULL
 );
 
+-- Tabela de Turmas (para demonstrar CRUD completo)
+CREATE TABLE "turma_turma" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "nome" VARCHAR(255) NOT NULL,
+    "periodo_letivo" VARCHAR(4) NOT NULL DEFAULT '2025',
+    "tipo_ensino" VARCHAR(50) NOT NULL,
+    "ano_serie" VARCHAR(50) NOT NULL,
+    "turno" VARCHAR(20) NOT NULL,
+    "vagas_total" INTEGER NOT NULL DEFAULT 30,
+    "diario_fechado" BOOLEAN NOT NULL DEFAULT 0,
+    "data_criacao" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "usuario_criacao_id" INTEGER NOT NULL
+);
+
+-- Tabela de Enturmação (relacionamento Aluno-Turma)
+CREATE TABLE "turma_enturmacao" (
+    "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    "data_enturmacao" DATE NOT NULL DEFAULT CURRENT_DATE,
+    "ativo" BOOLEAN NOT NULL DEFAULT 1,
+    "data_desenturmacao" DATE NULL,
+    "motivo_desenturmacao" VARCHAR(255) NULL,
+    "aluno_id" INTEGER NOT NULL,
+    "turma_id" INTEGER NOT NULL,
+    "usuario_enturmacao_id" INTEGER NOT NULL,
+    "usuario_desenturmacao_id" INTEGER NULL
+);
+
 -- Criação dos índices para otimização
 CREATE INDEX "idx_aluno_nome" ON "alunos_aluno" ("nome");
 CREATE INDEX "idx_aluno_usuario_cadastro" ON "alunos_aluno" ("usuario_cadastro_id");
@@ -109,12 +136,25 @@ CREATE INDEX "idx_responsavel_aluno" ON "alunos_responsavel" ("aluno_id");
 CREATE INDEX "idx_matricula_aluno" ON "alunos_matricula" ("aluno_id");
 CREATE INDEX "idx_matricula_ano" ON "alunos_matricula" ("ano_administrativo");
 CREATE INDEX "idx_funcionario_cpf" ON "funcionarios_funcionario" ("cpf");
+CREATE INDEX "idx_funcionario_nome" ON "funcionarios_funcionario" ("nome");
+CREATE INDEX "idx_turma_periodo" ON "turma_turma" ("periodo_letivo");
+CREATE INDEX "idx_turma_nome" ON "turma_turma" ("nome");
+CREATE INDEX "idx_enturmacao_aluno" ON "turma_enturmacao" ("aluno_id");
+CREATE INDEX "idx_enturmacao_turma" ON "turma_enturmacao" ("turma_id");
 
 -- Constraints de integridade referencial criadas implicitamente via REFERENCES
 
 -- Constraint de unicidade para evitar múltiplas matrículas ativas
-CREATE UNIQUE INDEX "idx_matricula_unica_ativa" 
+CREATE UNIQUE INDEX "idx_matricula_unica_ativa"
 ON "alunos_matricula" ("aluno_id", "ano_administrativo", "tipo_matricula");
+
+-- Constraint de unicidade para turmas (nome único por período)
+CREATE UNIQUE INDEX "idx_turma_unica_periodo"
+ON "turma_turma" ("nome", "periodo_letivo");
+
+-- Constraint de unicidade para enturmação ativa
+CREATE UNIQUE INDEX "idx_enturmacao_unica_ativa"
+ON "turma_enturmacao" ("aluno_id", "turma_id", "ativo");
 
 COMMIT;
 
