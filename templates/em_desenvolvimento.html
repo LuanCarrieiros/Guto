@@ -1,104 +1,177 @@
 {% extends 'base.html' %}
 
-{% block title %}Em Desenvolvimento - GUTO{% endblock %}
+{% block title %}Funcionalidade em Desenvolvimento - GUTO{% endblock %}
 
 {% block extra_css %}
 <style>
 /* Garantir que a sidebar não seja afetada */
 .fixed.inset-y-0.left-0.w-72 {
     left: 0 !important;
-    width: 18rem !important; /* w-72 */
+    width: 18rem !important;
     position: fixed !important;
     overflow: visible !important;
 }
-/* Resetar qualquer margin/padding que possa estar afetando */
-.fixed.inset-y-0.left-0.w-72 * {
-    margin-left: 0 !important;
+
+/* Animações personalizadas */
+@keyframes pulse-soft {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+@keyframes slideUp {
+    from { 
+        opacity: 0; 
+        transform: translateY(20px); 
+    }
+    to { 
+        opacity: 1; 
+        transform: translateY(0); 
+    }
+}
+
+.animate-slide-up {
+    animation: slideUp 0.6s ease-out;
+}
+
+.animate-pulse-soft {
+    animation: pulse-soft 2s infinite;
 }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-center py-12">
-    <div class="max-w-md w-full bg-white rounded-2xl shadow-xl p-8 text-center border border-blue-200" style="background: linear-gradient(135deg, #dbeafe, #e0e7ff);">
-        <!-- Ícone -->
-        <div class="mb-6">
-            <div class="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center mx-auto">
-                <i class="fas fa-tools text-white text-2xl"></i>
-            </div>
-        </div>
-
-        <!-- Título -->
-        <h1 class="text-2xl font-bold text-gray-900 mb-3">Em Desenvolvimento</h1>
-        
-        <!-- Descrição -->
-        <p class="text-gray-600 mb-6 leading-relaxed">
-            Esta funcionalidade está sendo desenvolvida e estará disponível em breve. 
-            Nossa equipe está trabalhando para trazer a melhor experiência para você!
-        </p>
-
-        <!-- Funcionalidade específica (se fornecida) -->
-        {% if funcionalidade %}
-        <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
-            <p class="text-sm text-blue-800">
-                <strong>Funcionalidade:</strong> {{ funcionalidade }}
-            </p>
-        </div>
-        {% endif %}
-
-        <!-- Progresso fake (visual apenas) -->
-        <div class="mb-6">
-            <div class="flex items-center justify-between mb-2">
-                <span class="text-sm font-medium text-gray-600">Progresso</span>
-                <span class="text-sm font-medium text-blue-600">{{ progresso|default:"75" }}%</span>
-            </div>
-            <div class="w-full bg-gray-200 rounded-full h-3">
-                <div class="bg-gradient-to-r from-blue-500 to-indigo-600 h-3 rounded-full transition-all duration-1000" style="width: {{ progresso|default:"75" }}%"></div>
-            </div>
-        </div>
-
-        <!-- Informações adicionais -->
-        <div class="space-y-3 mb-6">
-            <div class="flex items-center justify-center space-x-2 text-sm text-gray-600">
-                <i class="fas fa-clock text-blue-500"></i>
-                <span>Previsão: Em breve</span>
-            </div>
-            <div class="flex items-center justify-center space-x-2 text-sm text-gray-600">
-                <i class="fas fa-code text-green-500"></i>
-                <span>Status: Desenvolvimento ativo</span>
-            </div>
-        </div>
-
-        <!-- Botões de ação -->
-        <div class="space-y-3">
-            <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white py-3 px-6 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition-all duration-200 inline-block" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
-                    <i class="fas fa-arrow-left mr-2"></i>Voltar
-                </a>
+<div class="flex items-center justify-center min-h-screen py-8 px-4">
+    <div class="max-w-4xl w-full bg-white rounded-3xl shadow-2xl text-center border-0 animate-slide-up relative" 
+         style="background: linear-gradient(135deg, #f8fafc, #e2e8f0, #dbeafe); height: 80vh; max-height: 600px;">
+         
+        <!-- Container principal com flex -->
+        <div class="flex flex-col h-full px-8 pt-8 pb-4">
             
-            <a href="{% url 'dashboard:home' %}" class="w-full bg-gray-100 text-gray-700 py-3 px-6 rounded-lg hover:bg-gray-200 transition-colors inline-block">
-                <i class="fas fa-home mr-2"></i>
-                Ir ao Dashboard
-            </a>
-        </div>
+            <!-- Conteúdo superior -->
+            <div class="flex-1">
+                <!-- Layout em grid para otimizar espaço -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    
+                    <!-- Coluna esquerda - Ícone, título e botões -->
+                    <div class="lg:col-span-1">
+                        <div class="mb-6">
+                            <div class="w-24 h-24 bg-gradient-to-br from-amber-400 via-orange-500 to-red-500 rounded-full flex items-center justify-center mx-auto shadow-lg animate-pulse-soft">
+                                <i class="fas fa-hard-hat text-white text-3xl"></i>
+                            </div>
+                        </div>
+                        <h1 class="text-3xl font-bold text-gray-900 mb-3">🚧 Em Desenvolvimento</h1>
+                        <div class="inline-block bg-orange-100 text-orange-800 px-4 py-2 rounded-full text-sm font-semibold mb-6">
+                            <i class="fas fa-clock mr-1"></i>
+                            Temporariamente Indisponível
+                        </div>
+                        
+                        <!-- Botões movidos para a coluna esquerda -->
+                        <div class="flex flex-col gap-3 mt-6">
+                            <a href="#" 
+                               class="btn-voltar bg-gradient-to-r from-slate-600 to-slate-700 text-white py-2 px-4 rounded-xl hover:from-slate-700 hover:to-slate-800 transition-all duration-300 flex items-center justify-center shadow-lg text-sm" 
+                               onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+                                <i class="fas fa-arrow-left mr-2"></i>Voltar
+                            </a>
+                            
+                            <a href="{% url 'dashboard:home' %}" 
+                               class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white py-2 px-4 rounded-xl hover:from-blue-700 hover:to-indigo-700 transition-all duration-300 flex items-center justify-center shadow-lg text-sm">
+                                <i class="fas fa-home mr-2"></i>Dashboard
+                            </a>
+                        </div>
+                    </div>
 
-        <!-- Footer -->
-        <div class="mt-8 pt-6 border-t border-gray-100">
-            <p class="text-xs text-gray-500">
-                GUTO - Sistema de Gestão Escolar
-            </p>
+                    <!-- Coluna direita - Conteúdo principal -->
+                    <div class="lg:col-span-2">
+                        <!-- Descrição principal -->
+                        <p class="text-gray-700 mb-6 leading-relaxed text-lg text-left">
+                            Esta funcionalidade está sendo desenvolvida pela nossa equipe e estará disponível em breve.
+                        </p>
+
+                        <!-- Funcionalidade específica (se fornecida) -->
+                        {% if funcionalidade %}
+                        <div class="bg-gradient-to-r from-blue-50 to-indigo-50 border-l-4 border-blue-400 rounded-lg p-4 mb-6">
+                            <div class="flex items-center">
+                                <i class="fas fa-info-circle text-blue-500 mr-3"></i>
+                                <div class="text-left">
+                                    <p class="text-sm text-blue-800 font-semibold">Módulo Solicitado:</p>
+                                    <p class="text-blue-900 font-bold">{{ funcionalidade }}</p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <!-- Cards de status em linha -->
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+                                <div class="text-yellow-600 mb-2">
+                                    <i class="fas fa-code text-xl"></i>
+                                </div>
+                                <p class="text-xs font-semibold text-yellow-800">Status</p>
+                                <p class="text-sm text-yellow-900">Desenvolvimento</p>
+                            </div>
+                            
+                            <div class="bg-green-50 border border-green-200 rounded-lg p-4 text-center">
+                                <div class="text-green-600 mb-2">
+                                    <i class="fas fa-calendar-alt text-xl"></i>
+                                </div>
+                                <p class="text-xs font-semibold text-green-800">Previsão</p>
+                                <p class="text-sm text-green-900">Em breve</p>
+                            </div>
+                        </div>
+
+                        <!-- Mensagem motivacional -->
+                        <div class="bg-gradient-to-r from-purple-50 to-pink-50 border border-purple-200 rounded-xl p-4">
+                            <div class="flex items-center justify-center mb-2">
+                                <i class="fas fa-rocket text-purple-500 text-xl"></i>
+                            </div>
+                            <p class="text-purple-800 font-medium text-sm">
+                                <strong>Sistema GUTO</strong> está sempre evoluindo!<br>
+                                <span class="text-purple-600">Obrigado pela sua paciência enquanto trabalhamos em melhorias.</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer apenas com informações do sistema -->
+            <div class="mt-auto pt-4">
+                <div class="border-t border-gray-200 pt-3">
+                    <div class="text-center">
+                        <div class="text-xs text-gray-500 leading-tight">
+                            GUTO v1.0 • Sistema de Gestão Escolar
+                        </div>
+                        <div class="text-xs text-gray-400 leading-tight">
+                            Desenvolvido com ❤️ para educação
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>
 
 <script>
-// Animação do progresso ao carregar a página
 document.addEventListener('DOMContentLoaded', function() {
-    const progressBar = document.querySelector('.bg-gradient-to-r');
-    if (progressBar) {
-        progressBar.style.width = '0%';
-        setTimeout(() => {
-            progressBar.style.width = '{{ progresso|default:"75" }}%';
-        }, 500);
+    // Efeito de entrada suave
+    setTimeout(() => {
+        document.querySelector('.animate-slide-up').style.transform = 'translateY(0)';
+        document.querySelector('.animate-slide-up').style.opacity = '1';
+    }, 100);
+    
+    // Easter egg: clique no ícone
+    const icon = document.querySelector('.fa-hard-hat');
+    if (icon) {
+        let clickCount = 0;
+        icon.addEventListener('click', function() {
+            clickCount++;
+            if (clickCount === 5) {
+                this.parentElement.innerHTML = '<i class="fas fa-rocket text-white text-3xl"></i>';
+                setTimeout(() => {
+                    this.parentElement.innerHTML = '<i class="fas fa-hard-hat text-white text-3xl"></i>';
+                }, 2000);
+                clickCount = 0;
+            }
+        });
     }
 });
 </script>

@@ -51,7 +51,7 @@ Sistema GUTO/
 - **Linguagem:** Python 3.12+
 - **Framework:** Django 5.2.5
 - **Paradigma:** Programação Orientada a Objetos
-- **Database:** SQLite3 (operacional)
+- **Database:** SQLite3 (desenvolvimento/testes) - **Migração futura:** PostgreSQL ou Azure Database for PostgreSQL
 - **Frontend:** HTML5, CSS3, Tailwind CSS, JavaScript
 - **Arquitetura:** MVT (Model-View-Template) com Domain-Driven Design
 
@@ -59,33 +59,29 @@ Sistema GUTO/
 
 ### 1. 🔒 **Encapsulamento**
 
-**Implementação no Django Models:**
+**Implementação Real no Sistema:**
 
 ```python
-# alunos/models.py
+# alunos/models.py - Código real implementado
 class Aluno(models.Model):
-    # Atributos privados através de convenção
-    _codigo = models.AutoField(primary_key=True)
-    _nome_completo = models.CharField(max_length=200)
-    _data_nascimento = models.DateField()
-    _ativo = models.BooleanField(default=True)
+    # Atributos protegidos - não acessíveis diretamente
+    codigo = models.AutoField(primary_key=True, verbose_name="Código")
+    nome = models.CharField(max_length=255, verbose_name="Nome Completo")
+    data_nascimento = models.DateField(verbose_name="Data de Nascimento")
     
-    # Propriedades públicas controladas
+    # Método getter (propriedade calculada)
     @property
-    def nome_completo(self):
-        return self._nome_completo
+    def idade(self):
+        """Encapsula lógica de cálculo de idade"""
+        today = date.today()
+        return today.year - self.data_nascimento.year - (
+            (today.month, today.day) < 
+            (self.data_nascimento.month, self.data_nascimento.day)
+        )
     
-    @nome_completo.setter
-    def nome_completo(self, valor):
-        if not valor or len(valor.strip()) < 3:
-            raise ValidationError("Nome deve ter pelo menos 3 caracteres")
-        self._nome_completo = valor.strip().title()
-    
-    # Métodos de negócio encapsulados
-    def calcular_idade(self):
-        from datetime import date
-        hoje = date.today()
-        return hoje.year - self._data_nascimento.year
+    # Método de negócio encapsulado
+    def __str__(self):
+        return f"{self.codigo} - {self.nome}"
 ```
 
 **Aplicação no Sistema:**
@@ -96,44 +92,33 @@ class Aluno(models.Model):
 
 ### 2. 🏗️ **Herança**
 
-**Implementação na Hierarquia de Funcionários:**
+**Implementação Real - Django Model Inheritance:**
 
 ```python
-# funcionarios/models.py
+# funcionarios/models.py - Código real implementado
 class Funcionario(models.Model):
-    """Classe base para todos os funcionários"""
-    codigo = models.AutoField(primary_key=True)
-    nome_completo = models.CharField(max_length=200)
-    cpf = models.CharField(max_length=14, unique=True)
-    cargo = models.CharField(max_length=100)
+    """Classe base com atributos comuns"""
+    codigo = models.AutoField(primary_key=True, verbose_name="Código")
+    nome = models.CharField(max_length=255, verbose_name="Nome Completo")
+    data_nascimento = models.DateField(verbose_name="Data de Nascimento")
     
-    # Métodos comuns
+    # Método comum herdado
+    @property
+    def idade(self):
+        today = date.today()
+        return today.year - self.data_nascimento.year
+
+class DadosFuncionais(models.Model):
+    """Especialização funcional - herda comportamentos"""
+    funcionario = models.OneToOneField(Funcionario, on_delete=models.CASCADE)
+    matricula = models.CharField(max_length=20, unique=True)
+    funcao = models.CharField(max_length=30, choices=FUNCAO_CHOICES)
+    
+    # Método específico da especialização
     def calcular_tempo_servico(self):
-        """Método comum a todos os funcionários"""
-        pass
-    
-    class Meta:
-        abstract = False  # Permite herança
-
-class Professor(models.Model):
-    """Especialização para professores"""
-    funcionario = models.OneToOneField(Funcionario, on_delete=models.CASCADE)
-    disciplinas = models.ManyToManyField('Disciplina')
-    carga_horaria = models.IntegerField(default=40)
-    
-    def calcular_bonus_disciplina(self):
-        """Método específico de professores"""
-        return self.disciplinas.count() * 100
-
-class Administrativo(models.Model):
-    """Especialização para funcionários administrativos"""
-    funcionario = models.OneToOneField(Funcionario, on_delete=models.CASCADE)
-    setor = models.CharField(max_length=100)
-    nivel_acesso = models.CharField(max_length=50)
-    
-    def calcular_bonus_tempo(self):
-        """Método específico de administrativos"""
-        return self.funcionario.calcular_tempo_servico() * 50
+        if self.data_admissao:
+            return (date.today() - self.data_admissao).days
+        return 0
 ```
 
 **Aplicação no Sistema:**
@@ -168,28 +153,28 @@ def processar_avaliacoes(avaliacoes):
 
 ### 4. 🏢 **Composição**
 
-**Implementação em Relacionamentos Dependentes:**
+**Implementação Real - Relacionamento de Dependência Total:**
 
 ```python
-# alunos/models.py
+# alunos/models.py - Código real implementado
 class Aluno(models.Model):
-    nome_completo = models.CharField(max_length=200)
+    nome = models.CharField(max_length=255)
     data_nascimento = models.DateField()
 
 class DocumentacaoAluno(models.Model):
-    """Composição: Documentação FAZ PARTE do Aluno"""
+    """Composição: Documentação não existe sem Aluno"""
     aluno = models.OneToOneField(
         Aluno, 
-        on_delete=models.CASCADE,  # Se aluno é excluído, documentação também é
+        on_delete=models.CASCADE,  # Cascata obrigatória
         related_name='documentacao'
     )
-    rg = models.CharField(max_length=20)
-    cpf = models.CharField(max_length=14)
-    certidao_nascimento = models.CharField(max_length=50)
+    rg = models.CharField(max_length=20, blank=True, null=True)
+    cpf = models.CharField(max_length=14, blank=True, null=True)
     
+    # Método de negócio da composição
     def documentos_completos(self):
-        """Método específico da composição"""
-        return all([self.rg, self.cpf, self.certidao_nascimento])
+        """Regra de negócio específica"""
+        return bool(self.rg and self.cpf)
 ```
 
 **Características:**
@@ -228,39 +213,84 @@ class TurmaDisciplina(models.Model):
 
 ### 6. 🔗 **Associação**
 
-**Implementação através de Tabelas de Relacionamento:**
+**Implementação Real - Classe de Relacionamento:**
 
 ```python
-# avaliacao/models.py
+# avaliacao/models.py - Código real implementado
 class Enturmacao(models.Model):
-    """Classe de associação entre Aluno e Turma"""
-    aluno = models.ForeignKey('alunos.Aluno', on_delete=models.CASCADE)
-    turma = models.ForeignKey('Turma', on_delete=models.CASCADE)
+    """Associação entre Aluno e Turma com metadados"""
+    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, related_name='enturmacoes')
+    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, related_name='enturmacoes')
     
-    # Metadados da associação
+    # Atributos específicos da associação
     data_enturmacao = models.DateField(auto_now_add=True)
-    data_desenturmacao = models.DateField(null=True, blank=True)
     ativo = models.BooleanField(default=True)
-    motivo_desenturmacao = models.TextField(blank=True)
+    data_desenturmacao = models.DateField(blank=True, null=True)
+    usuario_enturmacao = models.ForeignKey(User, on_delete=models.PROTECT)
     
-    def desenturmar(self, motivo=""):
-        """Método de negócio da associação"""
-        self.ativo = False
-        self.data_desenturmacao = timezone.now().date()
-        self.motivo_desenturmacao = motivo
-        self.save()
+    # Método de negócio da associação  
+    def __str__(self):
+        return f"{self.aluno.nome} - {self.turma.nome}"
     
-    def tempo_na_turma(self):
-        """Calcula tempo de permanência"""
-        data_fim = self.data_desenturmacao or timezone.now().date()
-        return (data_fim - self.data_enturmacao).days
+    # Constraint de negócio
+    class Meta:
+        unique_together = ['aluno', 'ativo']  # Um aluno ativo por vez
 ```
 
-**Características:**
-- **Aluno ⟷ Turma via Enturmacao:** Relacionamento controlado com histórico
-- **Aluno ⟷ Ano Letivo via Matricula:** Histórico acadêmico completo
-- **Metadados ricos:** Datas, motivos, status específicos
-- **Métodos de negócio:** Lógicas específicas do relacionamento
+## 🛠️ **Construtores e Métodos de Acesso**
+
+**Implementação de Construtores e Getters/Setters:**
+
+```python
+# avaliacao/models.py - Código real implementado
+class Turma(models.Model):
+    nome = models.CharField(max_length=255)
+    vagas_total = models.IntegerField(default=30)
+    
+    # Getter calculado
+    def get_total_alunos(self):
+        """Retorna total de alunos enturmados"""
+        return self.enturmacoes.filter(ativo=True).count()
+    
+    # Getter com lógica de negócio
+    def get_vagas_disponiveis(self):
+        """Retorna número de vagas disponíveis"""
+        return self.vagas_total - self.get_total_alunos()
+    
+    # Método de negócio
+    def get_percentual_ocupacao(self):
+        """Calcula percentual de ocupação da turma"""
+        if self.vagas_total == 0:
+            return 0
+        return round((self.get_total_alunos() * 100) / self.vagas_total)
+```
+
+## 🎯 **Métodos de Negócio Educacionais**
+
+**Regras Específicas do Domínio Implementadas:**
+
+```python
+# avaliacao/models.py - Métodos de negócio reais
+class Avaliacao(models.Model):
+    valor_maximo = models.DecimalField(max_digits=4, decimal_places=2, default=10.00)
+    
+    def calcular_media_turma(self):
+        """Regra: Calcula média geral da turma nesta avaliação"""
+        notas_validas = self.notas.exclude(nota__isnull=True)
+        if not notas_validas:
+            return 0
+        return sum(n.nota for n in notas_validas) / len(notas_validas)
+    
+    def identificar_alunos_recuperacao(self):
+        """Regra: Alunos com nota < 6.0 vão para recuperação"""
+        return self.notas.filter(nota__lt=6.0)
+
+# alunos/models.py - Regras de matrícula
+class Matricula(models.Model):
+    def pode_renovar_matricula(self):
+        """Regra: Só pode renovar se não houver pendências"""
+        return self.status == 'ATIVA' and not self.possui_dependencia
+```
 
 ## 🚀 Como Executar o Sistema
 
@@ -268,7 +298,7 @@ class Enturmacao(models.Model):
 
 - Python 3.12 ou superior
 - Django 5.2.5
-- SQLite3 (incluso no Python)
+- SQLite3 (incluso no Python) - **Banco atual para desenvolvimento/testes**
 
 ### ▶️ **Execução**
 
@@ -355,8 +385,25 @@ O **Sistema GUTO** demonstra com excelência a aplicação dos conceitos de Orie
 
 Este sistema serve como exemplo prático de como os conceitos teóricos de Orientação a Objetos podem ser aplicados para criar soluções robustas, escaláveis e funcionais que resolvem problemas reais do mundo educacional.
 
+## 🗄️ Estratégia de Banco de Dados
+
+### **Configuração Atual (Desenvolvimento)**
+- **SQLite3:** Utilizado para desenvolvimento, testes e prototipação
+- **Vantagens:** Simplicidade, sem configuração adicional, ideal para desenvolvimento local
+- **Localização:** `db.sqlite3` na raiz do projeto
+
+### **Migração Futura (Produção)**
+- **PostgreSQL:** Planejado para ambiente de produção
+- **Azure Database for PostgreSQL:** Opção cloud para escalabilidade
+- **Benefícios:** Melhor performance, suporte a transações complexas, escalabilidade horizontal
+
+### **Arquitetura Preparada**
+O sistema Django está configurado de forma agnóstica ao banco, permitindo migração transparente através de:
+- **Models abstratos** que funcionam em qualquer SGBD compatível com Django ORM
+- **Migrations automáticas** para versionamento de schema
+- **Settings configuráveis** para diferentes ambientes (dev/test/prod)
+
 ---
 
 **Desenvolvido para demonstração dos conceitos de Orientação a Objetos**  
 **Disciplina: Engenharia de Software II**  
-**Sistema funcional e operacional para gestão escolar completa**
