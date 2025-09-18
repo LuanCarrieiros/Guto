@@ -1,8 +1,7 @@
 # Documento de Arquitetura de Software
 ## Sistema de Gestão Escolar - GUTO
 
-**Autores:** 
-
+**Integrantes do grupo:** 
 - Luan Barbosa Rosa Carrieiros
 - Diego Moreira Rocha
 - Arthur Clemente Machado
@@ -10,7 +9,7 @@
 - Arthur Gonçalves de Moraes
   
 
-**Data:** Agosto de 2024  
+**Data:** 2025.2
 **Versão:** 1.0  
 **Fase:** Planejamento Arquitetural  
 
