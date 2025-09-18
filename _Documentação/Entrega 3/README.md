@@ -5,6 +5,13 @@
 **Entrega:** Camada de Domínio  
 **Sistema:** GUTO - Gestão Unificada de Tecnologia Organizacional
 
+**Integrantes do grupo:** 
+- Luan Barbosa Rosa Carrieiros
+- Diego Moreira Rocha
+- Arthur Clemente Machado
+- Bernardo Ferreira Temponi
+- Arthur Gonçalves de Moraes
+
 ---
 
 ## 📋 Sobre o Projeto
