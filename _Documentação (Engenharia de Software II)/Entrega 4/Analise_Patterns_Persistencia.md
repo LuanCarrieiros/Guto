@@ -46,26 +46,41 @@ class Aluno(models.Model):
 
 ### 2.2 **PATTERN: Repository**
 
-**Localização demonstrativa:** `repository_layer.py`, linhas 120-220  
-**Baseado em:** `alunos/views.py` - operações CRUD reais
+**Localização demonstrativa:** `repository_layer.py`, linhas 120-850
+**Baseado em:** `alunos/views.py`, `funcionarios/views.py`, `turma/views.py` - operações CRUD reais
+
+**Implementações Completas:**
+- **AlunoRepository** (linhas 139-316): CRUD para alunos
+- **FuncionarioRepository** (linhas 470-630): CRUD para funcionários
+- **TurmaRepository** (linhas 637-819): CRUD para turmas
 
 ```python
 class AlunoRepository(IRepository):
     def create(self, aluno: AlunoDTO) -> int:
         # Implementação de criação
-        query = """INSERT INTO alunos_aluno (nome, data_nascimento, ...) 
+        query = """INSERT INTO alunos_aluno (nome, data_nascimento, ...)
                    VALUES (?, ?, ...)"""
         cursor.execute(query, valores)
         return cursor.lastrowid
-    
+
     def find_by_name(self, nome: str) -> List[AlunoDTO]:
         # Busca personalizada por nome
-        query = """SELECT * FROM alunos_aluno 
+        query = """SELECT * FROM alunos_aluno
                    WHERE nome LIKE ? AND tipo_arquivo = 'ativo'"""
+
+class FuncionarioRepository(IRepository):
+    def find_by_cpf(self, cpf: str) -> Optional[FuncionarioDTO]:
+        # Busca específica por CPF
+        query = "SELECT * FROM funcionarios_funcionario WHERE cpf = ?"
+
+class TurmaRepository(IRepository):
+    def find_by_periodo(self, periodo: str) -> List[TurmaDTO]:
+        # Busca turmas por período letivo
+        query = """SELECT * FROM turma_turma WHERE periodo_letivo = ?"""
 ```
 
 **No Sistema Django Real:**
-- As views utilizam `Aluno.objects.filter()`, `Aluno.objects.get()`
+- As views utilizam `Aluno.objects.filter()`, `Funcionario.objects.get()`, `Turma.objects.all()`
 - QuerySets fornecem interface rica para consultas
 - Managers customizados implementam lógica específica
 
@@ -171,7 +186,7 @@ class AlunoDTO:
 
 ### 2.6 **PATTERN: Factory**
 
-**Localização:** `repository_layer.py`, linhas 370-385  
+**Localização:** `repository_layer.py`, linhas 826-850
 **Inspirado em:** Django's `apps.get_model()`, DRF ViewSets
 
 ```python
@@ -179,7 +194,15 @@ class RepositoryFactory:
     @staticmethod
     def create_aluno_repository() -> AlunoRepository:
         return AlunoRepository()
-    
+
+    @staticmethod
+    def create_funcionario_repository() -> FuncionarioRepository:
+        return FuncionarioRepository()
+
+    @staticmethod
+    def create_turma_repository() -> TurmaRepository:
+        return TurmaRepository()
+
     @staticmethod
     def create_matricula_dao() -> MatriculaDAO:
         return MatriculaDAO()
@@ -241,17 +264,24 @@ class AlunoListView(ListView):
 O Sistema GUTO demonstra uso sofisticado de padrões de projeto na camada de persistência:
 
 1. **Active Record** via Django ORM para operações básicas
-2. **Repository** através de QuerySets e Managers customizados  
-3. **DAO** implementado em Forms e Views especializadas
-4. **Singleton** para configurações e conexões
-5. **DTO** via Forms e Serializers
-6. **Factory** para criação dinâmica de components
+2. **Repository** com 3 implementações completas (Aluno, Funcionário, Turma)
+3. **DAO** implementado em Forms e Views especializadas (Matrícula)
+4. **Singleton** para configurações e conexões de banco
+5. **DTO** para transferência segura de dados entre camadas
+6. **Factory** para criação padronizada de todos os repositórios
+
+**Implementação Completa:**
+- ✅ **3 Repositórios CRUD**: Aluno, Funcionário, Turma
+- ✅ **1 DAO Especializado**: Matrícula com regras de negócio
+- ✅ **850+ linhas de código** funcional e testado
+- ✅ **Demonstração automática** de todos os patterns
 
 Esta implementação resulta em código **mantível**, **testável** e **escalável**, seguindo as melhores práticas de engenharia de software para sistemas de gestão educacional.
 
 **Benefícios gerais alcançados:**
-- Separação clara de responsabilidades
+- Separação clara de responsabilidades entre entidades
 - Alta coesão e baixo acoplamento
 - Facilidade de manutenção e evolução
-- Reutilização de código
-- Testabilidade aprimorada
+- Reutilização de código entre diferentes módulos
+- Testabilidade aprimorada com interfaces bem definidas
+- Demonstração prática de funcionamento completo
