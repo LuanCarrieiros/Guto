@@ -249,7 +249,7 @@
                         </div>
                         <h4 class="text-lg font-medium text-gray-900 mb-2">Nenhuma turma com alunos</h4>
                         <p class="text-gray-500 mb-4">Crie turmas e entume alunos para visualizar a distribuição.</p>
-                        <a href="{% url 'avaliacao:turmas_list' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                        <a href="{% url 'turma:turmas_list' %}" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors duration-200">
                             <i class="fas fa-plus mr-2"></i>Gerenciar Turmas
                         </a>
                     </div>
@@ -270,14 +270,14 @@
                     <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4">
                         
                         <!-- Ações prioritárias para professores/coordenadores -->
-                        <a href="{% url 'avaliacao:turmas_list' %}" class="quick-action-card group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300">
+                        <a href="{% url 'turma:turmas_list' %}" class="quick-action-card group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-blue-300 hover:bg-blue-50 transition-all duration-300">
                             <div class="p-3 bg-blue-100 rounded-xl group-hover:bg-blue-200 group-hover:scale-105 transition-all duration-300 mb-3">
                                 <i class="fas fa-users text-blue-600 text-lg"></i>
                             </div>
                             <h4 class="font-medium text-gray-900 group-hover:text-blue-700 text-center text-sm leading-tight">Minhas Turmas</h4>
                         </a>
 
-                        <a href="{% url 'avaliacao:lancar_notas' %}" class="quick-action-card group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-300">
+                        <a href="{% url 'turma:lancar_notas' %}" class="quick-action-card group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-purple-300 hover:bg-purple-50 transition-all duration-300">
                             <div class="p-3 bg-purple-100 rounded-xl group-hover:bg-purple-200 group-hover:scale-105 transition-all duration-300 mb-3">
                                 <i class="fas fa-star text-purple-600 text-lg"></i>
                             </div>
@@ -305,7 +305,7 @@
                             <h4 class="font-medium text-gray-900 group-hover:text-indigo-700 text-center text-sm leading-tight">Relatórios</h4>
                         </a>
 
-                        <a href="{% url 'avaliacao:conceitos_list' %}" class="quick-action-card group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-teal-300 hover:bg-teal-50 transition-all duration-300">
+                        <a href="{% url 'turma:conceitos_list' %}" class="quick-action-card group flex flex-col items-center p-4 rounded-xl border border-gray-200 hover:border-teal-300 hover:bg-teal-50 transition-all duration-300">
                             <div class="p-3 bg-teal-100 rounded-xl group-hover:bg-teal-200 group-hover:scale-105 transition-all duration-300 mb-3">
                                 <i class="fas fa-medal text-teal-600 text-lg"></i>
                             </div>
