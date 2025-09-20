@@ -1,0 +1,433 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ turma.nome }} - Diário Eletrônico - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-3">
+                    <a href="{% url 'diario:home' %}" class="hover:text-blue-600 transition-colors">Diário Eletrônico</a>
+                    <i class="fas fa-chevron-right text-xs"></i>
+                    <span class="text-gray-900 font-medium">{{ turma.nome }}</span>
+                </nav>
+                
+                <h1 class="text-3xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-users text-blue-600 mr-3"></i>
+                    {{ turma.nome }}
+                </h1>
+                <div class="flex items-center space-x-4 text-gray-600 mt-2">
+                    <span class="flex items-center">
+                        <i class="fas fa-calendar mr-2"></i>
+                        {{ turma.periodo_letivo }}
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-clock mr-2"></i>
+                        {{ turma.get_turno_display }}
+                    </span>
+                    <span class="flex items-center">
+                        <i class="fas fa-graduation-cap mr-2"></i>
+                        {{ turma.get_tipo_ensino_display }}
+                    </span>
+                </div>
+            </div>
+            
+            <a href="{% url 'diario:home' %}" 
+               class="btn-voltar flex items-center px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors duration-200">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Voltar
+            </a>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-user-friends text-blue-600 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-gray-900">{{ total_alunos }}</div>
+            <div class="text-sm text-gray-600">Alunos Matriculados</div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-chalkboard text-green-600 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-gray-900">{{ total_aulas|default:0 }}</div>
+            <div class="text-sm text-gray-600">Aulas Registradas</div>
+        </div>
+        
+        <div class="bg-white rounded-xl shadow-lg p-6 text-center">
+            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-clipboard-check text-purple-600 text-xl"></i>
+            </div>
+            <div class="text-2xl font-bold text-gray-900">{{ total_avaliacoes|default:0 }}</div>
+            <div class="text-sm text-gray-600">Avaliações Criadas</div>
+        </div>
+    </div>
+
+    <!-- Ações Rápidas -->
+    <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-lg font-semibold text-gray-900 mb-6">Ações Rápidas</h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <a href="{% url 'diario:chamada' turma.pk %}" class="flex items-center p-4 bg-green-50 border border-green-200 rounded-lg hover:bg-green-100 hover:shadow-md transition-all duration-200 group">
+                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-green-200 transition-colors">
+                    <i class="fas fa-user-check text-green-600"></i>
+                </div>
+                <div>
+                    <div class="font-medium text-gray-900">Fazer Chamada</div>
+                    <div class="text-sm text-gray-600">Registrar presença</div>
+                </div>
+            </a>
+
+            <a href="{% url 'diario:notas' turma.pk %}" class="flex items-center p-4 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 hover:shadow-md transition-all duration-200 group">
+                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-blue-200 transition-colors">
+                    <i class="fas fa-edit text-blue-600"></i>
+                </div>
+                <div>
+                    <div class="font-medium text-gray-900">Lançar Notas</div>
+                    <div class="text-sm text-gray-600">Avaliar alunos</div>
+                </div>
+            </a>
+
+            <a href="{% url 'turma:avaliacoes_list' %}" class="flex items-center p-4 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 hover:shadow-md transition-all duration-200 group">
+                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-purple-200 transition-colors">
+                    <i class="fas fa-clipboard-list text-purple-600"></i>
+                </div>
+                <div>
+                    <div class="font-medium text-gray-900">Avaliações</div>
+                    <div class="text-sm text-gray-600">Gerenciar provas</div>
+                </div>
+            </a>
+
+            <a href="#" class="flex items-center p-4 bg-orange-50 border border-orange-200 rounded-lg hover:bg-orange-100 hover:shadow-md transition-all duration-200 group">
+                <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center mr-3 group-hover:bg-orange-200 transition-colors">
+                    <i class="fas fa-chart-bar text-orange-600"></i>
+                </div>
+                <div>
+                    <div class="font-medium text-gray-900">Relatórios</div>
+                    <div class="text-sm text-gray-600">Ver desempenho</div>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Sistema de Abas -->
+    <div class="bg-white rounded-xl shadow-lg border border-gray-200">
+        <!-- Tab Headers -->
+        <div class="border-b border-gray-200">
+            <nav class="flex space-x-1 p-4">
+                <button onclick="showTab('alunos')" 
+                        class="tab-button active px-4 py-2 rounded-lg font-medium transition-all duration-200 flex items-center space-x-2 bg-blue-600 text-white">
+                    <i class="fas fa-users"></i>
+                    <span>Alunos ({{ total_alunos }})</span>
+                </button>
+                
+                <button onclick="showTab('aulas')" 
+                        class="tab-button px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200 flex items-center space-x-2">
+                    <i class="fas fa-chalkboard"></i>
+                    <span>Aulas Recentes</span>
+                </button>
+                
+                <button onclick="showTab('avaliacoes')" 
+                        class="tab-button px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200 flex items-center space-x-2">
+                    <i class="fas fa-clipboard-list"></i>
+                    <span>Avaliações</span>
+                </button>
+                
+                <button onclick="showTab('disciplinas')" 
+                        class="tab-button px-4 py-2 rounded-lg font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 transition-all duration-200 flex items-center space-x-2">
+                    <i class="fas fa-book"></i>
+                    <span>Disciplinas</span>
+                </button>
+            </nav>
+        </div>
+
+        <!-- Tab Contents -->
+        <div class="p-6">
+            <!-- Aba Alunos -->
+            <div id="alunos" class="tab-content active">
+                {% if alunos %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                        {% for aluno in alunos %}
+                            <div class="bg-gray-50 rounded-xl p-4 student-card transition-all duration-300 border hover:border-blue-200">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold">
+                                        {{ aluno.nome|slice:":2"|upper }}
+                                    </div>
+                                    <div class="flex-1 min-w-0">
+                                        <h4 class="font-medium text-gray-900 truncate">{{ aluno.nome }}</h4>
+                                        <p class="text-sm text-gray-600">Código: {{ aluno.codigo }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-3 pt-3 border-t border-gray-200 flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="text-center">
+                                            <div class="text-sm font-semibold text-green-600">95%</div>
+                                            <div class="text-xs text-gray-500">Freq.</div>
+                                        </div>
+                                        <div class="text-center">
+                                            <div class="text-sm font-semibold text-blue-600">8.5</div>
+                                            <div class="text-xs text-gray-500">Média</div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex space-x-1">
+                                        <a href="#" class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors" title="Ver detalhes">
+                                            <i class="fas fa-eye text-sm"></i>
+                                        </a>
+                                        <a href="#" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors" title="Frequência">
+                                            <i class="fas fa-calendar-check text-sm"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-user-graduate text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhum aluno enturmado</h3>
+                        <p class="text-gray-500 mb-6">Esta turma ainda não possui alunos matriculados.</p>
+                        <a href="{% url 'turma:enturmar_alunos' turma.id %}" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Enturmar Alunos
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Aba Aulas -->
+            <div id="aulas" class="tab-content">
+                {% if aulas_recentes %}
+                    <div class="space-y-4">
+                        {% for aula in aulas_recentes %}
+                            <div class="bg-gray-50 rounded-xl p-6 hover:shadow-md transition-all duration-300">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-4">
+                                        <div class="p-3 bg-blue-100 rounded-full">
+                                            <i class="fas fa-chalkboard text-blue-600"></i>
+                                        </div>
+                                        
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800">{{ aula.disciplina.nome }}</h4>
+                                            <p class="text-sm text-gray-600 mt-1">{{ aula.conteudo_programatico|truncatewords:8 }}</p>
+                                            <div class="flex items-center space-x-4 mt-2">
+                                                <span class="text-xs text-gray-500 flex items-center">
+                                                    <i class="fas fa-calendar mr-1"></i>
+                                                    {{ aula.data_aula|date:"d/m/Y" }}
+                                                </span>
+                                                <span class="text-xs text-gray-500 flex items-center">
+                                                    <i class="fas fa-clock mr-1"></i>
+                                                    {{ aula.horario_inicio }} - {{ aula.horario_fim }}
+                                                </span>
+                                                <span class="text-xs text-gray-500 flex items-center">
+                                                    <i class="fas fa-stopwatch mr-1"></i>
+                                                    {{ aula.duracao_aula }} min
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="flex items-center space-x-2">
+                                        {% if aula.chamada_realizada %}
+                                            <span class="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full flex items-center">
+                                                <i class="fas fa-check mr-1"></i>
+                                                Chamada OK
+                                            </span>
+                                        {% else %}
+                                            <a href="#" class="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full hover:bg-yellow-200 transition-colors flex items-center">
+                                                <i class="fas fa-clock mr-1"></i>
+                                                Fazer Chamada
+                                            </a>
+                                        {% endif %}
+                                        
+                                        <button class="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-lg transition-colors">
+                                            <i class="fas fa-ellipsis-v"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-chalkboard text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhuma aula registrada</h3>
+                        <p class="text-gray-500 mb-6">Comece registrando uma aula para esta turma.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Aba Avaliações -->
+            <div id="avaliacoes" class="tab-content">
+                {% if avaliacoes_recentes %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for avaliacao in avaliacoes_recentes %}
+                            <div class="bg-gradient-to-br from-white to-gray-50 rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-300">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex items-center space-x-3">
+                                        <div class="p-2 bg-purple-100 rounded-lg">
+                                            <i class="fas fa-clipboard-list text-purple-600"></i>
+                                        </div>
+                                        <div>
+                                            <h4 class="font-semibold text-gray-800">{{ avaliacao.nome }}</h4>
+                                            <p class="text-sm text-gray-600">{{ avaliacao.disciplina.nome }}</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {% if avaliacao.notas_lancadas %}
+                                        <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                                            <i class="fas fa-check mr-1"></i>
+                                            Completa
+                                        </span>
+                                    {% else %}
+                                        <span class="bg-yellow-100 text-yellow-800 text-xs px-2 py-1 rounded-full">
+                                            <i class="fas fa-clock mr-1"></i>
+                                            Pendente
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <div class="space-y-2 mb-4">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-600">Data:</span>
+                                        <span class="font-medium">{{ avaliacao.data_aplicacao|date:"d/m/Y" }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-600">Tipo:</span>
+                                        <span class="font-medium">{{ avaliacao.tipo_avaliacao.nome }}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-600">Valor:</span>
+                                        <span class="font-medium">{{ avaliacao.valor_maximo }} pontos</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center space-x-2">
+                                    {% if not avaliacao.notas_lancadas %}
+                                        <a href="#" class="flex-1 bg-blue-600 text-white text-sm px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-center">
+                                            <i class="fas fa-edit mr-1"></i>
+                                            Lançar Notas
+                                        </a>
+                                    {% else %}
+                                        <a href="#" class="flex-1 bg-gray-100 text-gray-700 text-sm px-4 py-2 rounded-lg hover:bg-gray-200 transition-colors text-center">
+                                            <i class="fas fa-eye mr-1"></i>
+                                            Ver Notas
+                                        </a>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-clipboard-list text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhuma avaliação criada</h3>
+                        <p class="text-gray-500 mb-6">Crie avaliações para acompanhar o desempenho dos alunos.</p>
+                    </div>
+                {% endif %}
+            </div>
+
+            <!-- Aba Disciplinas -->
+            <div id="disciplinas" class="tab-content">
+                {% if disciplinas %}
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        {% for disciplina in disciplinas %}
+                            <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl border border-indigo-200 p-6 hover:shadow-md transition-all duration-300">
+                                <div class="flex items-center space-x-3 mb-4">
+                                    <div class="p-3 bg-indigo-100 rounded-lg">
+                                        <i class="fas fa-book text-indigo-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-semibold text-gray-800">{{ disciplina.nome }}</h4>
+                                        <p class="text-sm text-gray-600">{{ disciplina.codigo }}</p>
+                                    </div>
+                                </div>
+                                
+                                <div class="space-y-2">
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-600">Carga Horária:</span>
+                                        <span class="font-medium">{{ disciplina.carga_horaria }}h</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-sm">
+                                        <span class="text-gray-600">Tipo Avaliação:</span>
+                                        <span class="font-medium">
+                                            {% if disciplina.avalia_por_conceito %}
+                                                <i class="fas fa-star text-yellow-500 mr-1"></i>
+                                                Conceito
+                                            {% else %}
+                                                <i class="fas fa-sort-numeric-up text-blue-500 mr-1"></i>
+                                                Nota
+                                            {% endif %}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                <div class="mt-4 pt-4 border-t border-indigo-100">
+                                    <div class="flex items-center justify-between">
+                                        <span class="text-xs text-gray-500">5 aulas registradas</span>
+                                        <a href="#" class="text-indigo-600 hover:text-indigo-700 text-sm font-medium">
+                                            Ver detalhes
+                                            <i class="fas fa-arrow-right ml-1"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-12">
+                        <i class="fas fa-book text-6xl text-gray-300 mb-4"></i>
+                        <h3 class="text-xl font-semibold text-gray-600 mb-2">Nenhuma disciplina encontrada</h3>
+                        <p class="text-gray-500">As disciplinas aparecerão aqui conforme as aulas forem registradas.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+<style>
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+</style>
+
+<script>
+    function showTab(tabName) {
+        // Hide all tab contents
+        const tabContents = document.querySelectorAll('.tab-content');
+        tabContents.forEach(content => {
+            content.classList.remove('active');
+        });
+        
+        // Remove active class from all buttons
+        const tabButtons = document.querySelectorAll('.tab-button');
+        tabButtons.forEach(button => {
+            button.classList.remove('active', 'bg-blue-600', 'text-white');
+            button.classList.add('text-gray-600', 'hover:text-gray-800', 'hover:bg-gray-100');
+        });
+        
+        // Show selected tab content
+        document.getElementById(tabName).classList.add('active');
+        
+        // Add active class to clicked button
+        const activeButton = event.target.closest('.tab-button');
+        activeButton.classList.add('active', 'bg-blue-600', 'text-white');
+        activeButton.classList.remove('text-gray-600', 'hover:text-gray-800', 'hover:bg-gray-100');
+    }
+
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        // Ensure first tab is active
+        document.getElementById('alunos').classList.add('active');
+    });
+</script>
+
+{% endblock %}
