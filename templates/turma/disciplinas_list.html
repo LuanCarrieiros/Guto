@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+
+{% block title %}Disciplinas - GUTO{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-book-open text-purple-600 mr-3"></i>Disciplinas
+                </h1>
+                <p class="text-gray-600 mt-1">Gestão das disciplinas do sistema educacional</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all duration-200" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar
+                </a>
+                <a href="{% url 'turma:disciplina_create' %}" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200">
+                    <i class="fas fa-plus mr-2"></i>Nova Disciplina
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-purple-100 rounded-full p-3">
+                    <i class="fas fa-book text-purple-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Total de Disciplinas</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ disciplinas.count }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-green-100 rounded-full p-3">
+                    <i class="fas fa-check-circle text-green-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Disciplinas Ativas</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ disciplinas|length }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-lg p-6">
+            <div class="flex items-center">
+                <div class="bg-blue-100 rounded-full p-3">
+                    <i class="fas fa-graduation-cap text-blue-600 text-xl"></i>
+                </div>
+                <div class="ml-4">
+                    <p class="text-sm font-medium text-gray-500">Em Uso</p>
+                    <p class="text-2xl font-bold text-gray-900">{{ disciplinas|length }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filtros e Busca -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex flex-col md:flex-row gap-4">
+            <div class="flex-1">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+                    <input type="text" 
+                           placeholder="Buscar disciplinas..." 
+                           class="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+                           id="search-input">
+                </div>
+            </div>
+            <div class="flex gap-3">
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">Todos os Tipos</option>
+                    <option value="fundamental">Ensino Fundamental</option>
+                    <option value="medio">Ensino Médio</option>
+                    <option value="tecnico">Ensino Técnico</option>
+                </select>
+                <select class="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
+                    <option value="">Status</option>
+                    <option value="ativo">Ativo</option>
+                    <option value="inativo">Inativo</option>
+                </select>
+            </div>
+        </div>
+    </div>
+
+    <!-- Lista de Disciplinas -->
+    <div class="bg-white rounded-xl shadow-lg overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-lg font-semibold text-gray-800">Lista de Disciplinas</h2>
+        </div>
+
+        {% if disciplinas %}
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Código</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Carga Horária</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo de Avaliação</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200" id="disciplinas-tbody">
+                    {% for disciplina in disciplinas %}
+                    <tr class="hover:bg-gray-50 disciplina-row" data-nome="{{ disciplina.nome|lower }}">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <div class="flex items-center">
+                                <div class="flex-shrink-0 w-10 h-10">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                        <i class="fas fa-book text-purple-600"></i>
+                                    </div>
+                                </div>
+                                <div class="ml-4">
+                                    <div class="text-sm font-medium text-gray-900">{{ disciplina.nome }}</div>
+                                    {% if disciplina.descricao %}
+                                    <div class="text-sm text-gray-500">{{ disciplina.descricao|truncatechars:50 }}</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            <span class="font-mono bg-gray-100 px-2 py-1 rounded">
+                                {{ disciplina.codigo|default:disciplina.id }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {{ disciplina.carga_horaria|default:"--" }}h
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if disciplina.avalia_por_conceito %}
+                                <span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    Conceito
+                                </span>
+                            {% else %}
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    Nota
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if disciplina.ativo %}
+                                <span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    <i class="fas fa-check mr-1"></i>Ativo
+                                </span>
+                            {% else %}
+                                <span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs font-medium">
+                                    <i class="fas fa-times mr-1"></i>Inativo
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                            <a href="{% url 'turma:disciplina_edit' disciplina.pk %}" class="text-yellow-600 hover:text-yellow-900 transition-colors duration-200" title="Editar">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                            <a href="{% url 'turma:disciplina_delete' disciplina.pk %}" class="text-red-600 hover:text-red-900 transition-colors duration-200" title="Excluir">
+                                <i class="fas fa-trash"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                <i class="fas fa-book text-gray-400 text-3xl"></i>
+            </div>
+            <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhuma disciplina encontrada</h3>
+            <p class="text-gray-500 mb-6">Não há disciplinas cadastradas no sistema ainda.</p>
+            <a href="{% url 'turma:disciplina_create' %}" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200">
+                <i class="fas fa-plus mr-2"></i>Cadastrar Primeira Disciplina
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- JavaScript para filtro de busca -->
+<script>
+document.getElementById('search-input').addEventListener('input', function() {
+    const searchTerm = this.value.toLowerCase();
+    const rows = document.querySelectorAll('.disciplina-row');
+    
+    rows.forEach(row => {
+        const nome = row.dataset.nome;
+        if (nome.includes(searchTerm)) {
+            row.style.display = '';
+        } else {
+            row.style.display = 'none';
+        }
+    });
+});
+</script>
+{% endblock %}
