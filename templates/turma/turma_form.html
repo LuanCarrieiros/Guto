@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
+        <p class="text-gray-600 mt-1">{% if is_create %}Preencha as informações para criar uma nova turma{% else %}Edite as informações da turma{% endif %}</p>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-lg p-6">
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+            {% if next_url %}<input type="hidden" name="next" value="{{ next_url }}">{% endif %}
+            
+            <!-- Informações Básicas -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Informações Básicas</h3>
+                <div class="grid grid-cols-12 gap-4">
+                    <div class="col-span-12 lg:col-span-8">
+                        <label for="{{ form.nome.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Nome da Turma *
+                        </label>
+                        {{ form.nome }}
+                        {% if form.nome.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.nome.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-span-12 lg:col-span-4">
+                        <label for="{{ form.periodo_letivo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Período Letivo *
+                        </label>
+                        {{ form.periodo_letivo }}
+                        {% if form.periodo_letivo.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.periodo_letivo.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Classificação -->
+            <div>
+                <h3 class="text-lg font-semibold text-gray-900 mb-4">Classificação</h3>
+                <div class="grid grid-cols-12 gap-4">
+                    <div class="col-span-12 lg:col-span-5">
+                        <label for="{{ form.tipo_ensino.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Tipo de Ensino *
+                        </label>
+                        {{ form.tipo_ensino }}
+                        {% if form.tipo_ensino.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.tipo_ensino.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-span-12 lg:col-span-4">
+                        <label for="{{ form.ano_serie.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Ano/Série *
+                        </label>
+                        {{ form.ano_serie }}
+                        {% if form.ano_serie.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.ano_serie.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-span-12 lg:col-span-3">
+                        <label for="{{ form.turno.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
+                            Turno *
+                        </label>
+                        {{ form.turno }}
+                        {% if form.turno.errors %}
+                            <p class="mt-1 text-sm text-red-600">{{ form.turno.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Informações sobre as formas de validação -->
+            {% if form.non_field_errors %}
+                <div class="bg-red-50 border border-red-200 rounded-md p-4">
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <h3 class="text-sm font-medium text-red-800">Erro no formulário</h3>
+                            <div class="mt-2 text-sm text-red-700">
+                                {% for error in form.non_field_errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            <!-- Botões de Ação -->
+            <div class="flex items-center justify-between pt-6 border-t border-gray-200">
+                {% if next_url and 'diario' in next_url %}
+                    <a href="{% url 'diario:home' %}" 
+                       class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </a>
+                {% else %}
+                    <a href="{% url 'turma:turmas_list' %}" 
+                       class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-arrow-left mr-2"></i>Cancelar
+                    </a>
+                {% endif %}
+                
+                <button type="submit" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-save mr-2"></i>
+                    {% if is_create %}Criar Turma{% else %}Salvar Alterações{% endif %}
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Informações de Ajuda -->
+    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-400"></i>
+            </div>
+            <div class="ml-3">
+                <h3 class="text-sm font-medium text-blue-800">Dicas importantes</h3>
+                <div class="mt-2 text-sm text-blue-700">
+                    <ul class="list-disc list-inside space-y-1">
+                        <li>O nome da turma deve ser único para cada período letivo</li>
+                        <li>Escolha o tipo de ensino adequado para configurar corretamente as avaliações</li>
+                        <li>O turno da turma é importante para organização dos horários</li>
+                        <li>Após criar a turma, você poderá enturmar alunos nela</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoEnsinoSelect = document.getElementById('id_tipo_ensino');
+    const anoSerieSelect = document.getElementById('id_ano_serie');
+    
+    if (!tipoEnsinoSelect || !anoSerieSelect) return;
+    
+    // Função para atualizar as opções de ano/série
+    function atualizarAnosSeries(tipoEnsino) {
+        if (!tipoEnsino) {
+            // Limpar opções se nenhum tipo selecionado
+            anoSerieSelect.innerHTML = '<option value="">---------</option>';
+            return;
+        }
+        
+        // Fazer requisição AJAX
+        fetch(`{% url 'turma:get_anos_series_por_tipo' %}?tipo_ensino=${tipoEnsino}`)
+            .then(response => response.json())
+            .then(data => {
+                // Limpar opções existentes
+                anoSerieSelect.innerHTML = '<option value="">---------</option>';
+                
+                // Adicionar novas opções
+                data.anos_series.forEach(opcao => {
+                    const option = document.createElement('option');
+                    option.value = opcao[0];  // primeiro elemento é o valor
+                    option.textContent = opcao[1];  // segundo elemento é o texto
+                    anoSerieSelect.appendChild(option);
+                });
+                
+                // Restaurar valor selecionado se estiver editando
+                const valorSelecionado = anoSerieSelect.getAttribute('data-selected');
+                if (valorSelecionado) {
+                    anoSerieSelect.value = valorSelecionado;
+                    anoSerieSelect.removeAttribute('data-selected');
+                }
+            })
+            .catch(error => {
+                console.error('Erro ao carregar anos/séries:', error);
+            });
+    }
+    
+    // Salvar valor atual se estiver editando
+    const valorAtual = anoSerieSelect.value;
+    if (valorAtual) {
+        anoSerieSelect.setAttribute('data-selected', valorAtual);
+    }
+    
+    // Event listener para mudanças no tipo de ensino
+    tipoEnsinoSelect.addEventListener('change', function() {
+        atualizarAnosSeries(this.value);
+    });
+    
+    // Carregar opções iniciais
+    if (tipoEnsinoSelect.value) {
+        atualizarAnosSeries(tipoEnsinoSelect.value);
+    }
+});
+</script>
+{% endblock %}
