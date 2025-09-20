@@ -1,0 +1,265 @@
+{% extends 'base.html' %}
+
+{% block title %}Enturmar Alunos - {{ turma.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">Enturmar Alunos</h1>
+            <p class="text-gray-600 mt-1">Turma: {{ turma.nome }} - {{ turma.periodo_letivo }}</p>
+        </div>
+        <a href="{% url 'turma:turma_detail' turma.pk %}" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+            <i class="fas fa-arrow-left mr-2"></i>Voltar
+        </a>
+    </div>
+
+    <!-- Info da Turma -->
+    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div class="flex items-center">
+            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+            <div>
+                <p class="text-sm font-medium text-blue-800">Informações da Turma</p>
+                <p class="text-sm text-blue-700">
+                    <strong>Vagas disponíveis:</strong> {{ vagas_disponiveis }} 
+                    | <strong>Total de vagas:</strong> {{ turma.vagas_total }}
+                    | <strong>Alunos já enturmados:</strong> {{ turma.get_total_alunos }}
+                </p>
+                <!-- DEBUG INFO -->
+                <p class="text-xs text-red-600 mt-2">
+                    <strong>DEBUG:</strong> Total de alunos disponíveis: {{ alunos_disponiveis.count }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {% if vagas_disponiveis == 0 %}
+        <!-- Sem vagas -->
+        <div class="bg-red-50 border border-red-200 rounded-lg p-6 text-center">
+            <i class="fas fa-exclamation-triangle text-red-600 text-4xl mb-4"></i>
+            <h3 class="text-lg font-semibold text-red-800 mb-2">Turma Lotada</h3>
+            <p class="text-red-700">Esta turma não possui vagas disponíveis para novos alunos.</p>
+            <a href="{% url 'turma:turma_detail' turma.pk %}" class="mt-4 inline-block bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 transition-colors">
+                Voltar aos Detalhes da Turma
+            </a>
+        </div>
+    {% elif mostrar_confirmacao %}
+        <!-- Confirmação de transferência -->
+        <div class="bg-orange-50 border border-orange-200 rounded-lg shadow">
+            <div class="px-6 py-4 border-b border-orange-200">
+                <div class="flex items-center">
+                    <i class="fas fa-exclamation-triangle text-orange-600 mr-3 text-xl"></i>
+                    <h2 class="text-xl font-semibold text-orange-900">Confirmação de Transferência</h2>
+                </div>
+            </div>
+            
+            <div class="p-6">
+                <p class="text-orange-800 mb-4">
+                    Os seguintes alunos já estão enturmados em outras turmas. Confirmar esta ação irá <strong>desenturmá-los</strong> 
+                    de suas turmas atuais e <strong>enturmá-los</strong> na turma <strong>{{ turma.nome }}</strong>:
+                </p>
+                
+                <div class="space-y-3 mb-6">
+                    {% for item in alunos_ja_enturmados %}
+                    <div class="bg-white border border-orange-200 rounded-lg p-4">
+                        <div class="flex items-center space-x-3">
+                            {% if item.aluno.foto %}
+                                <img src="{{ item.aluno.foto.url }}" alt="{{ item.aluno.nome }}" class="w-12 h-12 rounded-full object-cover">
+                            {% else %}
+                                <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-user text-orange-600"></i>
+                                </div>
+                            {% endif %}
+                            <div class="flex-1">
+                                <p class="font-medium text-gray-900">{{ item.aluno.nome }}</p>
+                                <p class="text-sm text-gray-600">
+                                    <i class="fas fa-arrow-right text-orange-500 mr-1"></i>
+                                    Será transferido de <strong class="text-red-600">{{ item.turma_atual.nome }}</strong> 
+                                    para <strong class="text-green-600">{{ turma.nome }}</strong>
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div class="bg-orange-100 border border-orange-300 rounded-lg p-4 mb-6">
+                    <div class="flex items-center">
+                        <i class="fas fa-info-circle text-orange-600 mr-2"></i>
+                        <p class="text-sm text-orange-800">
+                            <strong>Atenção:</strong> Esta ação não pode ser desfeita automaticamente. 
+                            Você precisará transferir manualmente os alunos de volta se necessário.
+                        </p>
+                    </div>
+                </div>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    {% for aluno_id in alunos_ids %}
+                        <input type="hidden" name="alunos" value="{{ aluno_id }}">
+                    {% endfor %}
+                    <input type="hidden" name="confirmar_transferencia" value="sim">
+                    
+                    <div class="flex items-center justify-between">
+                        <a href="{% url 'turma:enturmar_alunos' turma.pk %}" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                            <i class="fas fa-times mr-2"></i>Cancelar
+                        </a>
+                        
+                        <button type="submit" class="bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 transition-colors">
+                            <i class="fas fa-check mr-2"></i>Confirmar Transferência
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    {% elif not alunos_disponiveis %}
+        <!-- Sem alunos disponíveis -->
+        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 text-center">
+            <i class="fas fa-users text-yellow-600 text-4xl mb-4"></i>
+            <h3 class="text-lg font-semibold text-yellow-800 mb-2">Nenhum Aluno Disponível</h3>
+            <p class="text-yellow-700">Todos os alunos cadastrados já estão enturmados nesta turma.</p>
+            <div class="mt-4">
+                <a href="{% url 'turma:turma_detail' turma.pk %}" class="inline-block bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar aos Detalhes da Turma
+                </a>
+            </div>
+        </div>
+    {% else %}
+        <!-- Formulário de enturmação -->
+        <div class="bg-white rounded-lg shadow">
+            <form method="POST" id="enturmarForm">
+                {% csrf_token %}
+                
+                <div class="px-6 py-4 border-b border-gray-200">
+                    <h2 class="text-xl font-semibold text-gray-900">Selecionar Alunos para Enturmar</h2>
+                    <p class="text-sm text-gray-600 mt-1">Selecione os alunos que deseja enturmar nesta turma</p>
+                </div>
+
+                <div class="p-6">
+                    <!-- Seleção em massa -->
+                    <div class="mb-4 flex items-center justify-between">
+                        <div>
+                            <label class="flex items-center">
+                                <input type="checkbox" id="selectAll" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="ml-2 text-sm font-medium text-gray-700">Selecionar todos</span>
+                            </label>
+                        </div>
+                        <div class="text-sm text-gray-600">
+                            Total: {{ alunos_disponiveis.count }} aluno(s) disponível(is)
+                        </div>
+                    </div>
+
+                    <!-- Lista de alunos -->
+                    <div class="space-y-2">
+                        {% for aluno in alunos_disponiveis %}
+                        <label class="flex items-center p-3 bg-gray-50 hover:bg-gray-100 rounded-lg cursor-pointer transition-colors aluno-item">
+                            <input type="checkbox" name="alunos" value="{{ aluno.codigo }}" class="rounded border-gray-300 text-blue-600 focus:ring-blue-500 aluno-checkbox">
+                            <div class="ml-3 flex-1">
+                                <div class="flex items-center space-x-3">
+                                    {% if aluno.foto %}
+                                        <img src="{{ aluno.foto.url }}" alt="{{ aluno.nome }}" class="w-10 h-10 rounded-full object-cover">
+                                    {% else %}
+                                        <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                            <i class="fas fa-user text-blue-600"></i>
+                                        </div>
+                                    {% endif %}
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">{{ aluno.nome }}</p>
+                                        <p class="text-sm text-gray-500">
+                                            Nascimento: {{ aluno.data_nascimento|date:"d/m/Y" }}
+                                            {% if aluno.nome_social %}| Nome Social: {{ aluno.nome_social }}{% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </label>
+                        {% endfor %}
+                    </div>
+
+                    <!-- Contador de selecionados -->
+                    <div class="mt-4 p-3 bg-blue-50 rounded-lg">
+                        <p class="text-sm text-blue-700">
+                            <span id="selectedCount">0</span> aluno(s) selecionado(s) 
+                            de <span class="font-medium">{{ vagas_disponiveis }}</span> vaga(s) disponível(is)
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Botões de ação -->
+                <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                    <a href="{% url 'turma:turma_detail' turma.pk %}" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                        <i class="fas fa-times mr-2"></i>Cancelar
+                    </a>
+                    
+                    <button type="submit" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors" id="enturmarBtn" disabled>
+                        <i class="fas fa-user-plus mr-2"></i>Enturmar Alunos Selecionados
+                    </button>
+                </div>
+            </form>
+        </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const selectAllCheckbox = document.getElementById('selectAll');
+    const alunoCheckboxes = document.querySelectorAll('.aluno-checkbox');
+    const selectedCountSpan = document.getElementById('selectedCount');
+    const enturmarBtn = document.getElementById('enturmarBtn');
+    const vagasDisponiveis = {{ vagas_disponiveis }};
+    
+    function updateSelectedCount() {
+        const selectedCount = document.querySelectorAll('.aluno-checkbox:checked').length;
+        selectedCountSpan.textContent = selectedCount;
+        
+        // Habilitar/desabilitar botão
+        enturmarBtn.disabled = selectedCount === 0;
+        
+        // Verificar se excedeu vagas
+        if (selectedCount > vagasDisponiveis) {
+            enturmarBtn.textContent = `Muitos alunos selecionados! (${selectedCount}/${vagasDisponiveis})`;
+            enturmarBtn.classList.add('bg-red-600', 'hover:bg-red-700');
+            enturmarBtn.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            enturmarBtn.disabled = true;
+        } else {
+            enturmarBtn.innerHTML = '<i class="fas fa-user-plus mr-2"></i>Enturmar Alunos Selecionados';
+            enturmarBtn.classList.remove('bg-red-600', 'hover:bg-red-700');
+            enturmarBtn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            enturmarBtn.disabled = selectedCount === 0;
+        }
+        
+        // Atualizar "Selecionar todos"
+        if (selectedCount === alunoCheckboxes.length) {
+            selectAllCheckbox.checked = true;
+            selectAllCheckbox.indeterminate = false;
+        } else if (selectedCount === 0) {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = false;
+        } else {
+            selectAllCheckbox.checked = false;
+            selectAllCheckbox.indeterminate = true;
+        }
+    }
+    
+    // Selecionar todos
+    if (selectAllCheckbox) {
+        selectAllCheckbox.addEventListener('change', function() {
+            alunoCheckboxes.forEach(checkbox => {
+                checkbox.checked = this.checked;
+            });
+            updateSelectedCount();
+        });
+    }
+    
+    // Checkboxes individuais
+    alunoCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', updateSelectedCount);
+    });
+    
+    // Inicializar contador
+    updateSelectedCount();
+});
+</script>
+{% endblock %}
