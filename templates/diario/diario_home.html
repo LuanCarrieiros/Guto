@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+
+{% block title %}📚 Diário Eletrônico - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Header Alegre -->
+    <div class="mb-8">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+            <a href="{% url 'turma:avaliacao_home' %}" class="hover:text-blue-600 transition-colors">📊 Avaliação</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-gray-900 font-medium">📚 Diário Eletrônico</span>
+        </nav>
+        
+        <div class="bg-gradient-to-br from-purple-500 via-pink-500 to-orange-400 rounded-2xl shadow-2xl p-8 text-white">
+            <div class="text-center">
+                <div class="text-8xl mb-4">📚</div>
+                <h1 class="text-4xl font-bold mb-3">🎉 Diário Eletrônico</h1>
+                <p class="text-white/90 text-lg max-w-2xl mx-auto">
+                    ✨ Gerencie suas turmas com alegria! Acompanhe frequência e notas de forma divertida e eficiente 🌟
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Coloridas -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <div class="bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl shadow-lg p-6 text-center text-white">
+            <div class="text-3xl mb-2">🏫</div>
+            <div class="text-2xl font-bold">{{ turmas|length }}</div>
+            <div class="text-sm text-blue-100">Turmas Ativas</div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg p-6 text-center text-white">
+            <div class="text-3xl mb-2">👥</div>
+            <div class="text-2xl font-bold">
+                {% widthratio 0 1 0 as total_alunos %}
+                {% for turma in turmas %}
+                    {% widthratio turma.get_total_alunos|default:0 1 1 as alunos %}
+                    {% widthratio total_alunos|add:alunos 1 1 as total_alunos %}
+                {% endfor %}
+                {{ total_alunos|default:0 }}
+            </div>
+            <div class="text-sm text-emerald-100">Estudantes</div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl shadow-lg p-6 text-center text-white">
+            <div class="text-3xl mb-2">📊</div>
+            <div class="text-2xl font-bold">95%</div>
+            <div class="text-sm text-purple-100">Frequência</div>
+        </div>
+        
+        <div class="bg-gradient-to-br from-orange-400 to-red-500 rounded-xl shadow-lg p-6 text-center text-white">
+            <div class="text-3xl mb-2">⭐</div>
+            <div class="text-2xl font-bold">8.5</div>
+            <div class="text-sm text-orange-100">Média Geral</div>
+        </div>
+    </div>
+
+    <!-- Busca Colorida -->
+    <div class="bg-gradient-to-r from-indigo-500 to-purple-600 rounded-xl shadow-lg p-6 mb-8">
+        <div class="max-w-md mx-auto">
+            <h3 class="text-white font-bold text-lg mb-4 text-center">🔍 Encontre sua turma</h3>
+            <div class="relative">
+                <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <i class="fas fa-search text-indigo-300"></i>
+                </div>
+                <input type="text" id="turmaSearch" 
+                       placeholder="Digite o nome da turma..." 
+                       class="w-full pl-12 pr-4 py-4 border-0 rounded-xl focus:outline-none focus:ring-4 focus:ring-white/30 text-lg font-medium shadow-lg">
+            </div>
+        </div>
+    </div>
+
+    <!-- Grid de Turmas Colorido -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for turma in turmas %}
+        <div class="bg-gradient-to-br from-white to-blue-50 border-2 border-blue-200 rounded-2xl p-6 hover:shadow-2xl hover:scale-105 transition-all duration-300 diary-card">
+            <!-- Header Colorido -->
+            <div class="flex items-start justify-between mb-6">
+                <div>
+                    <h3 class="text-2xl font-bold text-gray-800 mb-2 flex items-center">
+                        <span class="text-3xl mr-2">🎓</span>
+                        {{ turma.nome }}
+                    </h3>
+                    <div class="flex items-center space-x-2 text-sm">
+                        <span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full font-medium">
+                            📚 {{ turma.get_ano_serie_display }}
+                        </span>
+                        <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-medium">
+                            🕒 {{ turma.get_turno_display }}
+                        </span>
+                    </div>
+                    <div class="mt-2 text-gray-600 font-medium">
+                        👥 {{ turma.get_total_alunos|default:0 }} estudantes
+                    </div>
+                </div>
+                <div class="flex items-center space-x-2">
+                    {% if turma.diario_fechado %}
+                        <div class="bg-red-100 text-red-700 px-3 py-1 rounded-full text-sm font-bold">
+                            🔒 Fechado
+                        </div>
+                    {% else %}
+                        <div class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold">
+                            ✅ Ativo
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Botão Principal Colorido -->
+            <div class="mb-4">
+                <a href="{% url 'diario:turma' turma.pk %}" 
+                   class="block w-full text-center px-6 py-4 bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg transform hover:scale-105 text-lg">
+                    📖 Abrir Diário ✨
+                </a>
+            </div>
+
+        </div>
+        {% empty %}
+        <!-- Estado Vazio Alegre -->
+        <div class="col-span-full">
+            <div class="bg-gradient-to-br from-yellow-100 to-orange-100 rounded-3xl border-2 border-dashed border-orange-300 p-12 text-center shadow-lg">
+                <div class="text-8xl mb-6">🎪</div>
+                <h3 class="text-2xl font-bold text-orange-800 mb-3">🎉 Vamos começar a diversão!</h3>
+                <p class="text-orange-700 mb-6 text-lg">Que tal criar sua primeira turma? O diário eletrônico está esperando você! ✨</p>
+                <a href="{% url 'turma:turmas_list' %}" 
+                   class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-2xl hover:from-orange-600 hover:to-red-600 transition-all duration-300 font-bold text-lg shadow-xl transform hover:scale-105">
+                    <i class="fas fa-plus-circle mr-3"></i>
+                    🚀 Criar Primeira Turma
+                </a>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+// 🔍 Busca de turmas com animação
+document.getElementById('turmaSearch').addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const cards = document.querySelectorAll('.diary-card');
+    
+    cards.forEach(card => {
+        const text = card.textContent.toLowerCase();
+        if (text.includes(searchTerm)) {
+            card.style.display = 'block';
+            card.style.transform = 'scale(1)';
+            card.style.opacity = '1';
+        } else {
+            card.style.transform = 'scale(0.8)';
+            card.style.opacity = '0.5';
+            setTimeout(() => {
+                if (!card.textContent.toLowerCase().includes(searchTerm)) {
+                    card.style.display = 'none';
+                }
+            }, 200);
+        }
+    });
+});
+
+// 🎉 Animação de entrada para os cards
+document.addEventListener('DOMContentLoaded', function() {
+    const cards = document.querySelectorAll('.diary-card');
+    
+    // Adicionar animação de entrada
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(30px)';
+        
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 150);
+    });
+
+    // ✨ Efeitos de hover especiais
+    cards.forEach(card => {
+        card.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-10px) scale(1.02)';
+            this.style.boxShadow = '0 25px 50px -12px rgba(0, 0, 0, 0.25)';
+        });
+        
+        card.addEventListener('mouseleave', function() {
+            this.style.transform = 'translateY(0) scale(1)';
+            this.style.boxShadow = '0 10px 15px -3px rgba(0, 0, 0, 0.1)';
+        });
+    });
+});
+
+// 🎊 Efeito confete quando clica em "Abrir Diário" (só por diversão)
+document.querySelectorAll('a[href*="turma"]').forEach(link => {
+    link.addEventListener('click', function(e) {
+        // Pequena animação de "click"
+        this.style.transform = 'scale(0.95)';
+        setTimeout(() => {
+            this.style.transform = 'scale(1)';
+        }, 100);
+    });
+});
+</script>
+{% endblock %}
