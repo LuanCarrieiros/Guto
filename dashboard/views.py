@@ -6,7 +6,7 @@ from django.contrib.auth.models import User
 from .models import AtividadeRecente
 from alunos.models import Aluno
 from funcionarios.models import Funcionario
-from avaliacao.models import Turma, Enturmacao, Avaliacao
+from turma.models import Turma, Enturmacao, Avaliacao
 import datetime
 import locale
 
