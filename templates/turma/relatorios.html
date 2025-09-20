@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatórios - GUTO{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    <!-- Header -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-800">
+                    <i class="fas fa-chart-line text-green-600 mr-3"></i>Relatórios de Avaliação
+                </h1>
+                <p class="text-gray-600 mt-1">Estatísticas e relatórios do sistema educacional</p>
+            </div>
+            <div class="flex space-x-3">
+                <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all duration-200" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Estatísticas Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Total Alunos Avaliados -->
+        <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <i class="fas fa-user-graduate text-2xl"></i>
+                </div>
+                <span class="w-3 h-3 bg-green-400 rounded-full animate-pulse"></span>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">{{ stats.total_alunos_avaliados }}</h3>
+            <p class="text-blue-100">Alunos Avaliados</p>
+        </div>
+
+        <!-- Média Geral -->
+        <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                </div>
+                <span class="w-3 h-3 bg-yellow-400 rounded-full"></span>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">{{ stats.media_geral|floatformat:1 }}</h3>
+            <p class="text-emerald-100">Média Geral</p>
+        </div>
+
+        <!-- Total Recuperações -->
+        <div class="bg-gradient-to-br from-orange-500 to-red-500 rounded-xl p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <i class="fas fa-redo text-2xl"></i>
+                </div>
+                <span class="w-3 h-3 bg-red-400 rounded-full animate-pulse"></span>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">{{ stats.total_recuperacoes }}</h3>
+            <p class="text-orange-100">Recuperações</p>
+        </div>
+
+        <!-- Atestados Médicos -->
+        <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 text-white">
+            <div class="flex items-center justify-between mb-4">
+                <div class="p-3 bg-white bg-opacity-20 rounded-xl">
+                    <i class="fas fa-heart text-2xl"></i>
+                </div>
+                <span class="w-3 h-3 bg-blue-400 rounded-full"></span>
+            </div>
+            <h3 class="text-3xl font-bold mb-1">{{ stats.total_atestados }}</h3>
+            <p class="text-purple-100">Atestados Médicos</p>
+        </div>
+    </div>
+
+    <!-- Tipos de Relatórios -->
+    <div class="bg-white rounded-xl shadow-lg p-6">
+        <h2 class="text-xl font-semibold text-gray-800 mb-6">
+            <i class="fas fa-file-alt text-blue-600 mr-2"></i>Tipos de Relatórios Disponíveis
+        </h2>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            
+            <!-- Relatório de Notas -->
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-star text-blue-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Relatório de Notas</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Visualize e exporte as notas dos alunos por turma, disciplina ou período.</p>
+                <button class="w-full bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>Gerar Relatório
+                </button>
+            </div>
+
+            <!-- Relatório de Frequência -->
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-calendar-check text-green-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Relatório de Frequência</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Acompanhe a frequência dos alunos e identifique padrões de faltas.</p>
+                <button class="w-full bg-green-600 text-white py-2 px-4 rounded-lg hover:bg-green-700 transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>Gerar Relatório
+                </button>
+            </div>
+
+            <!-- Relatório de Performance -->
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-chart-bar text-purple-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Performance por Turma</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Compare o desempenho entre turmas e identifique oportunidades.</p>
+                <button class="w-full bg-purple-600 text-white py-2 px-4 rounded-lg hover:bg-purple-700 transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>Gerar Relatório
+                </button>
+            </div>
+
+            <!-- Relatório de Disciplinas -->
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-book text-yellow-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Por Disciplina</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Analise o desempenho dos alunos por disciplina específica.</p>
+                <button class="w-full bg-yellow-600 text-white py-2 px-4 rounded-lg hover:bg-yellow-700 transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>Gerar Relatório
+                </button>
+            </div>
+
+            <!-- Relatório de Recuperações -->
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-redo text-red-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Recuperações</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Relatório de alunos em recuperação e seus progressos.</p>
+                <button class="w-full bg-red-600 text-white py-2 px-4 rounded-lg hover:bg-red-700 transition-colors duration-200">
+                    <i class="fas fa-download mr-2"></i>Gerar Relatório
+                </button>
+            </div>
+
+            <!-- Relatório Personalizado -->
+            <div class="border border-gray-200 rounded-lg p-6 hover:shadow-lg transition-shadow duration-300">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center mr-4">
+                        <i class="fas fa-cog text-gray-600 text-xl"></i>
+                    </div>
+                    <h3 class="text-lg font-semibold text-gray-900">Personalizado</h3>
+                </div>
+                <p class="text-gray-600 mb-4">Crie relatórios customizados com filtros específicos.</p>
+                <button class="w-full bg-gray-600 text-white py-2 px-4 rounded-lg hover:bg-gray-700 transition-colors duration-200">
+                    <i class="fas fa-tools mr-2"></i>Criar Relatório
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Em Desenvolvimento -->
+    <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+        <div class="flex items-start">
+            <div class="flex-shrink-0">
+                <i class="fas fa-construction text-yellow-600 text-2xl"></i>
+            </div>
+            <div class="ml-4">
+                <h3 class="text-lg font-semibold text-yellow-800 mb-2">
+                    Funcionalidade em Desenvolvimento
+                </h3>
+                <p class="text-yellow-700">
+                    O sistema de relatórios está sendo aprimorado. Em breve você terá acesso a relatórios detalhados 
+                    com filtros avançados, exportação em múltiplos formatos (PDF, Excel, CSV) e gráficos interativos.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
