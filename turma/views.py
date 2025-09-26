@@ -100,7 +100,7 @@ def turmas_list(request):
 def turma_create(request):
     """Cria uma nova turma"""
     # Capturar a página de origem para voltar corretamente
-    next_url = request.GET.get('next', 'avaliacao:turmas_list')
+    next_url = request.GET.get('next', 'turma:turmas_list')
     
     if request.method == 'POST':
         form = TurmaForm(request.POST)
@@ -119,8 +119,8 @@ def turma_create(request):
             
             # Verificar se veio do diário home para redirecionar corretamente
             if 'diario' in request.POST.get('next', ''):
-                return redirect('avaliacao:diario_home')
-            return redirect('avaliacao:turmas_list')
+                return redirect('diario:home')
+            return redirect('turma:turmas_list')
     else:
         form = TurmaForm()
     
@@ -154,7 +154,7 @@ def turma_edit(request, pk):
                 descricao=f'Editou a turma {turma.nome}'
             )
             
-            return redirect('avaliacao:turmas_list')
+            return redirect('turma:turmas_list')
     else:
         form = TurmaForm(instance=turma)
     
@@ -167,12 +167,16 @@ def turma_detail(request, pk):
     turma = get_object_or_404(Turma, pk=pk)
     alunos_enturmados = turma.get_alunos_enturmados()
     avaliacoes = Avaliacao.objects.filter(turma=turma).order_by('-data_aplicacao')[:5]
-    
+
+    # Verificar se veio do diário
+    from_diary = request.GET.get('from_diary') == 'true'
+
     context = {
         'turma': turma,
         'alunos_enturmados': alunos_enturmados,
         'avaliacoes': avaliacoes,
         'total_alunos': alunos_enturmados.count(),
+        'from_diary': from_diary,
     }
     return render(request, 'turma/turma_detail.html', context)
 
@@ -235,7 +239,7 @@ def disciplina_create(request):
                 descricao=f'Criou a disciplina {disciplina.nome}'
             )
             
-            return redirect('avaliacao:disciplinas_list')
+            return redirect('turma:disciplinas_list')
     else:
         form = DisciplinaForm()
     
@@ -262,7 +266,7 @@ def disciplina_edit(request, pk):
                 descricao=f'Editou a disciplina {disciplina.nome}'
             )
             
-            return redirect('avaliacao:disciplinas_list')
+            return redirect('turma:disciplinas_list')
     else:
         form = DisciplinaForm(instance=disciplina)
     
@@ -288,7 +292,7 @@ def disciplina_delete(request, pk):
             descricao=f'Excluiu a disciplina {nome_disciplina}'
         )
         
-        return redirect('avaliacao:disciplinas_list')
+        return redirect('turma:disciplinas_list')
     
     return render(request, 'turma/disciplina_confirm_delete.html', {'disciplina': disciplina})
 
@@ -334,10 +338,11 @@ def lancar_notas(request):
 
 
 @login_required
-def avaliacao_create(request):
+def avaliacao_create(request, turma_id=None):
     """Cria uma nova avaliação"""
     if request.method == 'POST':
-        turma_id = request.POST.get('turma')
+        if not turma_id:
+            turma_id = request.POST.get('turma')
         disciplina_id = request.POST.get('disciplina')
         tipo_avaliacao_id = request.POST.get('tipo_avaliacao')
         nome = request.POST.get('nome')
@@ -387,7 +392,7 @@ def avaliacao_create(request):
                 descricao=f'Criou a avaliação {nome} para a turma {turma.nome}'
             )
             
-            return redirect('avaliacao:lancar_notas_avaliacao', avaliacao_id=avaliacao.id)
+            return redirect('turma:lancar_notas_avaliacao', avaliacao_id=avaliacao.id)
             
         except Exception as e:
             messages.error(request, f'Erro ao criar avaliação: {str(e)}')
@@ -443,11 +448,14 @@ def enturmar_alunos(request, pk):
         
         # Se há alunos já enturmados e não foi confirmado, mostrar confirmação
         if alunos_ja_enturmados and not confirmar_transferencia:
+            # Verificar se veio do diário
+            from_diary = request.POST.get('from_diary') or request.GET.get('from_diary') == 'true'
             context = {
                 'turma': turma,
                 'alunos_ja_enturmados': alunos_ja_enturmados,
                 'alunos_ids': alunos_ids,
                 'mostrar_confirmacao': True,
+                'from_diary': from_diary,
             }
             return render(request, 'turma/enturmar_alunos.html', context)
         
@@ -490,7 +498,7 @@ def enturmar_alunos(request, pk):
                 )
         
         messages.success(request, f'{len(alunos_ids)} aluno(s) enturmado(s) com sucesso!')
-        return redirect('avaliacao:turma_detail', pk=pk)
+        return redirect('turma:turma_detail', pk=pk)
     
     # Alunos já enturmados nesta turma
     alunos_enturmados_ids = Enturmacao.objects.filter(
@@ -505,11 +513,15 @@ def enturmar_alunos(request, pk):
     
     # Calcular vagas disponíveis
     vagas_disponiveis = turma.get_vagas_disponiveis()
-    
+
+    # Verificar se veio do diário
+    from_diary = request.GET.get('from_diary') == 'true'
+
     context = {
         'turma': turma,
         'alunos_disponiveis': alunos_disponiveis,
         'vagas_disponiveis': vagas_disponiveis,
+        'from_diary': from_diary,
     }
     return render(request, 'turma/enturmar_alunos.html', context)
 
@@ -540,7 +552,7 @@ def desenturmar_aluno(request, pk, aluno_id):
             enturmacao.save()
         
         messages.success(request, f'Aluno {aluno.nome} desenturmado da turma {turma.nome}!')
-        return redirect('avaliacao:turma_detail', pk=turma.pk)
+        return redirect('turma:turma_detail', pk=turma.pk)
     
     context = {
         'turma': turma,
@@ -561,7 +573,7 @@ def diario_dashboard(request):
         'total_turmas': total_turmas,
         'diarios_ativos': diarios_ativos,
     }
-    return render(request, 'turma/diario_eletronico_dashboard.html', context)
+    return render(request, 'diario/diario_eletronico_dashboard.html', context)
 
 
 @login_required
@@ -600,7 +612,7 @@ def lancar_notas_avaliacao(request, avaliacao_id):
                     continue
         
         messages.success(request, 'Notas lançadas com sucesso!')
-        return redirect('avaliacao:avaliacao_detail', pk=avaliacao.id)
+        return redirect('turma:avaliacao_detail', pk=avaliacao.id)
     
     # Obter notas já lançadas
     notas_existentes = NotaAvaliacao.objects.filter(
@@ -639,12 +651,12 @@ def gerenciar_disciplinas_turma(request, turma_id):
             )
         
         messages.success(request, f'{len(disciplinas_ids)} disciplina(s) vinculada(s) à turma com sucesso!')
-        return redirect('avaliacao:turma_detail', pk=turma_id)
+        return redirect('turma:turma_detail', pk=turma_id)
     
     todas_disciplinas = Disciplina.objects.all().order_by('nome')
     # Buscar disciplinas que têm diários para esta turma
     disciplinas_turma = Disciplina.objects.filter(
-        diarios_eletronicos__turma=turma
+        diarioeletronico__turma=turma
     ).distinct().order_by('nome')
     
     context = {
@@ -748,7 +760,7 @@ def avaliacao_edit(request, pk):
             descricao=f'Editou a avaliação {avaliacao.nome}'
         )
         
-        return redirect('avaliacao:avaliacao_detail', pk=pk)
+        return redirect('turma:avaliacao_detail', pk=pk)
     
     context = {
         'avaliacao': avaliacao,
@@ -775,7 +787,7 @@ def avaliacao_delete(request, pk):
             descricao=f'Excluiu a avaliação {nome_avaliacao}'
         )
         
-        return redirect('avaliacao:avaliacoes_list')
+        return redirect('turma:avaliacoes_list')
     
     return render(request, 'turma/avaliacao_confirm_delete.html', {'avaliacao': avaliacao})
 
@@ -808,7 +820,7 @@ def diario_home(request):
         'page_title': 'Diário Eletrônico'
     }
     
-    return render(request, 'turma/diario_home.html', context)
+    return render(request, 'diario/diario_home.html', context)
 
 
 @login_required
@@ -836,7 +848,7 @@ def diario_turma(request, turma_id):
         'page_title': f'Diário - {turma.nome}'
     }
     
-    return render(request, 'turma/diario/diario_turma.html', context)
+    return render(request, 'diario/turma_diario.html', context)
 
 
 @login_required
@@ -948,7 +960,7 @@ def fazer_chamada(request, turma_id):
         'page_title': f'Chamada - {disciplina.nome} - {turma.nome}'
     }
     
-    return render(request, 'turma/diario/fazer_chamada_diario.html', context)
+    return render(request, 'diario/fazer_chamada_diario.html', context)
 
 
 @login_required
@@ -1063,7 +1075,7 @@ def lancar_notas_diario(request, turma_id):
         'page_title': f'Lançar Notas - {turma.nome}'
     }
     
-    return render(request, 'turma/diario/lancar_notas_diario.html', context)
+    return render(request, 'diario/lancar_notas_diario.html', context)
 
 
 @login_required
@@ -1153,7 +1165,7 @@ def gerenciar_avaliacoes_diario(request, turma_id):
         'page_title': f'Avaliações - {disciplina.nome} - {turma.nome}'
     }
     
-    return render(request, 'turma/diario/gerenciar_avaliacoes_diario.html', context)
+    return render(request, 'diario/gerenciar_avaliacoes_diario.html', context)
 
 
 def visualizar_avaliacoes_diario(request, turma_id):
@@ -1185,7 +1197,7 @@ def visualizar_avaliacoes_diario(request, turma_id):
         'page_title': f'Espelho do Diário - {disciplina.nome} - {turma.nome}'
     }
     
-    return render(request, 'turma/diario/visualizar_avaliacoes_diario.html', context)
+    return render(request, 'diario/visualizar_avaliacoes_diario.html', context)
 
 
 @login_required
@@ -1255,7 +1267,7 @@ def editar_avaliacao_diario(request, avaliacao_id):
         'page_title': f'Editar Avaliação - {avaliacao.nome}'
     }
     
-    return render(request, 'turma/diario/editar_avaliacao_diario.html', context)
+    return render(request, 'diario/editar_avaliacao_diario.html', context)
 
 
 @login_required
