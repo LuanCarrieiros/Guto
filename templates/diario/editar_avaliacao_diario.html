@@ -16,7 +16,7 @@
                     </h1>
                     <p class="mt-2 text-blue-100">{{ disciplina.nome }} • {{ turma.nome }} • {{ turma.get_turno_display }}</p>
                 </div>
-                <a href="{% url 'diario:avaliacoes' turma.pk %}?disciplina={{ disciplina.pk }}" 
+                <a href="{% url 'turma:gerenciar_avaliacoes_diario' turma.pk %}?disciplina={{ disciplina.pk }}" 
                    class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Voltar às Avaliações
@@ -94,7 +94,7 @@
             
             <!-- Botões -->
             <div class="flex items-center justify-end gap-4 pt-4">
-                <a href="{% url 'diario:avaliacoes' turma.pk %}?disciplina={{ disciplina.pk }}" 
+                <a href="{% url 'turma:gerenciar_avaliacoes_diario' turma.pk %}?disciplina={{ disciplina.pk }}" 
                    class="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors">
                     Cancelar
                 </a>
