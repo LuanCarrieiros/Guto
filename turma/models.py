@@ -125,6 +125,10 @@ class Turma(models.Model):
         if self.vagas_total == 0:
             return 0
         return round((self.get_total_alunos() * 100) / self.vagas_total)
+
+    def get_disciplinas(self):
+        """Retorna todas as disciplinas ativas disponíveis para uso no diário"""
+        return Disciplina.objects.filter(ativo=True).order_by('nome')
     
     @classmethod
     def get_anos_series_por_tipo(cls, tipo_ensino):
@@ -177,16 +181,89 @@ class Turma(models.Model):
 class Disciplina(models.Model):
     """Model para Disciplinas"""
     nome = models.CharField(max_length=255, verbose_name="Nome da Disciplina")
-    codigo = models.CharField(max_length=20, unique=True, verbose_name="Código da Disciplina")
+    codigo = models.CharField(max_length=20, unique=True, verbose_name="Código da Disciplina", blank=True)
     avalia_por_conceito = models.BooleanField(default=False, verbose_name="Avalia por Conceito")
     carga_horaria = models.IntegerField(default=40, verbose_name="Carga Horária")
     ativo = models.BooleanField(default=True, verbose_name="Disciplina Ativa")
-    
+
     class Meta:
         verbose_name = "Disciplina"
         verbose_name_plural = "Disciplinas"
         ordering = ['nome']
-    
+
+    def save(self, *args, **kwargs):
+        """Gera código automático se não fornecido"""
+        if not self.codigo:
+            self.codigo = self.gerar_codigo_automatico()
+        super().save(*args, **kwargs)
+
+    def gerar_codigo_automatico(self):
+        """Gera código estiloso baseado no nome da disciplina"""
+        import re
+
+        # Remover acentos e caracteres especiais
+        nome_limpo = self.nome.upper()
+        nome_limpo = re.sub(r'[ÁÀÂÃÄ]', 'A', nome_limpo)
+        nome_limpo = re.sub(r'[ÉÈÊË]', 'E', nome_limpo)
+        nome_limpo = re.sub(r'[ÍÌÎÏ]', 'I', nome_limpo)
+        nome_limpo = re.sub(r'[ÓÒÔÕÖ]', 'O', nome_limpo)
+        nome_limpo = re.sub(r'[ÚÙÛÜ]', 'U', nome_limpo)
+        nome_limpo = re.sub(r'[ÇC]', 'C', nome_limpo)
+        nome_limpo = re.sub(r'[^A-Z\s]', '', nome_limpo)
+
+        # Mapeamento de disciplinas comuns para códigos estilosos
+        codigos_especiais = {
+            'MATEMATICA': 'MAT',
+            'PORTUGUES': 'PORT',
+            'LINGUA PORTUGUESA': 'PORT',
+            'HISTORIA': 'HIST',
+            'GEOGRAFIA': 'GEO',
+            'CIENCIAS': 'CIEN',
+            'BIOLOGIA': 'BIO',
+            'FISICA': 'FIS',
+            'QUIMICA': 'QUIM',
+            'FILOSOFIA': 'FIL',
+            'SOCIOLOGIA': 'SOC',
+            'EDUCACAO FISICA': 'EDFIS',
+            'ARTES': 'ART',
+            'INGLES': 'ING',
+            'ESPANHOL': 'ESP',
+            'INFORMATICA': 'INFO',
+            'LITERATURA': 'LIT',
+            'REDACAO': 'RED',
+            'GEOMETRIA': 'GEOM',
+            'ALGEBRA': 'ALG',
+            'ENSINO RELIGIOSO': 'ENS_REL'
+        }
+
+        # Verificar se é uma disciplina especial
+        for disciplina_key, codigo_base in codigos_especiais.items():
+            if disciplina_key in nome_limpo:
+                # Gerar número sequencial
+                contador = 1
+                while True:
+                    codigo_proposto = f"{codigo_base}{contador:03d}"
+                    if not Disciplina.objects.filter(codigo=codigo_proposto).exists():
+                        return codigo_proposto
+                    contador += 1
+
+        # Para disciplinas não mapeadas, usar primeiras letras
+        palavras = nome_limpo.split()
+        if len(palavras) >= 2:
+            # Pegar primeiras 2-3 letras das principais palavras
+            codigo_base = ''.join([palavra[:2] for palavra in palavras[:2]])
+        else:
+            # Uma palavra só, pegar primeiras 3-4 letras
+            codigo_base = palavras[0][:4] if len(palavras[0]) >= 4 else palavras[0]
+
+        # Gerar número sequencial
+        contador = 1
+        while True:
+            codigo_proposto = f"{codigo_base}{contador:03d}"
+            if not Disciplina.objects.filter(codigo=codigo_proposto).exists():
+                return codigo_proposto
+            contador += 1
+
     def __str__(self):
         return self.nome
 
