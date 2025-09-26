@@ -17,7 +17,7 @@
                     </h1>
                     <p class="mt-2 text-orange-100">{{ turma.nome }} • {{ turma.get_turno_display }}</p>
                 </div>
-                <a href="{% url 'diario:turma' turma.pk %}" 
+                <a href="{% url 'diario:turma' turma.pk %}"
                    class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Voltar às Disciplinas
@@ -41,11 +41,11 @@
                            class="w-full pl-10 pr-4 py-3 border-0 rounded-lg focus:outline-none focus:ring-4 focus:ring-white/30 text-lg font-medium shadow-lg">
                 </div>
             </div>
-            
+
             <div class="flex gap-3">
                 <div>
                     <label class="block text-sm font-medium text-purple-100 mb-2">⚙️ Ações</label>
-                    <a href="{% url 'diario:avaliacoes' turma.pk %}?disciplina={{ disciplina.pk }}" 
+                    <a href="{% url 'turma:gerenciar_avaliacoes_diario' turma.pk %}?disciplina={{ disciplina.pk }}"
                        class="inline-flex items-center px-6 py-3 bg-white/20 backdrop-blur-sm text-white rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30 font-bold shadow-lg h-12">
                         <i class="fas fa-cog mr-2"></i>
                         ✨ Gerenciar Avaliações
@@ -72,10 +72,10 @@
 
                 <div class="space-y-4" id="alunosContainer">
                     {% for aluno in alunos %}
-                    <div class="bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl p-4 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 aluno-item" 
-                         data-aluno-id="{{ aluno.pk }}" 
+                    <div class="bg-gradient-to-r from-white to-gray-50 border-2 border-gray-200 rounded-xl p-4 hover:shadow-xl hover:scale-[1.02] transition-all duration-300 aluno-item"
+                         data-aluno-id="{{ aluno.pk }}"
                          data-aluno-nome="{{ aluno.nome|lower }}">
-                        
+
                         <div class="flex items-center justify-between">
                             <div class="flex items-center space-x-4">
                                 <!-- Avatar/Número Colorido -->
@@ -91,7 +91,7 @@
                             </div>
 
                             <!-- Botão de Ação Mais Vibrante -->
-                            <button onclick="abrirModalNota({{ aluno.pk }}, '{{ aluno.nome }}')" 
+                            <button onclick="abrirModalNota({{ aluno.pk }}, '{{ aluno.nome }}')"
                                     class="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-600 text-white rounded-xl hover:from-orange-600 hover:to-red-700 transition-all duration-300 font-bold shadow-lg transform hover:scale-105">
                                 <i class="fas fa-star mr-2"></i>
                                 ✨ Lançar Nota
@@ -110,7 +110,7 @@
                                             </div>
                                             <div class="ml-3 flex items-center">
                                                 <span class="text-lg font-bold text-green-800">{{ nota.nota|floatformat:1 }}</span>
-                                                <button onclick="editarNota({{ aluno.pk }}, {{ nota.avaliacao.id }}, {{ nota.nota }}, '{{ aluno.nome }}', '{{ nota.avaliacao.nome }}')" 
+                                                <button onclick="editarNota({{ aluno.pk }}, {{ nota.avaliacao.id }}, {{ nota.nota }}, '{{ aluno.nome }}', '{{ nota.avaliacao.nome }}')"
                                                         class="ml-2 text-green-600 hover:text-green-800 transition-colors">
                                                     <i class="fas fa-edit text-xs"></i>
                                                 </button>
@@ -134,7 +134,7 @@
                 <i class="fas fa-user-slash text-4xl text-gray-400 mb-4"></i>
                 <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum aluno enturmado</h3>
                 <p class="text-gray-600 mb-6">Adicione alunos à turma para lançar notas.</p>
-                <a href="{% url 'turma:enturmar_alunos' turma.pk %}" 
+                <a href="{% url 'turma:enturmar_alunos' turma.pk %}?from_diary=true"
                    class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
                     <i class="fas fa-user-plus mr-2"></i>
                     Enturmar Alunos
@@ -153,7 +153,7 @@
                         ✨ Avaliações
                     </h3>
                 </div>
-                
+
                 {% if avaliacoes %}
                 <div class="space-y-3">
                     {% for avaliacao in avaliacoes %}
@@ -175,7 +175,7 @@
                             </span>
                             <h3 class="font-bold text-gray-900 flex-1">{{ avaliacao.nome }}</h3>
                         </div>
-                        
+
                         <!-- Linha 2: Data -->
                         <div class="mb-3">
                             <span class="text-xs text-green-700 bg-green-100 px-2 py-1 rounded-full font-medium">
@@ -183,7 +183,7 @@
                                 {{ avaliacao.data_aplicacao|date:"d/m/Y" }}
                             </span>
                         </div>
-                        
+
                         <!-- Linha 3: Peso e Progresso -->
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-2">
@@ -214,7 +214,7 @@
                 <div class="text-center py-8">
                     <i class="fas fa-clipboard text-3xl text-gray-300 mb-3"></i>
                     <p class="text-sm text-gray-600 mb-4">Nenhuma avaliação criada</p>
-                    <a href="{% url 'diario:avaliacoes' turma.pk %}?disciplina={{ disciplina.pk }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
+                    <a href="{% url 'turma:gerenciar_avaliacoes_diario' turma.pk %}?disciplina={{ disciplina.pk }}" class="text-blue-600 hover:text-blue-700 text-sm font-medium">
                         <i class="fas fa-plus mr-1"></i>
                         Criar primeira avaliação
                     </a>
@@ -239,7 +239,7 @@
                             <span class="text-2xl font-bold">{{ alunos|length }}</span>
                         </div>
                     </div>
-                    
+
                     <div class="bg-gradient-to-r from-green-400 to-emerald-500 rounded-xl p-4 text-white shadow-lg">
                         <div class="flex justify-between items-center">
                             <div class="flex items-center">
@@ -258,7 +258,7 @@
                         <span id="progressoTexto">0%</span>
                     </div>
                     <div class="w-full bg-gray-200 rounded-full h-2">
-                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500" 
+                        <div class="bg-gradient-to-r from-blue-500 to-purple-500 h-2 rounded-full transition-all duration-500"
                              style="width: 0%" id="progressoBarra"></div>
                     </div>
                 </div>
@@ -283,7 +283,7 @@
                     </button>
                 </div>
             </div>
-            
+
             <!-- Corpo do Modal -->
             <form id="formNota" class="p-6 space-y-6">
                 <!-- Informações do Aluno -->
@@ -296,7 +296,7 @@
                         <input type="text" id="nomeAluno" class="flex-1 border-0 bg-transparent text-gray-900 font-medium focus:ring-0" readonly>
                     </div>
                 </div>
-                
+
                 <!-- Seleção da Avaliação -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -313,7 +313,7 @@
                             <option value="">⚠️ Nenhuma avaliação disponível - Crie uma avaliação primeiro</option>
                         {% endif %}
                     </select>
-                    
+
                     {% if not avaliacoes %}
                     <div class="mt-2 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
                         <div class="flex items-center">
@@ -321,7 +321,7 @@
                             <div>
                                 <p class="text-sm font-medium text-yellow-800">Nenhuma avaliação encontrada</p>
                                 <p class="text-xs text-yellow-700">Você precisa criar avaliações antes de lançar notas.</p>
-                                <a href="{% url 'diario:avaliacoes' turma.pk %}?disciplina={{ disciplina.pk }}" 
+                                <a href="{% url 'turma:gerenciar_avaliacoes_diario' turma.pk %}?disciplina={{ disciplina.pk }}"
                                    class="text-blue-600 hover:text-blue-700 text-xs font-medium mt-1 inline-block">
                                     <i class="fas fa-plus mr-1"></i>Criar avaliação agora
                                 </a>
@@ -330,7 +330,7 @@
                     </div>
                     {% endif %}
                 </div>
-                
+
                 <!-- Input da Nota -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -338,15 +338,15 @@
                         Nota (0 a 10)
                     </label>
                     <div class="relative">
-                        <input type="number" id="notaInput" min="0" max="10" step="0.1" 
+                        <input type="number" id="notaInput" min="0" max="10" step="0.1"
                                placeholder="Digite a nota..."
                                class="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-lg [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none">
                         <div class="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
                             <span class="text-gray-400 text-sm font-medium">/10</span>
                         </div>
                     </div>
-                    
-                    <!-- Indicador Visual da Nota -->
+
+                    <!-- Indicador Visual da Nota - RAINBOW BAR -->
                     <div class="mt-3">
                         <div class="flex justify-between text-xs text-gray-500 mb-1">
                             <span>0</span>
@@ -358,7 +358,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <!-- Comentário/Observação (opcional) -->
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-2">
@@ -368,10 +368,10 @@
                     <textarea id="observacaoNota" rows="3" placeholder="Adicione uma observação sobre esta nota..."
                               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-none"></textarea>
                 </div>
-                
+
                 <!-- Botões de Ação -->
                 <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
-                    <button type="button" onclick="fecharModalNota()" 
+                    <button type="button" onclick="fecharModalNota()"
                             class="px-6 py-3 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
                         <i class="fas fa-times mr-2"></i>
                         Cancelar
@@ -396,11 +396,11 @@ let avaliacaoEditando = null;
 function abrirModalNota(alunoId, nomeAluno) {
     try {
         console.log(`Abrindo modal para aluno: ${nomeAluno} (ID: ${alunoId})`);
-        
+
         alunoAtual = alunoId;
         modoEdicao = false;
         avaliacaoEditando = null;
-        
+
         // Verificar se elementos existem
         const modalTitulo = document.getElementById('modalTitulo');
         const nomeAlunoInput = document.getElementById('nomeAluno');
@@ -408,28 +408,28 @@ function abrirModalNota(alunoId, nomeAluno) {
         const formNota = document.getElementById('formNota');
         const avaliacaoSelect = document.getElementById('avaliacaoSelect');
         const modalNota = document.getElementById('modalNota');
-        
+
         if (!modalTitulo || !nomeAlunoInput || !btnSalvarNota || !formNota || !avaliacaoSelect || !modalNota) {
             console.error('Erro: Elementos do modal não encontrados!');
             alert('Erro interno: Modal não pode ser aberto. Recarregue a página.');
             return;
         }
-        
+
         modalTitulo.textContent = 'Lançar Nova Nota';
         nomeAlunoInput.value = nomeAluno;
         btnSalvarNota.innerHTML = '<i class="fas fa-save mr-2"></i>Salvar Nota';
-        
+
         // Reset do form
         formNota.reset();
         nomeAlunoInput.value = nomeAluno;
         avaliacaoSelect.disabled = false;
         atualizarIndicadorNota('');
-        
+
         modalNota.classList.remove('hidden');
         setTimeout(() => avaliacaoSelect.focus(), 100);
-        
+
         console.log('Modal aberto com sucesso');
-        
+
     } catch (error) {
         console.error('Erro ao abrir modal:', error);
         alert('Erro ao abrir o modal de lançamento de nota. Recarregue a página e tente novamente.');
@@ -441,16 +441,16 @@ function editarNota(alunoId, avaliacaoId, notaAtual, nomeAluno, nomeAvaliacao) {
     alunoAtual = alunoId;
     modoEdicao = true;
     avaliacaoEditando = avaliacaoId;
-    
+
     document.getElementById('modalTitulo').textContent = 'Editar Nota';
     document.getElementById('nomeAluno').value = nomeAluno;
     document.getElementById('avaliacaoSelect').value = avaliacaoId;
     document.getElementById('avaliacaoSelect').disabled = true;
     document.getElementById('notaInput').value = notaAtual;
     document.getElementById('btnSalvarNota').innerHTML = '<i class="fas fa-edit mr-2"></i>Atualizar Nota';
-    
+
     atualizarIndicadorNota(notaAtual);
-    
+
     document.getElementById('modalNota').classList.remove('hidden');
     setTimeout(() => document.getElementById('notaInput').focus(), 100);
 }
@@ -465,27 +465,27 @@ function fecharModalNota() {
     atualizarIndicadorNota('');
 }
 
-// Função para atualizar indicador visual da nota
+// Função para atualizar indicador visual da nota - RAINBOW BAR
 function atualizarIndicadorNota(nota) {
     const notaAtualSpan = document.getElementById('notaAtual');
     const barraNota = document.getElementById('barraNota');
-    
+
     if (nota === '' || nota === null) {
         notaAtualSpan.textContent = '-';
         barraNota.style.width = '0%';
         return;
     }
-    
+
     const notaNum = parseFloat(nota);
-    
+
     // Limitar nota entre 0 e 10
     const notaLimitada = Math.max(0, Math.min(10, notaNum));
     const porcentagem = (notaLimitada / 10) * 100;
-    
+
     // Mostrar a nota real digitada, mas limitar a barra
     notaAtualSpan.textContent = notaNum.toFixed(1);
     barraNota.style.width = porcentagem + '%';
-    
+
     // Adicionar indicação visual se a nota estiver fora do limite
     if (notaNum > 10) {
         notaAtualSpan.style.color = '#ef4444'; // Vermelho para indicar erro
@@ -522,11 +522,9 @@ document.getElementById('alunoSearch').addEventListener('input', function(e) {
             item.style.display = 'none';
         }
     });
-    
+
     document.getElementById('countVisivel').textContent = count;
 });
-
-// Filtros removidos - agora todos os alunos são sempre mostrados
 
 // Fechar modais ao clicar fora
 document.addEventListener('click', function(e) {
@@ -548,24 +546,24 @@ function calcularEstatisticas() {
     let totalAlunos = 0;
     let todasNotas = [];
     let totalAvaliacoes = {{ avaliacoes|length }};
-    
+
     try {
         console.log('Calculando estatísticas...');
-        
+
         todasNotas = document.querySelectorAll('[data-avaliacao]');
         totalAlunos = document.querySelectorAll('.aluno-item').length;
         const totalPossivel = totalAlunos * totalAvaliacoes;
-        
+
         console.log(`Estatísticas: ${todasNotas.length} notas, ${totalAlunos} alunos, ${totalAvaliacoes} avaliações`);
-        
+
         // Total de notas removido do resumo geral
-        
+
         // Progresso geral
         if (totalPossivel > 0) {
             const progresso = (todasNotas.length / totalPossivel) * 100;
             const progressoTextoEl = document.getElementById('progressoTexto');
             const progressoBarraEl = document.getElementById('progressoBarra');
-            
+
             if (progressoTextoEl) progressoTextoEl.textContent = Math.round(progresso) + '%';
             if (progressoBarraEl) progressoBarraEl.style.width = progresso + '%';
         }
@@ -573,25 +571,25 @@ function calcularEstatisticas() {
         console.error('Erro no cálculo geral de estatísticas:', error);
         return; // Sair se houver erro no cálculo geral
     }
-    
+
     // Atualizar progresso individual de cada avaliação
     {% for avaliacao in avaliacoes %}
     try {
         const notasAvaliacao{{ avaliacao.pk }} = document.querySelectorAll('[data-avaliacao="{{ avaliacao.pk }}"]');
         const progressoAvaliacao{{ avaliacao.pk }} = totalAlunos > 0 ? Math.round((notasAvaliacao{{ avaliacao.pk }}.length / totalAlunos) * 100) : 0;
-        
+
         console.log(`Avaliação {{ avaliacao.pk }} ({{ avaliacao.nome }}): ${notasAvaliacao{{ avaliacao.pk }}.length} notas, ${progressoAvaliacao{{ avaliacao.pk }}}%`);
-        
+
         // Encontrar e atualizar a barra de progresso desta avaliação
         const barrasProgresso = document.querySelectorAll('.barra-progresso-{{ avaliacao.pk }}');
         const textosProgresso = document.querySelectorAll('.texto-progresso-{{ avaliacao.pk }}');
-        
+
         console.log(`Encontradas ${barrasProgresso.length} barras e ${textosProgresso.length} textos para avaliação {{ avaliacao.pk }}`);
-        
+
         barrasProgresso.forEach(barra => {
             if (barra) barra.style.width = progressoAvaliacao{{ avaliacao.pk }} + '%';
         });
-        
+
         textosProgresso.forEach(texto => {
             if (texto) texto.textContent = progressoAvaliacao{{ avaliacao.pk }} + '%';
         });
@@ -604,11 +602,11 @@ function calcularEstatisticas() {
 // Formulário de nota
 document.getElementById('formNota').addEventListener('submit', function(e) {
     e.preventDefault();
-    
+
     const avaliacao = document.getElementById('avaliacaoSelect').value;
     const nota = document.getElementById('notaInput').value;
     const observacao = document.getElementById('observacaoNota').value;
-    
+
     if (!avaliacao || !nota) {
         // Destacar campos obrigatórios sem popup
         if (!avaliacao) {
@@ -621,24 +619,24 @@ document.getElementById('formNota').addEventListener('submit', function(e) {
         }
         return;
     }
-    
+
     if (parseFloat(nota) < 0 || parseFloat(nota) > 10) {
         // Destacar campo com valor inválido
         document.getElementById('notaInput').classList.add('border-red-500');
         document.getElementById('notaInput').focus();
         return;
     }
-    
+
     // Remover destaque de erro se tudo está correto
     document.getElementById('avaliacaoSelect').classList.remove('border-red-500');
     document.getElementById('notaInput').classList.remove('border-red-500');
-    
+
     // Desabilitar o botão para evitar envio duplo
     const submitBtn = document.getElementById('btnSalvarNota');
     const originalText = submitBtn.innerHTML;
     submitBtn.disabled = true;
     submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
-    
+
     // Enviar dados via AJAX
     fetch(window.location.href, {
         method: 'POST',
@@ -660,10 +658,10 @@ document.getElementById('formNota').addEventListener('submit', function(e) {
             // Atualizar a exibição da nota
             const notasContainer = document.getElementById(`notas-aluno-${alunoAtual}`);
             const avaliacaoNome = document.getElementById('avaliacaoSelect').selectedOptions[0].text.split(' (')[0];
-            
+
             // Verificar se já existe uma nota para esta avaliação
             let existingDiv = notasContainer.querySelector(`[data-avaliacao="${avaliacao}"]`);
-            
+
             if (existingDiv) {
                 // Atualizar nota existente
                 existingDiv.querySelector('.text-lg').textContent = parseFloat(nota).toFixed(1);
@@ -674,7 +672,7 @@ document.getElementById('formNota').addEventListener('submit', function(e) {
                 if (noNoteText) {
                     noNoteText.remove();
                 }
-                
+
                 // Adicionar nova nota
                 const newDiv = document.createElement('div');
                 newDiv.className = 'flex items-center bg-green-50 border border-green-200 rounded-lg px-3 py-2';
@@ -686,7 +684,7 @@ document.getElementById('formNota').addEventListener('submit', function(e) {
                     </div>
                     <div class="ml-3 flex items-center">
                         <span class="text-lg font-bold text-green-800">${parseFloat(nota).toFixed(1)}</span>
-                        <button onclick="editarNota(${alunoAtual}, ${avaliacao}, ${nota}, '${document.getElementById('nomeAluno').value}', '${avaliacaoNome}')" 
+                        <button onclick="editarNota(${alunoAtual}, ${avaliacao}, ${nota}, '${document.getElementById('nomeAluno').value}', '${avaliacaoNome}')"
                                 class="ml-2 text-green-600 hover:text-green-800 transition-colors">
                             <i class="fas fa-edit text-xs"></i>
                         </button>
@@ -694,19 +692,19 @@ document.getElementById('formNota').addEventListener('submit', function(e) {
                 `;
                 notasContainer.appendChild(newDiv);
             }
-            
+
             // Recalcular estatísticas após um pequeno delay para garantir que o DOM seja atualizado
             setTimeout(() => {
                 calcularEstatisticas();
                 console.log('Estatísticas recalculadas após adicionar/editar nota');
             }, 100);
-            
+
             // Fechar modal - confirmação visual já aparece com a tag da nota
             fecharModalNota();
         } else {
             console.error('Erro ao salvar nota:', data);
             alert('Erro: ' + (data.message || 'Erro desconhecido.'));
-            
+
             // Log detalhes do erro para debug
             if (data.error_detail) {
                 console.error('Detalhes do erro:', data.error_detail);
