@@ -16,7 +16,7 @@
                     </h1>
                     <p class="mt-2 text-emerald-100">{{ disciplina.nome }} • {{ turma.nome }} • {{ turma.get_turno_display }}</p>
                 </div>
-                <a href="{% url 'diario:turma' turma.pk %}" 
+                <a href="{% url 'diario:turma' turma.pk %}"
                    class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Voltar às Disciplinas
@@ -32,19 +32,19 @@
             <div class="text-2xl font-bold" id="totalPresentes">0</div>
             <div class="text-sm text-green-100">Presentes</div>
         </div>
-        
+
         <div class="bg-gradient-to-br from-red-400 to-pink-500 rounded-xl shadow-lg p-6 text-center text-white">
             <div class="text-3xl mb-3">❌</div>
             <div class="text-2xl font-bold" id="totalAusentes">0</div>
             <div class="text-sm text-red-100">Ausentes</div>
         </div>
-        
+
         <div class="bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl shadow-lg p-6 text-center text-white">
             <div class="text-3xl mb-3">👥</div>
             <div class="text-2xl font-bold" id="totalAlunos">0</div>
             <div class="text-sm text-yellow-100">Total</div>
         </div>
-        
+
         <div class="bg-gradient-to-br from-blue-400 to-purple-500 rounded-xl shadow-lg p-6 text-center text-white">
             <div class="text-3xl mb-3">📊</div>
             <div class="text-2xl font-bold" id="percentualPresenca">100%</div>
@@ -58,32 +58,32 @@
             <!-- Seletor de Data -->
             <div class="lg:w-48">
                 <label for="dataChamada" class="block text-sm font-medium text-gray-700 mb-2">📅 Data da Chamada</label>
-                <input type="date" id="dataChamada" name="data_chamada" 
+                <input type="date" id="dataChamada" name="data_chamada"
                        value="{{ data_atual }}"
                        class="w-full px-3 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                        onchange="carregarChamadaData()">
             </div>
-            
+
             <div class="flex-1">
                 <label for="alunoSearch" class="block text-sm font-medium text-gray-700 mb-2">🔍 Buscar Aluno</label>
                 <div class="relative">
                     <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                         <i class="fas fa-search text-gray-400"></i>
                     </div>
-                    <input type="text" id="alunoSearch" 
-                           placeholder="Buscar aluno por nome ou código..." 
+                    <input type="text" id="alunoSearch"
+                           placeholder="Buscar aluno por nome ou código..."
                            class="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                 </div>
             </div>
-            
+
             <div class="flex gap-3">
-                <button onclick="marcarTodosPresentes()" 
+                <button onclick="marcarTodosPresentes()"
                         class="inline-flex items-center px-4 py-3 bg-green-50 text-green-700 rounded-lg hover:bg-green-100 transition-colors border border-green-200 font-medium">
                     <i class="fas fa-check-double mr-2"></i>
                     Todos Presentes
                 </button>
-                
-                <button onclick="resetarChamada()" 
+
+                <button onclick="resetarChamada()"
                         class="inline-flex items-center px-4 py-3 bg-gray-50 text-gray-700 rounded-lg hover:bg-gray-100 transition-colors border border-gray-200 font-medium">
                     <i class="fas fa-undo mr-2"></i>
                     Resetar
@@ -96,7 +96,7 @@
     <form method="post" id="chamadaForm">
         {% csrf_token %}
         <input type="hidden" name="data_aula" id="dataAulaHidden" value="{{ data_atual }}">
-        
+
         {% if alunos %}
         <div class="bg-white rounded-xl shadow-lg p-6">
             <div class="flex items-center justify-between mb-6">
@@ -108,40 +108,40 @@
 
             <div class="space-y-3">
                 {% for aluno in alunos %}
-                <div class="border {% if aluno.status_atual == 'AUSENTE' %}border-red-200 bg-red-50{% else %}border-green-200 bg-green-50{% endif %} rounded-lg p-4 hover:shadow-md transition-shadow aluno-item" 
-                     data-aluno-id="{{ aluno.codigo }}" 
+                <div class="border {% if aluno.status_atual == 'AUSENTE' %}border-red-200 bg-red-50{% else %}border-green-200 bg-green-50{% endif %} rounded-lg p-4 hover:shadow-md transition-shadow aluno-item"
+                     data-aluno-id="{{ aluno.codigo }}"
                      data-status="{% if aluno.status_atual == 'AUSENTE' %}ausente{% else %}presente{% endif %}">
-                    
+
                     <div class="flex items-center justify-between">
                         <div class="flex items-center space-x-4">
                             <!-- Avatar/Número -->
                             <div class="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
                                 {{ forloop.counter }}
                             </div>
-                            
+
                             <!-- Info do Aluno -->
                             <div>
                                 <h3 class="font-medium text-gray-900">{{ aluno.nome }}</h3>
                                 <p class="text-sm text-gray-600">Código: {{ aluno.codigo }}</p>
                             </div>
                         </div>
-                        
+
                         <!-- Toggle com Texto Dentro -->
                         <div class="flex items-center space-x-4">
                             <!-- Toggle Botão com Texto -->
-                            <button type="button" onclick="togglePresenca({{ aluno.codigo }})" 
+                            <button type="button" onclick="togglePresenca({{ aluno.codigo }})"
                                     class="presence-toggle px-6 py-3 rounded-lg font-bold text-white transition-all duration-300 focus:outline-none focus:ring-4 shadow-lg {% if aluno.status_atual == 'AUSENTE' %}bg-gradient-to-r from-red-400 to-pink-500 focus:ring-red-200{% else %}bg-gradient-to-r from-green-400 to-emerald-500 focus:ring-green-200{% endif %}"
                                     data-aluno="{{ aluno.codigo }}"
                                     data-status="{% if aluno.status_atual == 'AUSENTE' %}ausente{% else %}presente{% endif %}"
                                     id="toggle_{{ aluno.codigo }}">
                                 <span id="text_{{ aluno.codigo }}">{% if aluno.status_atual == 'AUSENTE' %}AUSENTE{% else %}PRESENTE{% endif %}</span>
                             </button>
-                            
+
                             <!-- Input Hidden para o Form -->
                             <input type="hidden" name="toggle_{{ aluno.codigo }}" value="{% if aluno.status_atual == 'AUSENTE' %}ausente{% else %}presente{% endif %}" id="input_{{ aluno.codigo }}">
                         </div>
                     </div>
-                    
+
                 </div>
                 {% endfor %}
             </div>
@@ -149,24 +149,24 @@
 
         <!-- Botões de Ação -->
         <div class="flex justify-between mt-8">
-            <a href="{% url 'diario:home' %}" 
+            <a href="{% url 'diario:home' %}"
                class="inline-flex items-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors">
                 <i class="fas fa-arrow-left mr-2"></i>Voltar ao Diário
             </a>
-            
-            <button type="submit" 
+
+            <button type="submit"
                     class="inline-flex items-center px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-lg">
                 <i class="fas fa-save mr-2"></i>Salvar Chamada
             </button>
         </div>
-        
+
         {% else %}
         <!-- Estado Vazio -->
         <div class="bg-white rounded-xl shadow-lg p-12 text-center">
             <i class="fas fa-user-slash text-4xl text-gray-400 mb-4"></i>
             <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum aluno enturmado</h3>
             <p class="text-gray-600 mb-6">Adicione alunos à turma para fazer a chamada.</p>
-            <a href="{% url 'turma:enturmar_alunos' turma.pk %}" 
+            <a href="{% url 'turma:enturmar_alunos' turma.pk %}?from_diary=true"
                class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors">
                 <i class="fas fa-user-plus mr-2"></i>Enturmar Alunos
             </a>
@@ -185,34 +185,34 @@ function togglePresenca(alunoId) {
     const textSpan = document.getElementById(`text_${alunoId}`);
     const alunoItem = document.querySelector(`[data-aluno-id="${alunoId}"]`);
     const hiddenInput = document.getElementById(`input_${alunoId}`);
-    
+
     const currentStatus = toggle.getAttribute('data-status');
     const newStatus = currentStatus === 'presente' ? 'ausente' : 'presente';
-    
+
     // Atualizar data-status
     toggle.setAttribute('data-status', newStatus);
     alunoItem.setAttribute('data-status', newStatus);
     hiddenInput.value = newStatus;
-    
+
     if (newStatus === 'presente') {
         // Estado PRESENTE - Verde
         toggle.className = 'presence-toggle px-6 py-3 rounded-lg font-bold text-white transition-all duration-300 focus:outline-none focus:ring-4 shadow-lg bg-gradient-to-r from-green-400 to-emerald-500 focus:ring-green-200';
         textSpan.textContent = 'PRESENTE';
-        
+
         // Visual do card
         alunoItem.classList.add('bg-green-50', 'border-green-200');
         alunoItem.classList.remove('bg-red-50', 'border-red-200');
-        
+
     } else {
         // Estado AUSENTE - Vermelho
         toggle.className = 'presence-toggle px-6 py-3 rounded-lg font-bold text-white transition-all duration-300 focus:outline-none focus:ring-4 shadow-lg bg-gradient-to-r from-red-400 to-pink-500 focus:ring-red-200';
         textSpan.textContent = 'AUSENTE';
-        
+
         // Visual do card
         alunoItem.classList.add('bg-red-50', 'border-red-200');
         alunoItem.classList.remove('bg-green-50', 'border-green-200');
     }
-    
+
     atualizarEstatisticas();
 }
 
@@ -222,7 +222,7 @@ function marcarTodosPresentes() {
     toggles.forEach(toggle => {
         const alunoId = toggle.getAttribute('data-aluno');
         const currentStatus = toggle.getAttribute('data-status');
-        
+
         // Se não estiver presente, fazer toggle
         if (currentStatus !== 'presente') {
             togglePresenca(alunoId);
@@ -240,10 +240,10 @@ function resetarChamada() {
 // Função para atualizar estatísticas
 function atualizarEstatisticas() {
     const items = document.querySelectorAll('.aluno-item');
-    
+
     let presentes = 0;
     let ausentes = 0;
-    
+
     items.forEach(item => {
         const status = item.getAttribute('data-status');
         if (status === 'presente') {
@@ -252,10 +252,10 @@ function atualizarEstatisticas() {
             ausentes++;
         }
     });
-    
+
     const total = items.length;
     const percentual = total > 0 ? Math.round((presentes / total) * 100) : 100;
-    
+
     document.getElementById('totalPresentes').textContent = presentes;
     document.getElementById('totalAusentes').textContent = ausentes;
     document.getElementById('totalAlunos').textContent = total;
@@ -266,7 +266,7 @@ function atualizarEstatisticas() {
 document.getElementById('alunoSearch').addEventListener('input', function(e) {
     const searchTerm = e.target.value.toLowerCase();
     const items = document.querySelectorAll('.aluno-item');
-    
+
     items.forEach(item => {
         const text = item.textContent.toLowerCase();
         if (text.includes(searchTerm)) {
@@ -281,7 +281,7 @@ document.getElementById('alunoSearch').addEventListener('input', function(e) {
 function carregarChamadaData() {
     const dataSelecionada = document.getElementById('dataChamada').value;
     document.getElementById('dataAulaHidden').value = dataSelecionada;
-    
+
     // Recarregar página com nova data
     const url = new URL(window.location);
     url.searchParams.set('data', dataSelecionada);
@@ -295,7 +295,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!dataInput.value) {
         dataInput.value = new Date().toISOString().split('T')[0];
     }
-    
+
     atualizarEstatisticas();
 });
 </script>
