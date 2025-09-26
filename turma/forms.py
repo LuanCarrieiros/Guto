@@ -94,11 +94,13 @@ class DisciplinaForm(forms.ModelForm):
         widgets = {
             'nome': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500',
-                'placeholder': 'Ex: Matemática'
+                'placeholder': 'Ex: Matemática',
+                'id': 'id_nome'
             }),
             'codigo': forms.TextInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500',
-                'placeholder': 'Ex: MAT001'
+                'placeholder': 'Deixe vazio para gerar automaticamente',
+                'id': 'id_codigo'
             }),
             'avalia_por_conceito': forms.CheckboxInput(attrs={
                 'class': 'w-4 h-4 text-purple-600 bg-gray-100 border-gray-300 rounded focus:ring-purple-500'
