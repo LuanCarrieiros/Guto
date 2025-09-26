@@ -79,7 +79,7 @@
         <div class="text-8xl mb-6">📝</div>
         <h3 class="text-2xl font-bold text-purple-800 mb-3">Nenhuma avaliação encontrada</h3>
         <p class="text-purple-700 mb-6 text-lg">Esta disciplina ainda não possui avaliações criadas.</p>
-        <a href="{% url 'diario:notas' turma.pk %}?disciplina={{ disciplina.pk }}" 
+        <a href="{% url 'turma:lancar_notas_diario' turma.pk %}?disciplina={{ disciplina.pk }}" 
            class="inline-flex items-center px-8 py-4 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-2xl hover:from-purple-600 hover:to-indigo-700 transition-all duration-300 font-bold text-lg shadow-xl transform hover:scale-105">
             <i class="fas fa-arrow-left mr-3"></i>
             🚀 Voltar às Notas
