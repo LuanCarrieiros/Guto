@@ -11,9 +11,15 @@
             <h1 class="text-3xl font-bold text-gray-900">Enturmar Alunos</h1>
             <p class="text-gray-600 mt-1">Turma: {{ turma.nome }} - {{ turma.periodo_letivo }}</p>
         </div>
-        <a href="{% url 'turma:turma_detail' turma.pk %}" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
-            <i class="fas fa-arrow-left mr-2"></i>Voltar
-        </a>
+        {% if from_diary %}
+            <a href="{% url 'diario:turma' turma.pk %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar ao Diário
+            </a>
+        {% else %}
+            <a href="{% url 'turma:turma_detail' turma.pk %}" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>Voltar
+            </a>
+        {% endif %}
     </div>
 
     <!-- Info da Turma -->
