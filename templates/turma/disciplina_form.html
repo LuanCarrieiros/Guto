@@ -49,16 +49,22 @@
                 </div>
 
                 <!-- Código da Disciplina -->
-                <div>
+                <div class="relative">
                     <label for="{{ form.codigo.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-2">
                         Código
+                        <span id="arrow-indicator" class="inline-block ml-2 opacity-0 transition-all duration-300 text-purple-600 text-xs">
+                            ← ✨ gerado automaticamente
+                        </span>
                     </label>
-                    <input type="text" 
-                           name="{{ form.codigo.name }}" 
+                    <input type="text"
+                           name="{{ form.codigo.name }}"
                            id="{{ form.codigo.id_for_label }}"
                            value="{{ form.codigo.value|default:'' }}"
-                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-                           placeholder="Ex: MAT001, PORT001...">
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-purple-500 bg-gray-50"
+                           placeholder=""
+                           style="font-family: 'Courier New', monospace; font-weight: bold; color: #6b7280;"
+                           {% if is_create %}readonly{% endif %}>
+                </div>
                     {% if form.codigo.errors %}
                         <div class="mt-1 text-sm text-red-600">
                             {% for error in form.codigo.errors %}
@@ -173,17 +179,161 @@ document.addEventListener('DOMContentLoaded', function() {
     // Auto-gerar código baseado no nome
     const nomeInput = document.getElementById('{{ form.nome.id_for_label }}');
     const codigoInput = document.getElementById('{{ form.codigo.id_for_label }}');
+    const arrowIndicator = document.getElementById('arrow-indicator');
     
-    {% if is_create %}
-    nomeInput.addEventListener('blur', function() {
-        if (!codigoInput.value && this.value) {
-            // Gerar código simples baseado no nome
-            let codigo = this.value.substring(0, 3).toUpperCase();
-            if (codigo.length < 3) {
-                codigo = codigo.padEnd(3, 'X');
+    // Função para gerar código automaticamente
+    function gerarCodigoAutomatico(nome) {
+        if (!nome) return '';
+
+        // Remover acentos e caracteres especiais
+        let nomeLimpo = nome.toUpperCase()
+            .replace(/[ÁÀÂÃÄ]/g, 'A')
+            .replace(/[ÉÈÊË]/g, 'E')
+            .replace(/[ÍÌÎÏ]/g, 'I')
+            .replace(/[ÓÒÔÕÖ]/g, 'O')
+            .replace(/[ÚÙÛÜ]/g, 'U')
+            .replace(/[Ç]/g, 'C')
+            .replace(/[^A-Z\s]/g, '');
+
+        // Mapeamento de disciplinas comuns para códigos estilosos
+        const codigosEspeciais = {
+            'MATEMATICA': 'MAT',
+            'PORTUGUES': 'PORT',
+            'LINGUA PORTUGUESA': 'PORT',
+            'HISTORIA': 'HIST',
+            'GEOGRAFIA': 'GEO',
+            'CIENCIAS': 'CIEN',
+            'BIOLOGIA': 'BIO',
+            'FISICA': 'FIS',
+            'QUIMICA': 'QUIM',
+            'FILOSOFIA': 'FIL',
+            'SOCIOLOGIA': 'SOC',
+            'EDUCACAO FISICA': 'EDFIS',
+            'ARTES': 'ART',
+            'INGLES': 'ING',
+            'ESPANHOL': 'ESP',
+            'INFORMATICA': 'INFO',
+            'LITERATURA': 'LIT',
+            'REDACAO': 'RED',
+            'GEOMETRIA': 'GEOM',
+            'ALGEBRA': 'ALG',
+            'ENSINO RELIGIOSO': 'ENS_REL'
+        };
+
+        // Verificar se é uma disciplina especial
+        for (let disciplina in codigosEspeciais) {
+            if (nomeLimpo.includes(disciplina) || disciplina.includes(nomeLimpo)) {
+                return codigosEspeciais[disciplina] + '001';
             }
-            codigo += '001';
-            codigoInput.value = codigo;
+        }
+
+        // Para disciplinas não mapeadas, usar primeiras letras
+        const palavras = nomeLimpo.split(/\s+/);
+        let codigoBase;
+
+        if (palavras.length >= 2) {
+            // Pegar primeiras 2 letras das principais palavras
+            codigoBase = palavras.slice(0, 2).map(p => p.substring(0, 2)).join('');
+        } else {
+            // Uma palavra só, pegar primeiras 3-4 letras
+            codigoBase = palavras[0].substring(0, 4);
+        }
+
+        return codigoBase + '001';
+    }
+
+    {% if is_create %}
+    // Geração automática em tempo real enquanto digita
+    let timeoutId;
+
+    nomeInput.addEventListener('input', function() {
+        const nome = this.value;
+
+        // Debounce para não gerar muito rapidamente
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            if (nome.length > 0) {
+                // Mostrar seta indicadora
+                arrowIndicator.style.opacity = '1';
+                arrowIndicator.style.color = '#8b5cf6';
+                arrowIndicator.style.transform = 'translateX(-5px)';
+
+                // Efeito visual de digitação
+                codigoInput.style.transition = 'all 0.3s ease';
+                codigoInput.style.background = 'linear-gradient(90deg, #f3f4f6, #e5e7eb)';
+                codigoInput.style.transform = 'scale(1.02)';
+
+                // Gerar código com efeito de digitação
+                setTimeout(() => {
+                    const codigoGerado = gerarCodigoAutomatico(nome);
+
+                    // Tornar editável temporariamente
+                    codigoInput.readOnly = false;
+
+                    // Efeito de digitação letra por letra
+                    codigoInput.value = '';
+                    let i = 0;
+                    const digitarCodigo = setInterval(() => {
+                        codigoInput.value += codigoGerado[i];
+                        i++;
+
+                        // Efeito visual de digitação
+                        codigoInput.style.background = 'linear-gradient(90deg, #fef3c7, #fde68a)';
+                        codigoInput.style.borderColor = '#f59e0b';
+                        codigoInput.style.color = '#d97706';
+
+                        if (i >= codigoGerado.length) {
+                            clearInterval(digitarCodigo);
+
+                            // Efeito final - flash verde de sucesso
+                            setTimeout(() => {
+                                codigoInput.style.background = 'linear-gradient(90deg, #dcfce7, #bbf7d0)';
+                                codigoInput.style.borderColor = '#10b981';
+                                codigoInput.style.color = '#059669';
+
+                                // Voltar ao estilo padrão e readonly
+                                setTimeout(() => {
+                                    codigoInput.style.background = '#f9fafb';
+                                    codigoInput.style.borderColor = '#d1d5db';
+                                    codigoInput.style.color = '#6b7280';
+                                    codigoInput.style.transform = 'scale(1)';
+                                    codigoInput.readOnly = true;
+                                }, 500);
+                            }, 200);
+                        }
+                    }, 50); // Velocidade da digitação
+                }, 150);
+            } else {
+                // Esconder seta indicadora
+                arrowIndicator.style.opacity = '0';
+                arrowIndicator.style.transform = 'translateX(0)';
+
+                // Limpar código se nome estiver vazio
+                codigoInput.value = '';
+                codigoInput.style.background = '#f9fafb';
+                codigoInput.style.borderColor = '#d1d5db';
+                codigoInput.style.color = '#6b7280';
+                codigoInput.style.transform = 'scale(1)';
+            }
+        }, 200); // Debounce de 200ms
+    });
+
+    // Efeito visual quando clica no campo de nome
+    nomeInput.addEventListener('focus', function() {
+        if (this.value.length > 0) {
+            // Destacar a conexão nome → código
+            codigoInput.style.boxShadow = '0 0 0 2px rgba(168, 85, 247, 0.2)';
+            arrowIndicator.style.opacity = '1';
+            arrowIndicator.style.color = '#8b5cf6';
+            arrowIndicator.style.fontWeight = 'bold';
+        }
+    });
+
+    nomeInput.addEventListener('blur', function() {
+        codigoInput.style.boxShadow = 'none';
+        if (arrowIndicator.style.opacity === '1') {
+            arrowIndicator.style.fontWeight = 'normal';
+            arrowIndicator.style.color = '#6b7280';
         }
     });
     {% endif %}
