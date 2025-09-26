@@ -16,7 +16,7 @@
                     </h1>
                     <p class="mt-2 text-indigo-100">{{ disciplina.nome }} • {{ turma.nome }} • {{ turma.get_turno_display }}</p>
                 </div>
-                <a href="{% url 'diario:notas' turma.pk %}?disciplina={{ disciplina.pk }}" 
+                <a href="{% url 'turma:lancar_notas_diario' turma.pk %}?disciplina={{ disciplina.pk }}" 
                    class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Voltar às Notas
@@ -60,9 +60,12 @@
                                 class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:border-green-500 focus:ring-2 focus:ring-green-200 transition-all duration-200 font-medium">
                             <option value="">Selecione o tipo</option>
                             {% for tipo in tipos_avaliacao %}
-                            <option value="{{ tipo.pk }}">{{ tipo.nome }}</option>
+                            <option value="{{ tipo.pk }}" data-peso="{{ tipo.peso_default }}">
+                                {{ tipo.nome }} (peso padrão: {{ tipo.peso_default }})
+                            </option>
                             {% endfor %}
                         </select>
+                        <p class="text-xs text-gray-500 mt-1">O peso padrão será preenchido automaticamente</p>
                     </div>
                     
                     <!-- Peso -->
@@ -97,7 +100,7 @@
                 
                 <!-- Botões -->
                 <div class="flex items-center justify-end gap-4 pt-4">
-                    <a href="{% url 'diario:notas' turma.pk %}?disciplina={{ disciplina.pk }}" 
+                    <a href="{% url 'turma:lancar_notas_diario' turma.pk %}?disciplina={{ disciplina.pk }}" 
                        class="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors">
                         Cancelar
                     </a>
@@ -191,5 +194,46 @@
         </div>
     </div>
 </div>
+
+<script>
+// Auto-preencher peso ao selecionar tipo de avaliação
+document.addEventListener('DOMContentLoaded', function() {
+    const tipoSelect = document.querySelector('select[name="tipo_avaliacao"]');
+    const pesoInput = document.querySelector('input[name="peso"]');
+
+    if (tipoSelect && pesoInput) {
+        tipoSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            const pesoDefault = selectedOption.getAttribute('data-peso');
+
+            if (pesoDefault && pesoInput.value === '') {
+                pesoInput.value = pesoDefault;
+
+                // Efeito visual de preenchimento automático
+                pesoInput.style.backgroundColor = '#dcfce7';
+                pesoInput.style.borderColor = '#16a34a';
+
+                setTimeout(() => {
+                    pesoInput.style.backgroundColor = '';
+                    pesoInput.style.borderColor = '';
+                }, 1500);
+            }
+        });
+    }
+
+    // Animação dos cards das avaliações
+    const cards = document.querySelectorAll('.bg-gradient-to-br.from-white');
+    cards.forEach((card, index) => {
+        card.style.opacity = '0';
+        card.style.transform = 'translateY(20px)';
+
+        setTimeout(() => {
+            card.style.transition = 'all 0.5s ease';
+            card.style.opacity = '1';
+            card.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+</script>
 
 {% endblock %}
