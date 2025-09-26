@@ -19,9 +19,15 @@
             </div>
         </div>
         <div class="flex space-x-3">
-            <a href="{% url 'turma:turmas_list' %}" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
+            {% if from_diary %}
+                <a href="{% url 'diario:turma' turma.pk %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                    <i class="fas fa-arrow-left mr-2"></i>Voltar ao Diário
+                </a>
+            {% else %}
+                <a href="{% url 'turma:turmas_list' %}" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
                     <i class="fas fa-arrow-left mr-2"></i>Voltar às Turmas
                 </a>
+            {% endif %}
         </div>
     </div>
 
