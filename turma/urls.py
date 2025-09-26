@@ -28,6 +28,10 @@ urlpatterns = [
     
     # NOTA: Espelho do Diário - Para visualização de coordenação
     path('avaliacoes/', views.avaliacoes_list, name='avaliacoes_list'),
+    path('avaliacoes/criar/', views.avaliacao_create, name='avaliacao_create'),
+    path('avaliacoes/<int:pk>/', views.avaliacao_detail, name='avaliacao_detail'),
+    path('avaliacoes/<int:pk>/editar/', views.avaliacao_edit, name='avaliacao_edit'),
+    path('avaliacoes/<int:pk>/excluir/', views.avaliacao_delete, name='avaliacao_delete'),
     
     
     # Conceitos
@@ -41,6 +45,15 @@ urlpatterns = [
     
     # Diário Eletrônico
     path('diario/', views.diario_dashboard, name='diario_dashboard'),
+    path('diario/home/', views.diario_home, name='diario_home'),
+    path('diario/turma/<int:turma_id>/', views.diario_turma, name='turma_diario'),
+    path('turma/<int:turma_id>/fazer-chamada/', views.fazer_chamada, name='fazer_chamada'),
+    path('turma/<int:turma_id>/lancar-notas/', views.lancar_notas_diario, name='lancar_notas_diario'),
+    path('turma/<int:turma_id>/gerenciar-avaliacoes/', views.gerenciar_avaliacoes_diario, name='gerenciar_avaliacoes_diario'),
+    path('turma/<int:turma_id>/visualizar-avaliacoes/', views.visualizar_avaliacoes_diario, name='visualizar_avaliacoes_diario'),
+    path('avaliacoes/<int:avaliacao_id>/editar/', views.editar_avaliacao_diario, name='editar_avaliacao_diario'),
+    path('avaliacoes/<int:avaliacao_id>/excluir/', views.excluir_avaliacao_diario, name='excluir_avaliacao_diario'),
+
     
     # AJAX Endpoints
     path('ajax/anos-series/', views.get_anos_series_por_tipo, name='get_anos_series_por_tipo'),
