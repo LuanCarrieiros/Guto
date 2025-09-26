@@ -16,7 +16,7 @@
                     </h1>
                     <p class="mt-2 text-blue-100">Sistema integrado para chamada e lançamento de notas</p>
                 </div>
-                <a href="{% url 'turma:avaliacao_home' %}" 
+                <a href="{% url 'diario:home' %}"
                    class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Voltar
@@ -86,11 +86,11 @@
                     </a>
                     
                     <div class="grid grid-cols-2 gap-3">
-                        <a href="{% url 'diario:chamada' turma.id %}" 
+                        <a href="{% url 'turma:fazer_chamada' turma.id %}" 
                            class="text-center bg-gradient-to-r from-emerald-400 to-green-500 text-white py-2 rounded-lg hover:from-emerald-500 hover:to-green-600 transition-all duration-300 text-sm font-bold shadow-md transform hover:scale-105">
                             <i class="fas fa-user-check mr-1"></i>📋 Chamada
                         </a>
-                        <a href="{% url 'diario:notas' turma.id %}" 
+                        <a href="{% url 'turma:lancar_notas_diario' turma.id %}" 
                            class="text-center bg-gradient-to-r from-purple-400 to-pink-500 text-white py-2 rounded-lg hover:from-purple-500 hover:to-pink-600 transition-all duration-300 text-sm font-bold shadow-md transform hover:scale-105">
                             <i class="fas fa-edit mr-1"></i>⭐ Notas
                         </a>
