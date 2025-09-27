@@ -227,46 +227,75 @@ def funcionario_edit_extended(request, pk):
     
     if request.method == 'POST':
         aba_ativa = request.POST.get('aba_ativa', 'dados_pessoais')
-        
+
         # RNF403: Salvar dados automaticamente ao navegar entre abas
         if aba_ativa == 'dados_pessoais':
-            funcionario_form = FuncionarioForm(request.POST, request.FILES, instance=funcionario, prefix='func')
+            funcionario_form = FuncionarioForm(request.POST, request.FILES, instance=funcionario)
             if funcionario_form.is_valid():
-                funcionario_form.save()
+                funcionario_form.save(user=request.user)
                 messages.success(request, 'Dados pessoais atualizados com sucesso')
-        
+            else:
+                # Mostrar erros de validação
+                for field, errors in funcionario_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{field}: {error}')
+
         elif aba_ativa == 'documentacao':
-            doc_form = DocumentacaoFuncionarioForm(request.POST, instance=documentacao, prefix='doc')
+            doc_form = DocumentacaoFuncionarioForm(request.POST, instance=documentacao)
             if doc_form.is_valid():
-                doc_form.save()
+                doc_instance = doc_form.save(commit=False)
+                doc_instance.funcionario = funcionario
+                doc_instance.save()
                 messages.success(request, 'Documentação atualizada com sucesso')
-        
+            else:
+                for field, errors in doc_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{field}: {error}')
+
         elif aba_ativa == 'dados_funcionais':
-            func_form = DadosFuncionaisForm(request.POST, instance=dados_funcionais, prefix='func_dados')
+            func_form = DadosFuncionaisForm(request.POST, instance=dados_funcionais)
             if func_form.is_valid():
-                func_form.save()
+                func_instance = func_form.save(commit=False)
+                func_instance.funcionario = funcionario
+                func_instance.save()
                 messages.success(request, 'Dados funcionais atualizados com sucesso')
-        
+            else:
+                for field, errors in func_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{field}: {error}')
+
         elif aba_ativa == 'escolaridade':
-            esc_form = EscolaridadeForm(request.POST, instance=escolaridade, prefix='esc')
+            esc_form = EscolaridadeForm(request.POST, instance=escolaridade)
             if esc_form.is_valid():
-                esc_form.save()
+                esc_instance = esc_form.save(commit=False)
+                esc_instance.funcionario = funcionario
+                esc_instance.save()
                 messages.success(request, 'Escolaridade atualizada com sucesso')
-        
+            else:
+                for field, errors in esc_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{field}: {error}')
+
         elif aba_ativa == 'disponibilidade':
-            disp_form = DisponibilidadeForm(request.POST, instance=disponibilidade, prefix='disp')
+            disp_form = DisponibilidadeForm(request.POST, instance=disponibilidade)
             if disp_form.is_valid():
-                disp_form.save()
+                disp_instance = disp_form.save(commit=False)
+                disp_instance.funcionario = funcionario
+                disp_instance.save()
                 messages.success(request, 'Disponibilidade atualizada com sucesso')
-        
+            else:
+                for field, errors in disp_form.errors.items():
+                    for error in errors:
+                        messages.error(request, f'{field}: {error}')
+
         return redirect('funcionarios:funcionario_edit_extended', pk=funcionario.pk)
     
     # Forms para cada aba
-    funcionario_form = FuncionarioForm(instance=funcionario, prefix='func')
-    doc_form = DocumentacaoFuncionarioForm(instance=documentacao, prefix='doc')
-    func_dados_form = DadosFuncionaisForm(instance=dados_funcionais, prefix='func_dados')
-    esc_form = EscolaridadeForm(instance=escolaridade, prefix='esc')
-    disp_form = DisponibilidadeForm(instance=disponibilidade, prefix='disp')
+    funcionario_form = FuncionarioForm(instance=funcionario)
+    doc_form = DocumentacaoFuncionarioForm(instance=documentacao)
+    func_dados_form = DadosFuncionaisForm(instance=dados_funcionais)
+    esc_form = EscolaridadeForm(instance=escolaridade)
+    disp_form = DisponibilidadeForm(instance=disponibilidade)
     
     context = {
         'funcionario': funcionario,
