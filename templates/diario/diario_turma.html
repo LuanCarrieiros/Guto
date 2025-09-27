@@ -6,12 +6,12 @@
 <div class="max-w-7xl mx-auto">
     <!-- Header Vibrante -->
     <div class="mb-8">
-        <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white shadow-xl">
+        <div class="bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl p-6 text-white shadow-xl">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-3xl font-bold flex items-center">
                         <span class="text-4xl mr-3">🎓</span>
-                        📚 {{ turma.nome }}
+                        {{ turma.nome }}
                     </h1>
                     <p class="mt-2 text-blue-100">{{ turma.get_tipo_ensino_display }} • {{ turma.get_ano_serie_display }} • {{ turma.get_turno_display }}</p>
                 </div>
@@ -24,28 +24,24 @@
         </div>
     </div>
 
-    <!-- Estatísticas Vibrantes - Estilo Clean das Divisões -->
+    <!-- Estatísticas -->
     <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
         <div class="bg-gradient-to-br from-blue-400 to-cyan-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
-            <div class="text-3xl mb-3">👥</div>
             <div class="text-2xl font-bold">{{ total_alunos }}</div>
             <div class="text-sm text-blue-100">Estudantes</div>
         </div>
 
         <div class="bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
-            <div class="text-3xl mb-3">📊</div>
             <div class="text-2xl font-bold">{{ disciplinas|length }}</div>
             <div class="text-sm text-emerald-100">Disciplinas</div>
         </div>
 
         <div class="bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
-            <div class="text-3xl mb-3">📈</div>
             <div class="text-2xl font-bold" id="progressoGeral">0%</div>
             <div class="text-sm text-purple-100">Progresso Geral</div>
         </div>
 
         <div class="bg-gradient-to-br from-orange-400 to-red-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
-            <div class="text-3xl mb-3">⭐</div>
             <div class="text-2xl font-bold" id="totalAvaliacoes">{{ disciplinas|length }}</div>
             <div class="text-sm text-orange-100">Ações Disponíveis</div>
         </div>
@@ -56,28 +52,44 @@
         <div class="bg-gradient-to-r from-indigo-500 to-blue-600 rounded-xl p-6 text-white shadow-xl mb-6">
             <h2 class="text-2xl font-bold text-center flex items-center justify-center">
                 <span class="text-3xl mr-3">📖</span>
-                ✨ Disciplinas da Turma
+                Selecionar Disciplina
             </h2>
-            <p class="text-center text-indigo-100 mt-2">Selecione uma disciplina para gerenciar o diário eletrônico</p>
+            <p class="text-center text-indigo-100 mt-2">Escolha uma disciplina para acessar o diário eletrônico</p>
         </div>
 
-        <!-- Indicador de Progresso -->
+        <!-- Indicador de Progresso - 5 Etapas -->
         <div class="mb-8">
-            <div class="flex items-center justify-center space-x-4">
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-green-500 rounded-full flex items-center justify-center text-white font-bold text-sm">✓</div>
-                    <div class="text-green-600 font-medium ml-2">1. Turma</div>
+            <div class="bg-gradient-to-r from-slate-100 to-gray-100 rounded-xl p-6 shadow-lg">
+                <h2 class="text-xl font-bold text-center text-gray-700 mb-6">
+                    📋 Processo do Diário Eletrônico
+                </h2>
+                <div class="flex items-center justify-center space-x-4">
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                        <div class="text-purple-600 font-medium ml-2">1. Diário</div>
+                    </div>
+                    <div class="flex-1 h-2 bg-gradient-to-r from-purple-500 to-cyan-500 rounded max-w-20"></div>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                        <div class="text-cyan-600 font-medium ml-2">2. Turma</div>
+                    </div>
+                    <div class="flex-1 h-2 bg-gray-300 rounded max-w-20"></div>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold text-sm">3</div>
+                        <div class="text-gray-500 font-medium ml-2">3. Disciplina</div>
+                    </div>
+                    <div class="flex-1 h-2 bg-gray-300 rounded max-w-20"></div>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold text-sm">4</div>
+                        <div class="text-gray-500 font-medium ml-2">4. Período</div>
+                    </div>
+                    <div class="flex-1 h-2 bg-gray-300 rounded max-w-20"></div>
+                    <div class="flex items-center">
+                        <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold text-sm">5</div>
+                        <div class="text-gray-500 font-medium ml-2">5. Ações</div>
+                    </div>
                 </div>
-                <div class="flex-1 h-1 bg-gray-300 rounded max-w-20"></div>
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold text-sm">○</div>
-                    <div class="text-gray-500 font-medium ml-2">2. Disciplina</div>
-                </div>
-                <div class="flex-1 h-1 bg-gray-300 rounded max-w-20"></div>
-                <div class="flex items-center">
-                    <div class="w-8 h-8 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold text-sm">○</div>
-                    <div class="text-gray-500 font-medium ml-2">3. Período</div>
-                </div>
+                <p class="text-center text-gray-600 text-sm mt-4">Selecione uma disciplina para continuar</p>
             </div>
         </div>
         
