@@ -30,10 +30,36 @@ def diario_dashboard(request):
 @login_required
 def diario_home(request):
     """Página inicial do diário eletrônico"""
+    from django.db.models import Avg, Count
+    from turma.models import AulaRegistrada, NotaAvaliacao, RegistroFrequencia
+
     turmas = Turma.objects.all()
+
+    # Calcular estatísticas reais
+    total_alunos = 0
+    for turma in turmas:
+        total_alunos += turma.get_alunos_enturmados().count()
+
+    # Calcular frequência média real
+    try:
+        frequencias_totais = RegistroFrequencia.objects.count()
+        presencas_totais = RegistroFrequencia.objects.filter(situacao='PRESENTE').count()
+        frequencia_media = (presencas_totais / frequencias_totais * 100) if frequencias_totais > 0 else 0
+    except:
+        frequencia_media = 0
+
+    # Calcular média geral das notas
+    try:
+        notas = NotaAvaliacao.objects.exclude(nota__isnull=True)
+        media_geral = notas.aggregate(Avg('nota'))['nota__avg'] or 0
+    except:
+        media_geral = 0
 
     context = {
         'turmas': turmas,
+        'total_alunos': total_alunos,
+        'frequencia_media': round(frequencia_media, 1),
+        'media_geral': round(media_geral, 1),
     }
     return render(request, 'diario/diario_home.html', context)
 
@@ -266,3 +292,16 @@ def abrir_diario(request, turma_id, disciplina_id):
     except DiarioEletronico.DoesNotExist:
         messages.error(request, 'Diário eletrônico não encontrado.')
         return JsonResponse({'success': False, 'error': 'Diário não encontrado'})
+
+
+@login_required
+def gerenciar_avaliacoes_via_diario(request, turma_id):
+    """Gerenciar avaliações via diário - redirecionamento para a view do turma app"""
+    disciplina_id = request.GET.get('disciplina')
+
+    if disciplina_id:
+        # Redirecionar para a view do turma app que já existe
+        return redirect('turma:gerenciar_avaliacoes_diario', turma_id=turma_id)
+    else:
+        messages.error(request, 'Disciplina não especificada.')
+        return redirect('diario:turma', turma_id=turma_id)
