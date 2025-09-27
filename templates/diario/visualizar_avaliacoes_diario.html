@@ -17,11 +17,19 @@
                     <p class="mt-2 text-purple-100">{{ disciplina.nome }} • {{ turma.nome }} • {{ turma.get_turno_display }}</p>
                     <p class="text-sm text-purple-200 mt-1">Visão de coordenação - Monitoramento das avaliações</p>
                 </div>
-                <a href="{% url 'diario:turma' turma.pk %}" 
+                {% if disciplina %}
+                <a href="{% url 'diario:disciplina' turma.pk disciplina.pk %}"
+                   class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar aos Períodos
+                </a>
+                {% else %}
+                <a href="{% url 'diario:turma' turma.pk %}"
                    class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Voltar às Disciplinas
                 </a>
+                {% endif %}
             </div>
         </div>
     </div>
