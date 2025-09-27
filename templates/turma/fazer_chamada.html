@@ -76,64 +76,97 @@
 
 {% block content %}
 <div class="max-w-6xl mx-auto">
-    <!-- Header da Chamada -->
+    <!-- Breadcrumb e Header -->
     <div class="mb-8">
-        <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-600 rounded-2xl p-8 text-white shadow-xl">
-            <nav class="text-sm text-blue-100 mb-3">
-                <a href="{% url 'diario:diario_dashboard' %}" class="hover:text-white">Diário Eletrônico</a>
-                <span class="mx-2">/</span>
-                <a href="{% url 'turma:turma_diario' aula.turma.id %}" class="hover:text-white">{{ aula.turma.nome }}</a>
-                <span class="mx-2">/</span>
-                <span>Fazer Chamada</span>
-            </nav>
-            
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+            <a href="{% url 'diario:home' %}" class="hover:text-blue-600 transition-colors">📚 Diário</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="{% url 'diario:turma' view.kwargs.turma_id %}" class="hover:text-blue-600 transition-colors">🎓 Turma</a>
+            {% if request.GET.disciplina %}
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="{% url 'diario:disciplina' view.kwargs.turma_id request.GET.disciplina %}" class="hover:text-blue-600 transition-colors">📖 Disciplina</a>
+            {% endif %}
+            {% if request.GET.divisao and request.GET.disciplina %}
+            <i class="fas fa-chevron-right text-xs"></i>
+            <a href="{% url 'diario:divisao' view.kwargs.turma_id request.GET.disciplina request.GET.divisao %}" class="hover:text-blue-600 transition-colors">📅 Período</a>
+            {% endif %}
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-gray-900 font-medium">📋 Fazer Chamada</span>
+        </nav>
+
+        <div class="bg-gradient-to-r from-emerald-500 to-teal-600 rounded-xl p-6 text-white shadow-xl">
             <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-4xl font-bold mb-4 flex items-center">
-                        <i class="fas fa-user-check mr-4"></i>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <span class="text-4xl mr-3">📋</span>
                         Fazer Chamada
                     </h1>
-                    
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 text-blue-100">
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-chalkboard text-xl"></i>
-                            <div>
-                                <div class="text-sm opacity-80">Disciplina</div>
-                                <div class="font-semibold text-white">{{ aula.disciplina.nome }}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-users text-xl"></i>
-                            <div>
-                                <div class="text-sm opacity-80">Turma</div>
-                                <div class="font-semibold text-white">{{ aula.turma.nome }}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-calendar-alt text-xl"></i>
-                            <div>
-                                <div class="text-sm opacity-80">Data</div>
-                                <div class="font-semibold text-white">{{ aula.data_aula|date:"d/m/Y" }}</div>
-                            </div>
-                        </div>
-                        
-                        <div class="flex items-center space-x-2">
-                            <i class="fas fa-clock text-xl"></i>
-                            <div>
-                                <div class="text-sm opacity-80">Horário</div>
-                                <div class="font-semibold text-white">{{ aula.horario_inicio }} - {{ aula.horario_fim }}</div>
-                            </div>
-                        </div>
+                    <p class="mt-2 text-emerald-100">{{ aula.turma.nome }} • {{ aula.disciplina.nome }}</p>
+                    <div class="mt-3 flex items-center space-x-4">
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                            📅 {{ aula.data_aula|date:"d/m/Y" }}
+                        </span>
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                            👥 {{ alunos.count }} estudantes
+                        </span>
                     </div>
                 </div>
-                
-                <div class="hidden lg:block text-center">
-                    <div class="text-4xl font-bold">{{ alunos|length }}</div>
-                    <div class="text-blue-200">Aluno{{ alunos|length|pluralize }}</div>
+                {% if request.GET.divisao and request.GET.disciplina %}
+                <a href="{% url 'diario:divisao' 1 request.GET.disciplina request.GET.divisao %}"
+                   class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar ao Diário
+                </a>
+                {% elif request.GET.disciplina %}
+                <a href="{% url 'diario:disciplina' 1 request.GET.disciplina %}"
+                   class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar à Disciplina
+                </a>
+                {% else %}
+                <a href="{% url 'diario:turma' 1 %}"
+                   class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    Voltar à Turma
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Indicador de Progresso - 5 Etapas -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-slate-100 to-gray-100 rounded-xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-center text-gray-700 mb-6">
+                📋 Processo do Diário Eletrônico
+            </h2>
+            <div class="flex items-center justify-center space-x-4">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                    <div class="text-purple-600 font-medium ml-2">1. Diário</div>
+                </div>
+                <div class="flex-1 h-2 bg-gradient-to-r from-purple-500 to-cyan-500 rounded max-w-20"></div>
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                    <div class="text-cyan-600 font-medium ml-2">2. Turma</div>
+                </div>
+                <div class="flex-1 h-2 bg-gradient-to-r from-cyan-500 to-emerald-500 rounded max-w-20"></div>
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                    <div class="text-green-600 font-medium ml-2">3. Disciplina</div>
+                </div>
+                <div class="flex-1 h-2 bg-gradient-to-r from-emerald-500 to-yellow-500 rounded max-w-20"></div>
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                    <div class="text-orange-600 font-medium ml-2">4. Período</div>
+                </div>
+                <div class="flex-1 h-2 bg-gradient-to-r from-orange-500 to-emerald-500 rounded max-w-20"></div>
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg animate-pulse">✓</div>
+                    <div class="text-emerald-600 font-medium ml-2">5. Ações</div>
                 </div>
             </div>
+            <p class="text-center text-gray-600 text-sm mt-4">📋 Registrando presença dos estudantes</p>
         </div>
     </div>
 
@@ -315,7 +348,7 @@
                                 <span>Salvar Chamada</span>
                             </button>
                             
-                            <a href="{% url 'turma:turma_diario' aula.turma.id %}" 
+                            <a href="{% url 'diario:divisao' aula.turma.pk aula.disciplina.pk divisao.pk %}"
                                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 px-4 rounded-lg transition-colors font-medium flex items-center justify-center space-x-2">
                                 <i class="fas fa-arrow-left"></i>
                                 <span>Cancelar</span>
