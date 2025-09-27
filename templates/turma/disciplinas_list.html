@@ -3,23 +3,29 @@
 {% block title %}Disciplinas - GUTO{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    <!-- Header -->
-    <div class="bg-white rounded-xl shadow-lg p-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-gray-800">
-                    <i class="fas fa-book-open text-purple-600 mr-3"></i>Disciplinas
-                </h1>
-                <p class="text-gray-600 mt-1">Gestão das disciplinas do sistema educacional</p>
-            </div>
-            <div class="flex space-x-3">
-                <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all duration-200" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
-                    <i class="fas fa-arrow-left mr-2"></i>Voltar
-                </a>
-                <a href="{% url 'turma:disciplina_create' %}" class="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-indigo-700 transition-all duration-200">
-                    <i class="fas fa-plus mr-2"></i>Nova Disciplina
-                </a>
+<div class="max-w-7xl mx-auto">
+
+    <!-- Header com Gradiente -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-xl p-6 text-white shadow-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <span class="text-4xl mr-3">📚</span>
+                        Gestão de Disciplinas
+                    </h1>
+                    <p class="mt-2 text-emerald-100">Administração das disciplinas do sistema educacional</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{% url 'turma:avaliacao_home' %}" class="bg-white/10 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 border border-white/20 flex items-center space-x-2">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Voltar</span>
+                    </a>
+                    <a href="{% url 'turma:disciplina_create' %}" class="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30 flex items-center space-x-2">
+                        <i class="fas fa-plus"></i>
+                        <span>Nova Disciplina</span>
+                    </a>
+                </div>
             </div>
         </div>
     </div>
