@@ -3,31 +3,45 @@
 {% block title %}{{ turma.nome }} - GUTO{% endblock %}
 
 {% block content %}
-<div class="space-y-6">
-    
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <div class="flex items-center space-x-3">
-                <div class="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                    <i class="fas fa-users text-blue-600 text-xl"></i>
-                </div>
+<div class="max-w-7xl mx-auto">
+
+    <!-- Header com Gradiente -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white shadow-xl">
+            <div class="flex items-center justify-between">
                 <div>
-                    <h1 class="text-3xl font-bold text-gray-900">{{ turma.nome }}</h1>
-                    <p class="text-gray-600">{{ turma.get_tipo_ensino_display }} • {{ turma.get_ano_serie_display }} • {{ turma.get_turno_display }}</p>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <span class="text-4xl mr-3">🎓</span>
+                        {{ turma.nome }}
+                    </h1>
+                    <p class="mt-2 text-blue-100">{{ turma.get_tipo_ensino_display }} • {{ turma.get_ano_serie_display }} • {{ turma.get_turno_display }}</p>
+                    <div class="mt-3 flex items-center space-x-4">
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                            Período: {{ turma.periodo_letivo }}
+                        </span>
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                            {{ alunos_enturmados.count }} alunos
+                        </span>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    {% if from_diary %}
+                        <a href="{% url 'diario:turma' turma.pk %}" class="bg-white/10 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 border border-white/20 flex items-center space-x-2">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Voltar ao Diário</span>
+                        </a>
+                    {% else %}
+                        <a href="{% url 'turma:turmas_list' %}" class="bg-white/10 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 border border-white/20 flex items-center space-x-2">
+                            <i class="fas fa-arrow-left"></i>
+                            <span>Voltar às Turmas</span>
+                        </a>
+                    {% endif %}
+                    <a href="{% url 'turma:turma_edit' turma.pk %}" class="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30 flex items-center space-x-2">
+                        <i class="fas fa-edit"></i>
+                        <span>Editar</span>
+                    </a>
                 </div>
             </div>
-        </div>
-        <div class="flex space-x-3">
-            {% if from_diary %}
-                <a href="{% url 'diario:turma' turma.pk %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i>Voltar ao Diário
-                </a>
-            {% else %}
-                <a href="{% url 'turma:turmas_list' %}" class="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 transition-colors">
-                    <i class="fas fa-arrow-left mr-2"></i>Voltar às Turmas
-                </a>
-            {% endif %}
         </div>
     </div>
 
