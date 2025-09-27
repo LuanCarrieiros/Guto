@@ -3,11 +3,27 @@
 {% block title %}{{ title }} - GUTO{% endblock %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto">
-    <!-- Header -->
-    <div class="mb-6">
-        <h1 class="text-3xl font-bold text-gray-900">{{ title }}</h1>
-        <p class="text-gray-600 mt-1">{% if is_create %}Preencha as informações para criar uma nova turma{% else %}Edite as informações da turma{% endif %}</p>
+<div class="max-w-5xl mx-auto">
+
+    <!-- Header com Gradiente -->
+    <div class="mb-8">
+        <div class="bg-gradient-to-r from-blue-600 to-indigo-700 rounded-xl p-6 text-white shadow-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <span class="text-4xl mr-3">🎓</span>
+                        {{ title }}
+                    </h1>
+                    <p class="mt-2 text-blue-100">{% if is_create %}Preencha as informações para criar uma nova turma{% else %}Edite as informações da turma{% endif %}</p>
+                </div>
+                <div class="flex space-x-3">
+                    <a href="{% url 'turma:turmas_list' %}" class="bg-white/10 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-all duration-200 border border-white/20 flex items-center space-x-2">
+                        <i class="fas fa-arrow-left"></i>
+                        <span>Voltar</span>
+                    </a>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="bg-white rounded-lg shadow-lg p-6">
