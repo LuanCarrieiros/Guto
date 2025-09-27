@@ -16,4 +16,7 @@ urlpatterns = [
     # Controle de diário (fechar/abrir)
     path('turma/<int:turma_id>/disciplina/<int:disciplina_id>/fechar/', views.fechar_diario, name='fechar_diario'),
     path('turma/<int:turma_id>/disciplina/<int:disciplina_id>/abrir/', views.abrir_diario, name='abrir_diario'),
+
+    # Gerenciar avaliações via diário
+    path('disciplina/avaliacoes/turma/<int:turma_id>/', views.gerenciar_avaliacoes_via_diario, name='gerenciar_avaliacoes_via_diario'),
 ]
