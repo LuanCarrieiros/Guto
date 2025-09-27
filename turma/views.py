@@ -949,7 +949,7 @@ def fazer_chamada(request, turma_id):
                 registro.save()
         
         messages.success(request, f'Chamada do dia {date.today().strftime("%d/%m/%Y")} registrada com sucesso!')
-        return redirect('diario:turma', turma_id=turma_id)
+        return redirect('diario:disciplina', turma_id=turma_id, disciplina_id=disciplina.pk)
     
     context = {
         'turma': turma,
@@ -1131,7 +1131,7 @@ def gerenciar_avaliacoes_diario(request, turma_id):
                 messages.success(request, f'Avaliação "{nome}" criada com sucesso!')
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'success': True, 'message': f'Avaliação "{nome}" criada com sucesso!'})
-                return redirect(f'/diario/disciplina/avaliacoes/turma/{turma_id}/?disciplina={disciplina_id}')
+                return redirect('turma:gerenciar_avaliacoes_diario', turma_id=turma_id)
                 
             except Exception as e:
                 error_msg = f'Erro ao criar avaliação: {str(e)}'
@@ -1290,4 +1290,4 @@ def excluir_avaliacao_diario(request, avaliacao_id):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'success': False, 'error': error_msg})
     
-    return redirect(f'/diario/disciplina/avaliacoes/turma/{turma_id}/?disciplina={disciplina_id}')
+    return redirect('turma:gerenciar_avaliacoes_diario', turma_id=turma_id)
