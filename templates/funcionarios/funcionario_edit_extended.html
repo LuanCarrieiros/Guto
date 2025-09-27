@@ -31,6 +31,20 @@
         </div>
     </div>
 
+    <!-- Messages -->
+    {% if messages %}
+        <div class="mb-6">
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} mb-3 p-4 rounded-lg {% if message.tags == 'success' %}bg-green-50 border border-green-200 text-green-800{% elif message.tags == 'error' %}bg-red-50 border border-red-200 text-red-800{% else %}bg-blue-50 border border-blue-200 text-blue-800{% endif %}">
+                    <div class="flex items-center">
+                        <i class="fas {% if message.tags == 'success' %}fa-check-circle{% elif message.tags == 'error' %}fa-exclamation-circle{% else %}fa-info-circle{% endif %} mr-2"></i>
+                        {{ message }}
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
     <!-- Progress Bar -->
     <div class="mb-6">
         <div class="flex justify-between text-xs text-gray-600 mb-1">
@@ -135,22 +149,25 @@
         <div class="mt-6">
             <!-- Dados Pessoais Tab -->
             <div x-show="activeTab === 'pessoais'" class="space-y-6">
-                <form id="form-pessoais" class="space-y-6" hx-post="{% url 'funcionarios:funcionario_edit' funcionario.codigo %}" hx-trigger="submit" hx-target="#message-container">
+                <form id="form-pessoais" class="space-y-6" method="post">
                     {% csrf_token %}
-                    <input type="hidden" name="tab" value="pessoais">
-                    
-                    <!-- Incluir aqui o conteúdo do formulário de dados pessoais -->
+                    <input type="hidden" name="aba_ativa" value="dados_pessoais">
+
                     <div class="bg-gray-50 rounded-lg p-6">
                         <h3 class="text-lg font-semibold text-gray-800 mb-4">Informações Pessoais</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            <!-- Campos do formulário pessoal aqui -->
-                            <div class="text-center py-8 col-span-full">
-                                <i class="fas fa-cog fa-spin text-4xl text-gray-400 mb-2"></i>
-                                <p class="text-gray-500">Carregando formulário...</p>
-                            </div>
+                            {% for field in funcionario_form %}
+                                <div class="{% if field.name in 'nome,data_nascimento,sexo,estado_civil,cor_raca,naturalidade,uf_nascimento,nome_mae,endereco,numero,bairro,cidade,uf,cpf,matricula,funcao,situacao_funcional,tipo_vinculo,data_admissao' %}col-span-1{% else %}col-span-full{% endif %}">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
                         </div>
                     </div>
-                    
+
                     <div class="flex justify-end">
                         <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
                             <i class="fas fa-save mr-2"></i>Salvar Dados Pessoais
@@ -161,67 +178,208 @@
 
             <!-- Documentação Tab -->
             <div x-show="activeTab === 'documentacao'" class="space-y-6">
-                <div class="bg-gray-50 rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Documentação do Funcionário</h3>
-                    <div class="text-center py-8">
-                        <i class="fas fa-file-alt text-4xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
-                        <p class="text-sm text-gray-400">Use a edição básica para alterar dados pessoais</p>
+                <form id="form-documentacao" class="space-y-6" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="aba_ativa" value="documentacao">
+
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Documentação do Funcionário</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {% for field in doc_form %}
+                                <div class="{% if field.name in 'rg,rg_orgao_expedidor,rg_uf,cpf,nis_pis_pasep,titulo_eleitor,carteira_trabalho,carteira_trabalho_serie,carteira_trabalho_uf' %}col-span-1{% else %}col-span-full{% endif %}">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Salvar Documentação
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <!-- Dados Funcionais Tab -->
             <div x-show="activeTab === 'funcionais'" class="space-y-6">
-                <div class="bg-gray-50 rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Dados Funcionais</h3>
-                    <div class="text-center py-8">
-                        <i class="fas fa-briefcase text-4xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                <form id="form-funcionais" class="space-y-6" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="aba_ativa" value="dados_funcionais">
+
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Dados Funcionais</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {% for field in func_dados_form %}
+                                <div class="{% if field.name in 'matricula,funcao,situacao_funcional,tipo_vinculo,carga_horaria_semanal,carga_horaria_contrato' %}col-span-1{% elif field.name in 'data_admissao,data_demissao,data_final_contrato' %}col-span-1{% else %}col-span-full{% endif %}">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Salvar Dados Funcionais
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <!-- Habilitação Tab -->
             <div x-show="activeTab === 'habilitacao'" class="space-y-6">
                 <div class="bg-gray-50 rounded-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Habilitação Profissional</h3>
-                    <div class="text-center py-8">
-                        <i class="fas fa-certificate text-4xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+
+                    {% if habilitacoes %}
+                        <div class="space-y-3">
+                            {% for habilitacao in habilitacoes %}
+                                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-900">{{ habilitacao.get_tipo_habilitacao_display }}</h4>
+                                            <p class="text-sm text-gray-600">{{ habilitacao.area_conhecimento }}</p>
+                                            <p class="text-xs text-gray-500 mt-1">{{ habilitacao.instituicao }} • {{ habilitacao.ano_conclusao }}</p>
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-certificate text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">Nenhuma habilitação cadastrada</p>
+                            <p class="text-sm text-gray-400 mt-1">Registre as habilitações profissionais do funcionário</p>
+                        </div>
+                    {% endif %}
+
+                    <div class="flex justify-end mt-6">
+                        <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Adicionar Habilitação
+                        </button>
                     </div>
                 </div>
             </div>
 
             <!-- Escolaridade Tab -->
             <div x-show="activeTab === 'escolaridade'" class="space-y-6">
-                <div class="bg-gray-50 rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Escolaridade</h3>
-                    <div class="text-center py-8">
-                        <i class="fas fa-graduation-cap text-4xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                <form id="form-escolaridade" class="space-y-6" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="aba_ativa" value="escolaridade">
+
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Escolaridade</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {% for field in esc_form %}
+                                <div class="{% if field.name in 'nivel,curso,instituicao,ano_conclusao' %}col-span-1{% else %}col-span-full{% endif %}">
+                                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ field.label }}</label>
+                                    {{ field }}
+                                    {% if field.errors %}
+                                        <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Salvar Escolaridade
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <!-- Disponibilidade Tab -->
             <div x-show="activeTab === 'disponibilidade'" class="space-y-6">
-                <div class="bg-gray-50 rounded-lg p-6">
-                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Disponibilidade de Horários</h3>
-                    <div class="text-center py-8">
-                        <i class="fas fa-clock text-4xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+                <form id="form-disponibilidade" class="space-y-6" method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="aba_ativa" value="disponibilidade">
+
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">Disponibilidade de Horários</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            {% for field in disp_form %}
+                                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                                    <div class="flex items-center space-x-3">
+                                        {{ field }}
+                                        <label for="{{ field.id_for_label }}" class="text-sm font-medium text-gray-700 cursor-pointer">
+                                            {{ field.label }}
+                                        </label>
+                                    </div>
+                                    {% if field.errors %}
+                                        <p class="text-red-500 text-xs mt-1">{{ field.errors.0 }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                        </div>
                     </div>
-                </div>
+
+                    <div class="flex justify-end">
+                        <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-save mr-2"></i>Salvar Disponibilidade
+                        </button>
+                    </div>
+                </form>
             </div>
 
             <!-- Disciplinas Tab -->
             <div x-show="activeTab === 'disciplinas'" class="space-y-6">
                 <div class="bg-gray-50 rounded-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Disciplinas que Leciona</h3>
-                    <div class="text-center py-8">
-                        <i class="fas fa-book text-4xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+
+                    {% if disciplinas %}
+                        <div class="space-y-3">
+                            {% for disciplina in disciplinas %}
+                                <div class="bg-white rounded-lg p-4 border border-gray-200 flex items-center justify-between">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">{{ disciplina.disciplina }}</h4>
+                                        <p class="text-sm text-gray-500">
+                                            {% if disciplina.habilitado %}
+                                                <span class="text-green-600"><i class="fas fa-check-circle mr-1"></i>Habilitado</span>
+                                            {% else %}
+                                                <span class="text-yellow-600"><i class="fas fa-clock mr-1"></i>Em habilitação</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50" title="Editar">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-book text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">Nenhuma disciplina cadastrada</p>
+                        </div>
+                    {% endif %}
+
+                    <div class="flex justify-end mt-6">
+                        <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Adicionar Disciplina
+                        </button>
                     </div>
                 </div>
             </div>
@@ -230,9 +388,42 @@
             <div x-show="activeTab === 'deficiencias'" class="space-y-6">
                 <div class="bg-gray-50 rounded-lg p-6">
                     <h3 class="text-lg font-semibold text-gray-800 mb-4">Deficiências</h3>
-                    <div class="text-center py-8">
-                        <i class="fas fa-universal-access text-4xl text-gray-400 mb-2"></i>
-                        <p class="text-gray-500">Funcionalidade em desenvolvimento</p>
+
+                    {% if deficiencias %}
+                        <div class="space-y-3">
+                            {% for deficiencia in deficiencias %}
+                                <div class="bg-white rounded-lg p-4 border border-gray-200">
+                                    <div class="flex items-start justify-between">
+                                        <div class="flex-1">
+                                            <h4 class="font-medium text-gray-900">{{ deficiencia.get_tipo_deficiencia_display }}</h4>
+                                            {% if deficiencia.descricao %}
+                                                <p class="text-sm text-gray-600 mt-1">{{ deficiencia.descricao }}</p>
+                                            {% endif %}
+                                        </div>
+                                        <div class="flex space-x-2">
+                                            <button class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50" title="Editar">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                            <button class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <div class="text-center py-8">
+                            <i class="fas fa-universal-access text-4xl text-gray-400 mb-2"></i>
+                            <p class="text-gray-500">Nenhuma deficiência cadastrada</p>
+                            <p class="text-sm text-gray-400 mt-1">Esta informação é importante para acessibilidade</p>
+                        </div>
+                    {% endif %}
+
+                    <div class="flex justify-end mt-6">
+                        <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                            <i class="fas fa-plus mr-2"></i>Registrar Deficiência
+                        </button>
                     </div>
                 </div>
             </div>
@@ -261,49 +452,114 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-    // Simular progresso baseado nas abas preenchidas
+    // Calcular progresso baseado nos dados preenchidos
     function updateProgress() {
         const totalTabs = 8;
-        const filledTabs = 1; // Apenas dados pessoais por enquanto
+        let filledTabs = 0;
+
+        // Verificar quais abas têm dados preenchidos
+        const funcionarioData = {{ funcionario|yesno:"1,0" }};
+        const documentacaoData = {{ funcionario.documentacao|yesno:"1,0"|default:"0" }};
+        const dadosFuncionaisData = {{ funcionario.dados_funcionais|yesno:"1,0"|default:"0" }};
+        const escolaridadeData = {{ funcionario.escolaridade|yesno:"1,0"|default:"0" }};
+        const disponibilidadeData = {{ funcionario.disponibilidade|yesno:"1,0"|default:"0" }};
+        const disciplinasData = {{ disciplinas.count|yesno:"1,0" }};
+        const habilitacoesData = {{ habilitacoes.count|yesno:"1,0" }};
+        const deficienciasData = {{ deficiencias.count|yesno:"1,0" }};
+
+        filledTabs += parseInt(funcionarioData);
+        filledTabs += parseInt(documentacaoData);
+        filledTabs += parseInt(dadosFuncionaisData);
+        filledTabs += parseInt(escolaridadeData);
+        filledTabs += parseInt(disponibilidadeData);
+        filledTabs += parseInt(disciplinasData);
+        filledTabs += parseInt(habilitacoesData);
+        filledTabs += parseInt(deficienciasData);
+
         const percentage = (filledTabs / totalTabs) * 100;
-        
+
         document.getElementById('progress-bar').style.width = percentage + '%';
         document.getElementById('progress-text').textContent = Math.round(percentage) + '%';
     }
-    
+
     updateProgress();
-    
-    // Tab navigation
+
+    // Tab navigation with Alpine.js integration
     const tabs = ['pessoais', 'documentacao', 'funcionais', 'habilitacao', 'escolaridade', 'disponibilidade', 'disciplinas', 'deficiencias'];
     let currentTabIndex = 0;
-    
+
     function updateTabNavigation() {
         const prevButton = document.getElementById('prev-tab');
         const nextButton = document.getElementById('next-tab');
-        
+
         prevButton.disabled = currentTabIndex === 0;
         nextButton.disabled = currentTabIndex === tabs.length - 1;
+
+        // Adicionar classe visual para botões desabilitados
+        prevButton.classList.toggle('opacity-50', currentTabIndex === 0);
+        nextButton.classList.toggle('opacity-50', currentTabIndex === tabs.length - 1);
     }
-    
+
+    // Encontrar qual aba está ativa inicialmente
+    function findActiveTab() {
+        const tabButtons = document.querySelectorAll('nav button[\\@click]');
+        for (let i = 0; i < tabButtons.length; i++) {
+            if (tabButtons[i].classList.contains('text-purple-600')) {
+                currentTabIndex = i;
+                break;
+            }
+        }
+    }
+
     document.getElementById('prev-tab').addEventListener('click', function() {
         if (currentTabIndex > 0) {
             currentTabIndex--;
-            // Trigger Alpine.js to change tab
-            document.dispatchEvent(new CustomEvent('change-tab', { detail: { tab: tabs[currentTabIndex] } }));
+            // Simular clique na aba anterior
+            const tabButtons = document.querySelectorAll('nav button[\\@click]');
+            if (tabButtons[currentTabIndex]) {
+                tabButtons[currentTabIndex].click();
+            }
             updateTabNavigation();
         }
     });
-    
+
     document.getElementById('next-tab').addEventListener('click', function() {
         if (currentTabIndex < tabs.length - 1) {
             currentTabIndex++;
-            // Trigger Alpine.js to change tab
-            document.dispatchEvent(new CustomEvent('change-tab', { detail: { tab: tabs[currentTabIndex] } }));
+            // Simular clique na próxima aba
+            const tabButtons = document.querySelectorAll('nav button[\\@click]');
+            if (tabButtons[currentTabIndex]) {
+                tabButtons[currentTabIndex].click();
+            }
             updateTabNavigation();
         }
     });
-    
+
+    // Atualizar navegação quando a aba mudar
+    document.addEventListener('click', function(e) {
+        const tabButton = e.target.closest('nav button[\\@click]');
+        if (tabButton) {
+            const tabButtons = document.querySelectorAll('nav button[\\@click]');
+            currentTabIndex = Array.from(tabButtons).indexOf(tabButton);
+            updateTabNavigation();
+        }
+    });
+
+    findActiveTab();
     updateTabNavigation();
+
+    // Auto-save functionality quando habilitado
+    const forms = document.querySelectorAll('form[id^="form-"]');
+    forms.forEach(form => {
+        // Adicionar loading state nos botões de submit
+        form.addEventListener('submit', function(e) {
+            const submitBtn = form.querySelector('button[type="submit"]');
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Salvando...';
+            }
+        });
+    });
 });
 </script>
 {% endblock %}
