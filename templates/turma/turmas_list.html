@@ -3,63 +3,85 @@
 {% block title %}Turmas - GUTO{% endblock %}
 
 {% block content %}
-<div class="flex flex-col space-y-6">
-    
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">Gestão de Turmas</h1>
-            <p class="text-gray-600 mt-1">Criação e gerenciamento de turmas escolares</p>
+<div class="max-w-7xl mx-auto">
+
+    <!-- Breadcrumb e Header -->
+    <div class="mb-8">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+            <a href="{% url 'turma:avaliacao_home' %}" class="hover:text-blue-600 transition-colors">🎓 Turmas</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-gray-900 font-medium">📋 Lista de Turmas</span>
+        </nav>
+
+        <div class="bg-gradient-to-r from-blue-500 to-indigo-600 rounded-xl p-6 text-white shadow-xl">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h1 class="text-3xl font-bold flex items-center">
+                        <span class="text-4xl mr-3">🎓</span>
+                        Gestão de Turmas
+                    </h1>
+                    <p class="mt-2 text-blue-100">Criação e gerenciamento de turmas escolares</p>
+                    <div class="mt-3 flex items-center space-x-4">
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                            📊 {{ total_turmas }} turmas
+                        </span>
+                    </div>
+                </div>
+                <a href="{% url 'turma:turma_create' %}" class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
+                    <i class="fas fa-plus mr-2"></i>
+                    Nova Turma
+                </a>
+            </div>
         </div>
-        <a href="{% url 'turma:turma_create' %}" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-all duration-200 flex items-center space-x-2">
-            <i class="fas fa-plus"></i>
-            <span>Nova Turma</span>
-        </a>
     </div>
 
     <!-- Filtros de Pesquisa -->
-    <div class="bg-gray-50 rounded-lg p-4 mb-6">
-        <form method="GET" class="flex flex-wrap gap-4 items-end">
-            <div class="flex-1 min-w-[200px]">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Buscar turma:</label>
-                <input type="text" name="busca" value="{{ busca|default:'' }}" 
-                       placeholder="Nome da turma..." 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+    <div class="bg-gradient-to-r from-purple-500 to-pink-600 rounded-xl shadow-lg p-6 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center">
+            <span class="text-2xl mr-2">🔍</span>
+            Filtros de Busca
+        </h2>
+        <form method="GET" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+                <label class="block text-sm font-medium text-white mb-2">Buscar turma:</label>
+                <input type="text" name="busca" value="{{ busca|default:'' }}"
+                       placeholder="Nome da turma..."
+                       class="w-full px-4 py-3 border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white placeholder-white/70 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all">
             </div>
-            
-            <div class="min-w-[120px]">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Período:</label>
-                <input type="text" name="periodo_letivo" value="{{ periodo_letivo|default:'' }}" 
-                       placeholder="2024" 
-                       class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+
+            <div>
+                <label class="block text-sm font-medium text-white mb-2">Período:</label>
+                <input type="text" name="periodo_letivo" value="{{ periodo_letivo|default:'' }}"
+                       placeholder="2024"
+                       class="w-full px-4 py-3 border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white placeholder-white/70 rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all">
             </div>
-            
-            <div class="min-w-[140px]">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tipo de Ensino:</label>
-                <select name="tipo_ensino" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Todos</option>
+
+            <div>
+                <label class="block text-sm font-medium text-white mb-2">Tipo de Ensino:</label>
+                <select name="tipo_ensino" class="w-full px-4 py-3 border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all">
+                    <option value="" class="text-gray-900">Todos</option>
                     {% for valor, label in tipo_ensino_choices %}
-                        <option value="{{ valor }}" {% if tipo_ensino == valor %}selected{% endif %}>{{ label }}</option>
+                        <option value="{{ valor }}" {% if tipo_ensino == valor %}selected{% endif %} class="text-gray-900">{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
-            
-            <div class="min-w-[100px]">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Turno:</label>
-                <select name="turno" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                    <option value="">Todos</option>
+
+            <div>
+                <label class="block text-sm font-medium text-white mb-2">Turno:</label>
+                <select name="turno" class="w-full px-4 py-3 border-2 border-white/30 bg-white/10 backdrop-blur-sm text-white rounded-lg focus:ring-2 focus:ring-white/50 focus:border-white/50 transition-all">
+                    <option value="" class="text-gray-900">Todos</option>
                     {% for valor, label in turno_choices %}
                         <option value="{{ valor }}" {% if turno == valor %}selected{% endif %}>{{ label }}</option>
                     {% endfor %}
                 </select>
             </div>
             
-            <div class="flex space-x-2">
-                <button type="submit" class="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <div class="md:col-span-2 lg:col-span-4 flex flex-col sm:flex-row gap-3 pt-2">
+                <button type="submit" class="bg-white/20 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-white/30 transition-all border border-white/30 flex items-center justify-center">
                     <i class="fas fa-search mr-2"></i>Buscar
                 </button>
-                
-                <a href="{% url 'turma:turmas_list' %}" class="bg-gray-600 text-white px-6 py-2 rounded-lg hover:bg-gray-700 transition-colors">
+
+                <a href="{% url 'turma:turmas_list' %}" class="bg-white/10 backdrop-blur-sm text-white px-6 py-3 rounded-lg hover:bg-white/20 transition-all border border-white/30 flex items-center justify-center">
                     <i class="fas fa-times mr-2"></i>Limpar
                 </a>
             </div>
@@ -67,7 +89,7 @@
     </div>
 
     <!-- Estatísticas Rápidas -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <div class="bg-white p-4 rounded-lg shadow border-l-4 border-blue-500">
             <div class="flex items-center">
                 <div class="p-2 bg-blue-100 rounded-lg">
