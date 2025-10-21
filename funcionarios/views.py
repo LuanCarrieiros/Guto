@@ -1,7 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from dashboard.models import AtividadeRecente
@@ -16,6 +16,44 @@ from .forms import (
     DisponibilidadeForm, DisciplinaFuncionarioForm, DeficienciaFuncionarioForm,
     AssociacaoProfessorForm, AssociacaoOutrosProfissionaisForm, BuscaRedeForm
 )
+
+@login_required
+def funcionarios_home(request):
+    """
+    Página inicial do módulo de Funcionários com estatísticas e ações rápidas
+    """
+    # Estatísticas gerais
+    total_funcionarios = Funcionario.objects.count()
+    funcionarios_ativos = Funcionario.objects.filter(tipo_arquivo='CORRENTE').count()
+
+    # Contagem por função
+    total_professores = DadosFuncionais.objects.filter(funcao='PROFESSOR').count()
+    total_administrativos = DadosFuncionais.objects.exclude(funcao='PROFESSOR').count()
+
+    # Últimos 5 funcionários cadastrados
+    funcionarios_recentes = Funcionario.objects.all().order_by('-codigo')[:5]
+
+    # Distribuição por função
+    funcionarios_por_funcao = []
+    funcoes = DadosFuncionais.objects.values('funcao').annotate(total=Count('funcao'))
+    for funcao in funcoes:
+        percentual = (funcao['total'] / total_funcionarios * 100) if total_funcionarios > 0 else 0
+        funcionarios_por_funcao.append({
+            'nome': dict(DadosFuncionais.FUNCAO_CHOICES).get(funcao['funcao'], funcao['funcao']),
+            'total': funcao['total'],
+            'percentual': percentual
+        })
+
+    context = {
+        'total_funcionarios': total_funcionarios,
+        'total_professores': total_professores,
+        'total_administrativos': total_administrativos,
+        'funcionarios_ativos': funcionarios_ativos,
+        'funcionarios_recentes': funcionarios_recentes,
+        'funcionarios_por_funcao': funcionarios_por_funcao,
+    }
+
+    return render(request, 'funcionarios/funcionarios_home.html', context)
 
 @login_required
 def funcionario_list(request):

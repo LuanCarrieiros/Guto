@@ -1,12 +1,45 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q
+from django.db.models import Q, Count
 from django.http import JsonResponse
 from django.core.paginator import Paginator
 from dashboard.models import AtividadeRecente
 from .models import Aluno, DocumentacaoAluno, Responsavel, TransporteAluno, Matricula
 from .forms import AlunoForm, DocumentacaoAlunoForm, ResponsavelForm, TransporteAlunoForm, MatriculaForm
+
+@login_required
+def alunos_home(request):
+    """
+    Página inicial do módulo de Alunos com estatísticas e ações rápidas
+    """
+    # Estatísticas gerais
+    total_alunos = Aluno.objects.count()
+    arquivo_corrente = Aluno.objects.filter(tipo_arquivo='CORRENTE').count()
+    arquivo_permanente = Aluno.objects.filter(tipo_arquivo='PERMANENTE').count()
+    matriculas_ativas = Matricula.objects.filter(status='ATIVA').count()
+
+    # Últimos 5 alunos cadastrados
+    alunos_recentes = Aluno.objects.all().order_by('-codigo')[:5]
+
+    # Distribuição por série (usando dados reais ou simulados)
+    # Você pode ajustar isso baseado na estrutura real do modelo Aluno
+    alunos_por_serie = []
+    if total_alunos > 0:
+        # Exemplo: contar por ano/série se existir esse campo
+        # Ajuste conforme a estrutura real do modelo
+        pass
+
+    context = {
+        'total_alunos': total_alunos,
+        'arquivo_corrente': arquivo_corrente,
+        'arquivo_permanente': arquivo_permanente,
+        'matriculas_ativas': matriculas_ativas,
+        'alunos_recentes': alunos_recentes,
+        'alunos_por_serie': alunos_por_serie,
+    }
+
+    return render(request, 'alunos/alunos_home.html', context)
 
 @login_required
 def aluno_list(request):

@@ -16,20 +16,48 @@
                     </h1>
                     <p class="mt-2 text-emerald-100">{{ disciplina.nome }} • {{ turma.nome }} • {{ turma.get_turno_display }}</p>
                 </div>
-                {% if disciplina %}
-                <a href="{% url 'diario:disciplina' turma.pk disciplina.pk %}"
+                <a href="{% url 'diario:divisao' turma.pk disciplina.pk divisao.pk %}"
                    class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
                     <i class="fas fa-arrow-left mr-2"></i>
-                    Voltar aos Períodos
+                    Voltar ao Diário
                 </a>
-                {% else %}
-                <a href="{% url 'diario:turma' turma.pk %}"
-                   class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
-                    <i class="fas fa-arrow-left mr-2"></i>
-                    Voltar às Disciplinas
-                </a>
-                {% endif %}
             </div>
+        </div>
+    </div>
+
+    <!-- Indicador de Progresso - 5 Etapas -->
+    <div class="mb-8" style="min-height: 140px;">
+        <div class="bg-gradient-to-r from-slate-100 to-gray-100 rounded-xl p-6 shadow-lg">
+            <h2 class="text-xl font-bold text-center text-gray-700 mb-6">
+                📋 Processo do Diário Eletrônico
+            </h2>
+            <div class="flex items-center justify-center space-x-4">
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                    <div class="text-cyan-600 font-medium ml-2 whitespace-nowrap">1. Turma</div>
+                </div>
+                <div class="flex-1 h-2 bg-gradient-to-r from-cyan-500 to-emerald-500 rounded max-w-20"></div>
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                    <div class="text-green-600 font-medium ml-2 whitespace-nowrap">2. Disciplina</div>
+                </div>
+                <div class="flex-1 h-2 bg-gradient-to-r from-emerald-500 to-yellow-500 rounded max-w-20"></div>
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                    <div class="text-orange-600 font-medium ml-2 whitespace-nowrap">3. Período</div>
+                </div>
+                <div class="flex-1 h-2 bg-gradient-to-r from-orange-500 to-purple-500 rounded max-w-20"></div>
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
+                    <div class="text-purple-600 font-medium ml-2 whitespace-nowrap">4. Diário</div>
+                </div>
+                <div class="flex-1 h-2 bg-gradient-to-r from-purple-500 to-emerald-500 rounded max-w-20"></div>
+                <div class="flex items-center">
+                    <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg animate-pulse">5</div>
+                    <div class="text-emerald-600 font-medium ml-2 whitespace-nowrap">5. Ações</div>
+                </div>
+            </div>
+            <p class="text-center text-gray-600 text-sm mt-4">📋 Registrando presença dos estudantes</p>
         </div>
     </div>
 

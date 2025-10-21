@@ -10,6 +10,10 @@
             <p class="text-gray-600 mt-1">Gerencie os funcionários da instituição</p>
         </div>
         <div class="flex space-x-3">
+            <a href="{% url 'funcionarios:funcionarios_home' %}" class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-lg inline-flex items-center transition-colors">
+                <i class="fas fa-arrow-left mr-2"></i>
+                Voltar
+            </a>
             <a href="{% url 'funcionarios:funcionario_create' %}" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center space-x-2">
                 <i class="fas fa-plus"></i>
                 <span>Novo Funcionário</span>

@@ -5,7 +5,8 @@ app_name = 'alunos'
 
 urlpatterns = [
     # URLs para Alunos
-    path('', views.aluno_list, name='aluno_list'),
+    path('', views.alunos_home, name='alunos_home'),
+    path('lista/', views.aluno_list, name='aluno_list'),
     path('cadastrar/', views.aluno_create, name='aluno_create'),
     path('<int:pk>/', views.aluno_detail, name='aluno_detail'),
     path('<int:pk>/editar/', views.aluno_edit, name='aluno_edit'),
