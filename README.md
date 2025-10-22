@@ -7,7 +7,7 @@ Sistema completo de gestão escolar desenvolvido em Django para controle de alun
 ## 🚀 Como Executar o Projeto
 
 ### 📋 **Pré-requisitos**
-- Python 3.8 ou superior
+- Python 3.14 ou superior
 - pip (gerenciador de pacotes Python)
 
 ### 🔧 **Instalação e Execução**
@@ -232,7 +232,7 @@ Isso permite testar o sistema imediatamente após a instalação!
 
 | Tecnologia | Versão | Uso |
 |------------|--------|-----|
-| Python | 3.8+ | Linguagem base |
+| Python | 3.14+ | Linguagem base |
 | Django | 5.2.6 | Framework web |
 | SQLite | 3.x | Banco de dados |
 | Tailwind CSS | 3.x | Estilização |
@@ -261,7 +261,7 @@ Este sistema foi desenvolvido como projeto acadêmico, implementando conceitos d
 Para dúvidas sobre a execução do projeto:
 1. Verifique se todas as dependências foram instaladas corretamente
 2. Certifique-se de que o ambiente virtual está ativado
-3. Confirme que o Python 3.8+ está instalado
+3. Confirme que o Python 3.14+ está instalado
 4. Execute `python manage.py migrate` se houver problemas com o banco
 
 ---
