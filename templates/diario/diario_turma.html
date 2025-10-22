@@ -4,19 +4,33 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto">
-    <!-- Header Vibrante -->
-    <div class="mb-8">
-        <div class="bg-gradient-to-r from-cyan-500 to-blue-500 rounded-lg p-6 text-white shadow-lg">
+    <!-- Breadcrumb e Header -->
+    <div class="mb-8" style="min-height: 165px;">
+        <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
+            <a href="{% url 'diario:home' %}" class="hover:text-blue-600 transition-colors">📚 Diário</a>
+            <i class="fas fa-chevron-right text-xs"></i>
+            <span class="text-gray-900 font-medium">🎓 {{ turma.nome }}</span>
+        </nav>
+
+        <div class="bg-gradient-to-r from-cyan-500 to-blue-500 rounded-xl p-6 text-white shadow-xl">
             <div class="flex items-center justify-between">
                 <div>
                     <h1 class="text-3xl font-bold flex items-center">
-                        <span class="text-3xl mr-3">🎓</span>
+                        <span class="text-4xl mr-3">🎓</span>
                         {{ turma.nome }}
                     </h1>
                     <p class="mt-2 text-blue-100">{{ turma.get_tipo_ensino_display }} • {{ turma.get_ano_serie_display }} • {{ turma.get_turno_display }}</p>
+                    <div class="mt-3 flex items-center space-x-4">
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                            👥 {{ total_alunos }} estudantes
+                        </span>
+                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
+                            📚 {{ disciplinas|length }} disciplinas
+                        </span>
+                    </div>
                 </div>
                 <a href="{% url 'diario:home' %}"
-                   class="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors">
+                   class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
                     <i class="fas fa-arrow-left mr-2"></i>
                     Voltar ao Diário
                 </a>
@@ -24,67 +38,8 @@
         </div>
     </div>
 
-    <!-- Estatísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-        <div class="bg-white border-l-4 border-blue-500 rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 bg-blue-100 rounded-lg mr-4">
-                    <i class="fas fa-user-graduate text-blue-600"></i>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-gray-900">{{ total_alunos }}</div>
-                    <div class="text-sm text-gray-600">Estudantes</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white border-l-4 border-green-500 rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 bg-green-100 rounded-lg mr-4">
-                    <i class="fas fa-book text-green-600"></i>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-gray-900">{{ disciplinas|length }}</div>
-                    <div class="text-sm text-gray-600">Disciplinas</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white border-l-4 border-purple-500 rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 bg-purple-100 rounded-lg mr-4">
-                    <i class="fas fa-chart-line text-purple-600"></i>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-gray-900" id="progressoGeral">0%</div>
-                    <div class="text-sm text-gray-600">Progresso Geral</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white border-l-4 border-orange-500 rounded-lg shadow p-6">
-            <div class="flex items-center">
-                <div class="p-3 bg-orange-100 rounded-lg mr-4">
-                    <i class="fas fa-tasks text-orange-600"></i>
-                </div>
-                <div>
-                    <div class="text-2xl font-bold text-gray-900" id="totalAvaliacoes">{{ disciplinas|length }}</div>
-                    <div class="text-sm text-gray-600">Ações Disponíveis</div>
-                </div>
-            </div>
-        </div>
-    </div>
-
     <!-- Seção de Disciplinas -->
     <div class="mb-8">
-        <div class="bg-white rounded-lg shadow border border-gray-200 p-6 mb-6">
-            <h2 class="text-xl font-semibold text-center flex items-center justify-center text-gray-800">
-                <span class="text-2xl mr-3">📖</span>
-                Selecionar Disciplina
-            </h2>
-            <p class="text-center text-gray-600 mt-2">Escolha uma disciplina para acessar o diário eletrônico</p>
-        </div>
-
         <!-- Indicador de Progresso - 5 Etapas -->
         <div class="mb-8" style="min-height: 140px;">
             <div class="bg-gradient-to-r from-slate-100 to-gray-100 rounded-xl p-6 shadow-lg">
@@ -93,13 +48,13 @@
                 </h2>
                 <div class="flex items-center justify-center space-x-4">
                     <div class="flex items-center">
-                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg animate-pulse">1</div>
+                        <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
                         <div class="text-cyan-600 font-medium ml-2 whitespace-nowrap">1. Turma</div>
                     </div>
-                    <div class="flex-1 h-2 bg-gray-300 rounded max-w-20"></div>
+                    <div class="flex-1 h-2 bg-gradient-to-r from-cyan-500 to-emerald-500 rounded max-w-20"></div>
                     <div class="flex items-center">
-                        <div class="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold text-sm">2</div>
-                        <div class="text-gray-500 font-medium ml-2 whitespace-nowrap">2. Disciplina</div>
+                        <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg animate-pulse">2</div>
+                        <div class="text-green-600 font-medium ml-2 whitespace-nowrap">2. Disciplina</div>
                     </div>
                     <div class="flex-1 h-2 bg-gray-300 rounded max-w-20"></div>
                     <div class="flex items-center">
@@ -117,7 +72,7 @@
                         <div class="text-gray-500 font-medium ml-2 whitespace-nowrap">5. Ações</div>
                     </div>
                 </div>
-                <p class="text-center text-gray-600 text-sm mt-4">Selecione uma disciplina para continuar</p>
+                <p class="text-center text-gray-600 text-sm mt-4">📍 Passo 2/5: Selecione uma disciplina para continuar</p>
             </div>
         </div>
         

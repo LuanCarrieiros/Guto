@@ -862,9 +862,15 @@ def fazer_chamada(request, turma_id):
         # Redirecionar para seleção de disciplina
         messages.error(request, 'Selecione uma disciplina para fazer a chamada.')
         return redirect('diario:turma', turma_id=turma_id)
-    
+
     disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-    
+
+    # Obter divisão (bimestre/período) da URL
+    divisao_id = request.GET.get('divisao')
+    divisao = None
+    if divisao_id:
+        divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
+
     # Buscar alunos da turma
     alunos = Aluno.objects.filter(
         enturmacoes__turma=turma,
@@ -954,6 +960,7 @@ def fazer_chamada(request, turma_id):
     context = {
         'turma': turma,
         'disciplina': disciplina,
+        'divisao': divisao,
         'alunos': alunos_list,  # Usar lista com status
         'data_hoje': date.today(),
         'data_atual': data_chamada.strftime('%Y-%m-%d'),  # Data para o input
@@ -973,15 +980,21 @@ def lancar_notas_diario(request, turma_id):
     if not disciplina_id:
         messages.error(request, 'Selecione uma disciplina para lançar notas.')
         return redirect('diario:turma', turma_id=turma_id)
-    
+
     disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-    
+
+    # Obter divisão (bimestre/período) da URL
+    divisao_id = request.GET.get('divisao')
+    divisao = None
+    if divisao_id:
+        divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
+
     # Buscar alunos da turma
     alunos = Aluno.objects.filter(
         enturmacoes__turma=turma,
         enturmacoes__ativo=True
     ).order_by('nome')
-    
+
     # Buscar avaliações da turma e disciplina
     avaliacoes = Avaliacao.objects.filter(
         turma=turma,
@@ -1068,6 +1081,7 @@ def lancar_notas_diario(request, turma_id):
     context = {
         'turma': turma,
         'disciplina': disciplina,
+        'divisao': divisao,
         'alunos': alunos_list,
         'avaliacoes': avaliacoes,
         'notas_dict': notas_dict,
@@ -1171,32 +1185,39 @@ def gerenciar_avaliacoes_diario(request, turma_id):
 def visualizar_avaliacoes_diario(request, turma_id):
     """Visualiza avaliações no contexto do diário (Espelho do Diário)"""
     turma = get_object_or_404(Turma, pk=turma_id)
-    
+
     # Obter disciplina da URL
     disciplina_id = request.GET.get('disciplina')
     if not disciplina_id:
         messages.error(request, 'Selecione uma disciplina para visualizar avaliações.')
         return redirect('diario:notas', turma_id=turma_id)
-    
+
     disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-    
+
+    # Obter divisão da URL
+    divisao_id = request.GET.get('divisao')
+    divisao = None
+    if divisao_id:
+        divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
+
     # Buscar avaliações da turma e disciplina
     avaliacoes = Avaliacao.objects.filter(
         turma=turma,
         disciplina=disciplina
     ).order_by('nome')
-    
+
     # Adicionar contagem de notas para cada avaliação
     for avaliacao in avaliacoes:
         avaliacao.total_notas_lancadas = NotaAvaliacao.objects.filter(avaliacao=avaliacao).count()
-    
+
     context = {
         'turma': turma,
         'disciplina': disciplina,
+        'divisao': divisao,
         'avaliacoes': avaliacoes,
         'page_title': f'Espelho do Diário - {disciplina.nome} - {turma.nome}'
     }
-    
+
     return render(request, 'diario/visualizar_avaliacoes_diario.html', context)
 
 
