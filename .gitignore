@@ -16,9 +16,13 @@ __pycache__/
 
 # Configuração de Ferramentas (Ex: VSCode, Claude)
 .vscode/
-.claude/
 .sonar/
+.claude/
 
 # Arquivos de Sistema Operacional
 .DS_Store
 Thumbs.db
+
+# Arquivos temporários
+*.tmp
+*.bak
