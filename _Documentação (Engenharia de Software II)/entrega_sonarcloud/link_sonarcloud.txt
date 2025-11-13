@@ -1,0 +1,25 @@
+============================================================
+LINK DO DASHBOARD SONARCLOUD - SISTEMA GUTO
+============================================================
+
+Link: https://sonarcloud.io/dashboard?id=LuanCarrieiros_Guto
+
+Data: 11/11/2025 21:00:22
+
+Integrantes do Grupo:
+- Luan Barbosa Rosa Carrieiros
+- Diego Moreira Rocha
+- Arthur Clemente Machado
+- Bernardo Ferreira Temponi
+- Arthur Gonçalves de Moraes
+
+Projeto: Sistema GUTO
+Repositorio: https://github.com/LuanCarrieiros/Guto
+
+============================================================
+ANALISE CONCLUIDA COM SUCESSO
+============================================================
+
+- 102 arquivos Python analisados
+- Quality Profile: Sonar way
+- Status: Analise completa
