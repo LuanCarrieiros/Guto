@@ -17,6 +17,7 @@ __pycache__/
 # Configuração de Ferramentas (Ex: VSCode, Claude)
 .vscode/
 .claude/
+.sonar/
 
 # Arquivos de Sistema Operacional
 .DS_Store
