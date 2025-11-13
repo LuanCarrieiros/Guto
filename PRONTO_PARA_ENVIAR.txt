@@ -1,0 +1,81 @@
+============================================================
+           ATIVIDADE SONARCLOUD/SONARLINT
+                  PRONTA PARA ENVIAR!
+============================================================
+
+ARQUIVO PARA ENVIO:
+  entregas.zip (328 KB)
+
+CONTEUDO DO ZIP (4 arquivos):
+  1. Questionario_SonarCloud_SonarLint.md (14 KB)
+     - Todas as 7 questoes respondidas
+     - Nomes dos 5 integrantes
+     - Link do SonarCloud incluido
+     - Exemplo de Code Smell preenchido
+
+  2. screenshot_sonarlint.png (312 KB)
+     - Screenshot do SonarLint no VS Code
+     - Mostra problemas de codigo detectados
+
+  3. link_sonarcloud.txt (758 bytes)
+     - Link: https://sonarcloud.io/dashboard?id=LuanCarrieiros_Guto
+     - Nomes dos integrantes
+     - Estatisticas da analise
+
+  4. LEIA-ME.txt (1.8 KB)
+     - Informacoes sobre a entrega
+     - Lista de ferramentas utilizadas
+     - Links importantes
+
+============================================================
+                     CHECKLIST FINAL
+============================================================
+
+[OK] SonarCloud configurado
+[OK] Analise do SonarCloud executada (102 arquivos)
+[OK] SonarLint instalado no VS Code
+[OK] Screenshot capturado
+[OK] Questionario completo (7 questoes)
+[OK] Nomes dos 5 integrantes em todos os arquivos
+[OK] Link do SonarCloud incluido
+[OK] Arquivo entregas.zip criado
+
+============================================================
+                   PROXIMOS PASSOS
+============================================================
+
+1. Abra o Canvas/Moodle da disciplina
+
+2. Localize a atividade:
+   "Atividade em Sala - Analise de Qualidade de Codigo"
+
+3. Faca upload do arquivo:
+   entregas.zip
+
+4. Confirme o envio
+
+5. PRAZO: Hoje as 23:59
+
+============================================================
+                  INFORMACOES IMPORTANTES
+============================================================
+
+Integrantes do Grupo:
+- Luan Barbosa Rosa Carrieiros
+- Diego Moreira Rocha
+- Arthur Clemente Machado
+- Bernardo Ferreira Temponi
+- Arthur Goncalves de Moraes
+
+Projeto: Sistema GUTO
+Repositorio: https://github.com/LuanCarrieiros/Guto
+Dashboard SonarCloud: https://sonarcloud.io/dashboard?id=LuanCarrieiros_Guto
+
+Analise SonarCloud:
+- 102 arquivos Python analisados
+- Tempo: 1min 45s
+- Status: Sucesso
+
+============================================================
+             TUDO PRONTO! SO ENVIAR AGORA!
+============================================================
