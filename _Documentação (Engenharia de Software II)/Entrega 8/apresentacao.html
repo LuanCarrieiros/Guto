@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Apresentação Final - Sistema GUTO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            overflow: hidden; /* Impede rolagem */
+        }
+        .slide {
+            display: none;
+            height: 100vh;
+            width: 100vw;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .slide.active {
+            display: flex;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .bg-gradient-brand {
+            background: linear-gradient(135deg, #1e3a8a 0%, #581c87 100%);
+        }
+        .text-gradient {
+            background: linear-gradient(to right, #1e3a8a, #581c87);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.9);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+        }
+        .bullet-point {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 1rem;
+        }
+        .bullet-icon {
+            color: #4f46e5;
+            margin-right: 0.75rem;
+            margin-top: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Navegação -->
+    <div class="fixed bottom-4 right-4 z-50 flex gap-2">
+        <button onclick="prevSlide()" class="bg-gray-800 text-white p-3 rounded-full hover:bg-gray-700 transition shadow-lg" title="Anterior (Seta Esquerda)">
+            <i class="fas fa-chevron-left"></i>
+        </button>
+        <button onclick="nextSlide()" class="bg-indigo-600 text-white p-3 rounded-full hover:bg-indigo-700 transition shadow-lg" title="Próximo (Seta Direita)">
+            <i class="fas fa-chevron-right"></i>
+        </button>
+    </div>
+    <div class="fixed bottom-4 left-4 text-gray-400 text-sm z-50">
+        <span id="slide-counter">1 / 8</span>
+    </div>
+
+    <!-- SLIDE 1: CAPA -->
+    <div class="slide active bg-gradient-brand text-white" id="slide-1">
+        <div class="text-center">
+            <div class="mb-6 inline-block p-6 rounded-full bg-white/10 backdrop-blur-sm border border-white/20">
+                <i class="fas fa-graduation-cap text-6xl"></i>
+            </div>
+            <h1 class="text-6xl font-bold mb-4 tracking-tight">Sistema GUTO</h1>
+            <h2 class="text-2xl text-blue-100 font-light mb-12">Gestão Unificada e Tecnológica Organizacional</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto text-left bg-white/10 p-8 rounded-xl backdrop-blur-sm">
+                <div>
+                    <p class="text-xs uppercase tracking-widest text-blue-200 mb-1">Projeto</p>
+                    <p class="font-semibold text-lg">Engenharia de Software II</p>
+                    <p class="text-sm text-blue-200">Semestre 2025.2</p>
+                </div>
+                <div>
+                    <p class="text-xs uppercase tracking-widest text-blue-200 mb-1">Equipe</p>
+                    <ul class="text-sm space-y-1">
+                        <li>Luan Barbosa</li>
+                        <li>Diego Moreira</li>
+                        <li>Arthur Clemente</li>
+                        <li>Bernardo Ferreira</li>
+                        <li>Arthur Gonçalves</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 2: INTRODUÇÃO E OBJETIVO -->
+    <div class="slide" id="slide-2">
+        <div class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-12 gap-8 items-center">
+            <div class="md:col-span-5">
+                <h2 class="text-5xl font-bold text-gray-900 mb-6 leading-tight">Contexto & <br><span class="text-indigo-600">Objetivo</span></h2>
+                <p class="text-xl text-gray-600 mb-8">Modernizando a gestão escolar através da centralização de dados.</p>
+                <div class="bg-indigo-50 border-l-4 border-indigo-600 p-4">
+                    <p class="font-semibold text-indigo-900">Meta Principal</p>
+                    <p class="text-indigo-800">Otimizar matrículas, diários eletrônicos e relatórios gerenciais em uma interface única.</p>
+                </div>
+            </div>
+            <div class="md:col-span-7 grid grid-cols-1 gap-6">
+                <div class="glass-panel p-6 rounded-xl">
+                    <h3 class="text-lg font-bold text-red-600 mb-2"><i class="fas fa-exclamation-circle mr-2"></i>O Problema</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li>• Descentralização crítica de dados.</li>
+                        <li>• Excesso de processos manuais e uso de papel.</li>
+                        <li>• Dificuldade na geração de relatórios confiáveis.</li>
+                    </ul>
+                </div>
+                <div class="glass-panel p-6 rounded-xl">
+                    <h3 class="text-lg font-bold text-green-600 mb-2"><i class="fas fa-check-circle mr-2"></i>A Solução (GUTO)</h3>
+                    <ul class="space-y-2 text-gray-700">
+                        <li>• Plataforma Web Centralizada.</li>
+                        <li>• Gestão unificada (Acadêmica + Administrativa).</li>
+                        <li>• Acesso para Secretários, Professores e Direção.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 3: REQUISITOS E MODELAGEM -->
+    <div class="slide" id="slide-3">
+        <div class="max-w-6xl w-full">
+            <h2 class="text-4xl font-bold text-gray-900 mb-10 text-center">Engenharia de <span class="text-indigo-600">Requisitos</span></h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+                <!-- Card Ator 1 -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-blue-500 text-center">
+                    <div class="text-4xl text-blue-500 mb-4"><i class="fas fa-user-tie"></i></div>
+                    <h3 class="font-bold text-lg mb-2">Secretário</h3>
+                    <p class="text-sm text-gray-600 italic">"Quero matricular alunos e gerenciar documentos de forma ágil."</p>
+                </div>
+                <!-- Card Ator 2 -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-green-500 text-center">
+                    <div class="text-4xl text-green-500 mb-4"><i class="fas fa-chalkboard-teacher"></i></div>
+                    <h3 class="font-bold text-lg mb-2">Professor</h3>
+                    <p class="text-sm text-gray-600 italic">"Quero lançar notas, frequências e conteúdos por turma."</p>
+                </div>
+                <!-- Card Ator 3 -->
+                <div class="bg-white p-6 rounded-xl shadow-md border-t-4 border-purple-500 text-center">
+                    <div class="text-4xl text-purple-500 mb-4"><i class="fas fa-users-cog"></i></div>
+                    <h3 class="font-bold text-lg mb-2">Coordenador</h3>
+                    <p class="text-sm text-gray-600 italic">"Quero realizar a enturmação e gerenciar a grade."</p>
+                </div>
+            </div>
+
+            <div class="bg-gray-50 p-6 rounded-xl border border-gray-200">
+                <h3 class="font-bold text-gray-800 mb-4 border-b pb-2">Artefatos Gerados</h3>
+                <div class="flex justify-around text-center">
+                    <div><i class="fas fa-project-diagram text-indigo-500 mr-2"></i>Diagramas de Casos de Uso</div>
+                    <div><i class="fas fa-random text-indigo-500 mr-2"></i>Diagramas de Sequência</div>
+                    <div><i class="fas fa-layer-group text-indigo-500 mr-2"></i>Protótipos de Alta Fidelidade</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 4: ARQUITETURA -->
+    <div class="slide" id="slide-4">
+        <div class="max-w-6xl w-full grid grid-cols-1 md:grid-cols-2 gap-12 items-center">
+            <div>
+                <h2 class="text-4xl font-bold text-gray-900 mb-6">Arquitetura do Sistema</h2>
+                <div class="mb-6">
+                    <span class="bg-indigo-100 text-indigo-800 text-sm font-medium px-3 py-1 rounded">Estilo</span>
+                    <span class="text-lg font-semibold ml-2">Monólito Modular (Django MVT)</span>
+                </div>
+                <p class="text-gray-600 mb-6">
+                    Optamos pela arquitetura <strong>Model-View-Template</strong> do Django para garantir alta produtividade, coesão com o domínio escolar complexo e facilidade de deploy.
+                </p>
+                <ul class="space-y-3">
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i>Modularização por Apps</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i>Separação de Responsabilidades</li>
+                    <li class="flex items-center"><i class="fas fa-check text-green-500 mr-3"></i>Escalabilidade Vertical</li>
+                </ul>
+            </div>
+            
+            <!-- Visualização das Camadas -->
+            <div class="bg-gray-800 p-8 rounded-2xl shadow-2xl text-white relative overflow-hidden">
+                <div class="absolute top-0 right-0 -mt-4 -mr-4 w-24 h-24 bg-indigo-500 rounded-full opacity-20 blur-xl"></div>
+                
+                <div class="space-y-4">
+                    <div class="bg-gradient-to-r from-pink-500 to-rose-500 p-4 rounded-lg text-center font-bold shadow-lg transform hover:scale-105 transition">
+                        1. Apresentação (Templates/HTMX)
+                    </div>
+                    <div class="flex justify-center"><i class="fas fa-arrow-down text-gray-500"></i></div>
+                    
+                    <div class="bg-gradient-to-r from-purple-500 to-indigo-500 p-4 rounded-lg text-center font-bold shadow-lg transform hover:scale-105 transition">
+                        2. Aplicação (Views/Forms)
+                    </div>
+                    <div class="flex justify-center"><i class="fas fa-arrow-down text-gray-500"></i></div>
+                    
+                    <div class="bg-gradient-to-r from-blue-500 to-cyan-500 p-4 rounded-lg text-center font-bold shadow-lg transform hover:scale-105 transition">
+                        3. Domínio (Models/Services)
+                    </div>
+                    <div class="flex justify-center"><i class="fas fa-arrow-down text-gray-500"></i></div>
+                    
+                    <div class="bg-gray-700 border border-gray-600 p-4 rounded-lg text-center font-bold shadow-lg">
+                        4. Dados (SQLite/PostgreSQL)
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 5: PADRÕES (CRÍTICO) - CLARO -->
+    <div class="slide bg-gray-100 text-gray-800" id="slide-5">
+        <div class="max-w-6xl w-full">
+            <div class="flex items-center mb-10">
+                <div class="w-2 h-12 bg-indigo-600 mr-4"></div>
+                <div>
+                    <h2 class="text-4xl font-bold text-gray-900">Padrões de Persistência e Design</h2>
+                    <p class="text-gray-500">Decisões técnicas fundamentais de Engenharia de Software</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <!-- Active Record -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:border-yellow-500 transition duration-300">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold text-yellow-600">Active Record</h3>
+                        <i class="fas fa-database text-gray-400"></i>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Padrão nativo do Django ORM. O objeto carrega dados e comportamento de persistência.</p>
+                    <code class="block bg-gray-100 p-2 rounded text-xs text-green-700 font-mono border border-gray-300">
+                        aluno = Aluno(nome="Guto")<br>
+                        aluno.save()
+                    </code>
+                    <p class="text-xs text-gray-400 mt-2 text-right">Utilizado em: CRUD Básico</p>
+                </div>
+
+                <!-- Repository -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:border-blue-500 transition duration-300">
+                    <div class="flex justify-between items-start mb-4">
+                        <h3 class="text-xl font-bold text-blue-600">Repository Pattern</h3>
+                        <i class="fas fa-layer-group text-gray-400"></i>
+                    </div>
+                    <p class="text-gray-600 text-sm mb-4">Camada intermediária para isolar a lógica de acesso a dados de consultas complexas.</p>
+                    <code class="block bg-gray-100 p-2 rounded text-xs text-green-700 font-mono border border-gray-300">
+                        repo = AlunoRepository()<br>
+                        lista = repo.get_ativos_por_turma(id)
+                    </code>
+                    <p class="text-xs text-gray-400 mt-2 text-right">Implementado em: repository_layer.py</p>
+                </div>
+
+                <!-- Singleton -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:border-purple-500 transition duration-300">
+                    <h3 class="text-xl font-bold text-purple-600 mb-2">Singleton</h3>
+                    <p class="text-gray-600 text-sm">Garante uma instância única para conexões de banco de dados e configurações globais do sistema.</p>
+                </div>
+
+                <!-- Factory -->
+                <div class="bg-white p-6 rounded-xl shadow-lg border border-gray-200 hover:border-pink-500 transition duration-300">
+                    <h3 class="text-xl font-bold text-pink-600 mb-2">Factory</h3>
+                    <p class="text-gray-600 text-sm">Utilizado para instanciar os repositórios de forma desacoplada, facilitando a injeção de dependências.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 6: IMPLEMENTAÇÃO -->
+    <div class="slide" id="slide-6">
+        <div class="max-w-6xl w-full">
+            <h2 class="text-4xl font-bold text-gray-900 mb-8 text-center">Stack Tecnológico & Fluxo</h2>
+            
+            <!-- Tech Stack Icons -->
+            <div class="flex justify-center gap-12 mb-12">
+                <div class="text-center">
+                    <i class="fab fa-python text-6xl text-blue-600 mb-2"></i>
+                    <p class="font-bold">Python 3.14</p>
+                    <p class="text-xs text-gray-500">Backend</p>
+                </div>
+                <div class="text-center">
+                    <span class="text-6xl font-bold text-green-700 block mb-2" style="line-height: 1;">dj</span>
+                    <p class="font-bold">Django 5.2</p>
+                    <p class="text-xs text-gray-500">Framework</p>
+                </div>
+                <div class="text-center">
+                    <i class="fab fa-js text-6xl text-yellow-500 mb-2"></i>
+                    <p class="font-bold">Javascript</p>
+                    <p class="text-xs text-gray-500">HTMX + Vanilla</p>
+                </div>
+                <div class="text-center">
+                    <i class="fab fa-css3 text-6xl text-blue-400 mb-2"></i>
+                    <p class="font-bold">Tailwind CSS</p>
+                    <p class="text-xs text-gray-500">Estilização</p>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow border border-gray-100">
+                    <h3 class="text-lg font-bold text-indigo-600 mb-4">Modularização (Django Apps)</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="px-3 py-1 bg-gray-100 rounded-full text-sm">alunos</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-full text-sm">funcionarios</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-full text-sm">turma</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-full text-sm">diario</span>
+                        <span class="px-3 py-1 bg-gray-100 rounded-full text-sm">dashboard</span>
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow border border-gray-100">
+                    <h3 class="text-lg font-bold text-indigo-600 mb-4">Fluxo de Dados</h3>
+                    <ol class="list-decimal list-inside space-y-2 text-sm font-mono text-gray-700">
+                        <li>Request HTTP</li>
+                        <li>URL Conf (Routing)</li>
+                        <li>View (Controller Logic)</li>
+                        <li>Repository / Model (Data Access)</li>
+                        <li>Database (SQLite)</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 7: QUALIDADE -->
+    <div class="slide" id="slide-7">
+        <div class="max-w-5xl w-full text-center">
+            <h2 class="text-4xl font-bold text-gray-900 mb-10">Garantia de Qualidade (QA)</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                <!-- SonarCloud -->
+                <div class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-orange-500 transform hover:-translate-y-1 transition">
+                    <div class="mb-6 text-center">
+                        <i class="fas fa-cloud text-6xl text-orange-500"></i>
+                        <span class="block text-xl font-bold text-gray-700 mt-2">SonarCloud</span>
+                    </div>
+                    <div class="text-left space-y-4">
+                        <div class="flex justify-between border-b pb-2">
+                            <span class="font-semibold">Status Quality Gate:</span>
+                            <span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> Aprovado</span>
+                        </div>
+                        <div class="flex justify-between border-b pb-2">
+                            <span class="font-semibold">Profile:</span>
+                            <span>Sonar way</span>
+                        </div>
+                        <div class="flex justify-between border-b pb-2">
+                            <span class="font-semibold">Arquivos Analisados:</span>
+                            <span>102 arquivos</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Testes Automatizados -->
+                <div class="bg-white p-8 rounded-2xl shadow-xl border-t-8 border-blue-600 transform hover:-translate-y-1 transition">
+                    <div class="mb-6 text-6xl text-blue-600">
+                        <i class="fas fa-vial"></i>
+                    </div>
+                    <h3 class="text-xl font-bold mb-4">Estratégia de Testes</h3>
+                    <div class="text-left space-y-3">
+                        <div class="bg-blue-50 p-3 rounded border-l-4 border-blue-400">
+                            <strong class="block text-blue-900">Unitários (Models)</strong>
+                            <span class="text-sm text-blue-700">Validação rigorosa das Regras de Negócio e constraints.</span>
+                        </div>
+                        <div class="bg-green-50 p-3 rounded border-l-4 border-green-400">
+                            <strong class="block text-green-900">Integração (Views)</strong>
+                            <span class="text-sm text-green-700">Testes de fluxo nas views principais (ex: <code>alunos/tests.py</code>).</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SLIDE 8: CONCLUSÃO -->
+    <div class="slide bg-gradient-brand text-white" id="slide-8">
+        <div class="max-w-5xl w-full">
+            <h2 class="text-5xl font-bold mb-12 text-center">Conclusão & Próximos Passos</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 mb-12">
+                <!-- Status -->
+                <div class="bg-white/10 backdrop-blur p-6 rounded-xl border border-white/20">
+                    <h3 class="text-xl font-bold text-green-300 mb-4 border-b border-white/20 pb-2">Status do Projeto</h3>
+                    <ul class="space-y-4">
+                        <li>
+                            <div class="flex justify-between mb-1"><span>Módulo Alunos</span> <span>100%</span></div>
+                            <div class="w-full bg-gray-700 rounded-full h-2"><div class="bg-green-400 h-2 rounded-full" style="width: 100%"></div></div>
+                        </li>
+                        <li>
+                            <div class="flex justify-between mb-1"><span>Diário Eletrônico</span> <span>95%</span></div>
+                            <div class="w-full bg-gray-700 rounded-full h-2"><div class="bg-green-400 h-2 rounded-full" style="width: 95%"></div></div>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Aprendizados -->
+                <div class="bg-white/10 backdrop-blur p-6 rounded-xl border border-white/20">
+                    <h3 class="text-xl font-bold text-yellow-300 mb-4 border-b border-white/20 pb-2">Aprendizados</h3>
+                    <p class="text-sm mb-3">Domínio da complexidade das regras de negócio educacionais (enturmação histórica).</p>
+                    <p class="text-sm">Implementação prática de Design Patterns sobre um ORM.</p>
+                </div>
+
+                <!-- Roadmap -->
+                <div class="bg-white/10 backdrop-blur p-6 rounded-xl border border-white/20">
+                    <h3 class="text-xl font-bold text-blue-300 mb-4 border-b border-white/20 pb-2">Roadmap Futuro</h3>
+                    <ul class="space-y-2 text-sm">
+                        <li><i class="fas fa-arrow-right mr-2"></i>Migração para PostgreSQL</li>
+                        <li><i class="fas fa-arrow-right mr-2"></i>Módulo de Transporte</li>
+                        <li><i class="fas fa-mobile-alt mr-2"></i>API REST para App Mobile</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="text-center mt-16">
+                <h1 class="text-4xl font-light">Obrigado!</h1>
+                <p class="text-blue-200 mt-2">https://github.com/LuanCarrieiros/Guto</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let currentSlide = 1;
+        const totalSlides = 8;
+
+        function showSlide(n) {
+            // Hide current
+            document.getElementById(`slide-${currentSlide}`).classList.remove('active');
+            
+            // Update index
+            if (n > totalSlides) currentSlide = 1;
+            else if (n < 1) currentSlide = totalSlides;
+            else currentSlide = n;
+
+            // Show new
+            document.getElementById(`slide-${currentSlide}`).classList.add('active');
+            
+            // Update counter
+            document.getElementById('slide-counter').innerText = `${currentSlide} / ${totalSlides}`;
+        }
+
+        function nextSlide() {
+            showSlide(currentSlide + 1);
+        }
+
+        function prevSlide() {
+            showSlide(currentSlide - 1);
+        }
+
+        // Keyboard navigation
+        document.addEventListener('keydown', function(event) {
+            if (event.key === "ArrowRight" || event.key === " ") {
+                nextSlide();
+            } else if (event.key === "ArrowLeft") {
+                prevSlide();
+            }
+        });
+    </script>
+</body>
+</html>
