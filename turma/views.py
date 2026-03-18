@@ -1,6 +1,7 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.urls import reverse
 from django.db.models import Count, Avg
 from django.db import models
 from django.core.paginator import Paginator
@@ -1101,10 +1102,16 @@ def gerenciar_avaliacoes_diario(request, turma_id):
     disciplina_id = request.GET.get('disciplina')
     if not disciplina_id:
         messages.error(request, 'Selecione uma disciplina para gerenciar avaliações.')
-        return redirect('diario:notas', turma_id=turma_id)
+        return redirect('diario:turma', turma_id=turma_id)
     
     disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-    
+
+    # Obter divisão (opcional) da URL
+    divisao_id = request.GET.get('divisao')
+    divisao = None
+    if divisao_id:
+        divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
+
     # Processar formulário de criação
     if request.method == 'POST':
         nome = request.POST.get('nome')
@@ -1145,7 +1152,13 @@ def gerenciar_avaliacoes_diario(request, turma_id):
                 messages.success(request, f'Avaliação "{nome}" criada com sucesso!')
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'success': True, 'message': f'Avaliação "{nome}" criada com sucesso!'})
-                return redirect('turma:gerenciar_avaliacoes_diario', turma_id=turma_id)
+
+                # Preservar parâmetros GET no redirect
+                divisao_id = request.GET.get('divisao', '')
+                redirect_url = f"{reverse('turma:gerenciar_avaliacoes_diario', args=[turma_id])}?disciplina={disciplina_id}"
+                if divisao_id:
+                    redirect_url += f"&divisao={divisao_id}"
+                return redirect(redirect_url)
                 
             except Exception as e:
                 error_msg = f'Erro ao criar avaliação: {str(e)}'
@@ -1174,6 +1187,7 @@ def gerenciar_avaliacoes_diario(request, turma_id):
     context = {
         'turma': turma,
         'disciplina': disciplina,
+        'divisao': divisao,
         'avaliacoes': avaliacoes,
         'tipos_avaliacao': tipos_avaliacao,
         'page_title': f'Avaliações - {disciplina.nome} - {turma.nome}'
@@ -1190,7 +1204,7 @@ def visualizar_avaliacoes_diario(request, turma_id):
     disciplina_id = request.GET.get('disciplina')
     if not disciplina_id:
         messages.error(request, 'Selecione uma disciplina para visualizar avaliações.')
-        return redirect('diario:notas', turma_id=turma_id)
+        return redirect('diario:turma', turma_id=turma_id)
 
     disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
 
