@@ -533,24 +533,24 @@ document.getElementById('avaliacaoSelect').addEventListener('change', function()
     this.classList.remove('border-red-500');
 });
 
-// Função para buscar alunos
-document.getElementById('alunoSearch').addEventListener('input', function(e) {
-    const searchTerm = e.target.value.toLowerCase();
-    const items = document.querySelectorAll('.aluno-item');
-    let count = 0;
+// Função para buscar alunos (desabilitada - elemento de busca não existe)
+// document.getElementById('alunoSearch').addEventListener('input', function(e) {
+//     const searchTerm = e.target.value.toLowerCase();
+//     const items = document.querySelectorAll('.aluno-item');
+//     let count = 0;
 
-    items.forEach(item => {
-        const nomeAluno = item.getAttribute('data-aluno-nome');
-        if (nomeAluno.includes(searchTerm)) {
-            item.style.display = 'block';
-            count++;
-        } else {
-            item.style.display = 'none';
-        }
-    });
+//     items.forEach(item => {
+//         const nomeAluno = item.getAttribute('data-aluno-nome');
+//         if (nomeAluno.includes(searchTerm)) {
+//             item.style.display = 'block';
+//             count++;
+//         } else {
+//             item.style.display = 'none';
+//         }
+//     });
 
-    document.getElementById('countVisivel').textContent = count;
-});
+//     document.getElementById('countVisivel').textContent = count;
+// });
 
 // Fechar modais ao clicar fora
 document.addEventListener('click', function(e) {
