@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Unidades Curriculares - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        {% url 'escola:escola_home' as home_url %}
+        {% include 'partials/page_header.html' with title='Unidades Curriculares' subtitle='Componentes que formam a grade dos itinerários' icon='fa-book' back_url=home_url no_margin=True %}
+        <a href="{% url 'escola:unidade_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Nova unidade</a>
+    </div>
+    <div class="card">
+        <form method="get" class="card-header guto-form">
+            <div class="flex gap-3 flex-1">
+                <input type="search" name="busca" value="{{ busca }}" placeholder="Buscar por nome ou ementa" class="!w-72">
+                <button type="submit" class="btn-secondary"><i class="fas fa-search"></i> Buscar</button>
+            </div>
+        </form>
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Unidade</th><th>Carga horária</th><th>Itinerários</th><th>Ementa</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for u in page_obj %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'escola:unidade_detail' u.pk %}" class="hover:text-indigo-600">{{ u.nome }}</a></td>
+                        <td>{{ u.carga_horaria }}h</td>
+                        <td>{{ u.total_itinerarios }}</td>
+                        <td class="whitespace-normal text-gray-600">{{ u.ementa|truncatechars:90 }}</td>
+                        <td class="text-right space-x-3">
+                            <a href="{% url 'escola:unidade_detail' u.pk %}" class="text-indigo-600 hover:text-indigo-800" title="Detalhes"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'escola:unidade_edit' u.pk %}" class="text-gray-600 hover:text-gray-800" title="Editar"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+        {% else %}
+            {% url 'escola:unidade_create' as novo_url %}
+            {% include 'partials/empty_state.html' with icon='fa-book' message='Nenhuma unidade curricular encontrada.' action_url=novo_url action_label='Nova unidade' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

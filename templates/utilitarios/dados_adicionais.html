@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Dados Adicionais - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    {% include 'partials/page_header.html' with title='Dados Adicionais' subtitle='Campos personalizados para o cadastro de alunos' icon='fa-list-alt' %}
+    {% include 'utilitarios/_nav.html' %}
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card">
+            <div class="card-header"><h2 class="card-title">Campos cadastrados</h2></div>
+            {% if dados %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Ordem</th><th>Rótulo</th><th>Tipo</th><th>Obrigatório</th><th>Valores</th><th>Situação</th><th></th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for d in dados %}
+                        <tr {% if editando.pk == d.pk %}class="bg-indigo-50"{% endif %}>
+                            <td>{{ d.ordem }}</td>
+                            <td class="font-medium">{{ d.rotulo }}{% if d.opcoes %}<p class="text-xs text-gray-500 whitespace-normal">{{ d.opcoes }}</p>{% endif %}</td>
+                            <td>{{ d.get_tipo_campo_display }}</td>
+                            <td>{{ d.obrigatorio|yesno:"Sim,Não" }}</td>
+                            <td>{{ d.total_valores }}</td>
+                            <td>{% if d.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</td>
+                            <td class="text-right"><a href="?editar={{ d.pk }}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-edit"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                {% include 'partials/empty_state.html' with icon='fa-list-alt' message='Nenhum campo adicional cadastrado.' %}
+            {% endif %}
+        </div>
+        <form method="post" class="card self-start" novalidate>
+            {% csrf_token %}
+            <div class="card-header">
+                <h2 class="card-title">{% if editando %}Editar campo{% else %}Novo campo{% endif %}</h2>
+                {% if editando %}<a href="{% url 'utilitarios:dados_adicionais' %}" class="text-sm text-gray-500 hover:underline">Cancelar</a>{% endif %}
+            </div>
+            <div class="card-body">{% include 'partials/form_fields.html' with form=form %}</div>
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end"><button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

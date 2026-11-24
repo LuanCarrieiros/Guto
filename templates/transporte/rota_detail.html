@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+
+{% block title %}Rota {{ rota.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'transporte:rota_list' as lista_url %}
+        {% include 'partials/page_header.html' with title=rota.nome subtitle=rota.get_turno_display icon='fa-route' back_url=lista_url no_margin=True %}
+        <div class="flex flex-wrap gap-3 shrink-0">
+            <a href="{% url 'transporte:rota_edit' rota.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            <a href="{% url 'transporte:viagem_create' %}?rota={{ rota.pk }}" class="btn-secondary"><i class="fas fa-road"></i> Registrar viagem</a>
+            <a href="{% url 'transporte:aluno_transporte_create' rota.pk %}" class="btn-primary"><i class="fas fa-user-plus"></i> Vincular aluno</a>
+        </div>
+    </div>
+
+    <div class="card card-body">
+        <div class="detail-grid">
+            <div><p class="detail-label">Ida</p><p class="detail-value">{{ rota.horario_saida_ida|time:"H:i" }} → {{ rota.horario_chegada_ida|time:"H:i" }}</p></div>
+            <div><p class="detail-label">Volta</p><p class="detail-value">{% if rota.horario_saida_volta %}{{ rota.horario_saida_volta|time:"H:i" }} → {{ rota.horario_chegada_volta|time:"H:i" }}{% else %}—{% endif %}</p></div>
+            <div><p class="detail-label">Distância</p><p class="detail-value">{{ rota.km_total|default:"—" }} km</p></div>
+            <div><p class="detail-label">Veículo</p><p class="detail-value">{% if rota.veiculo %}<a href="{% url 'transporte:veiculo_detail' rota.veiculo.pk %}" class="text-indigo-600 hover:underline">{{ rota.veiculo.placa }}</a> ({{ total_alunos }}/{{ rota.veiculo.capacidade_passageiros }} lugares){% else %}Não definido{% endif %}</p></div>
+            <div><p class="detail-label">Motorista</p><p class="detail-value">{% if rota.motorista %}<a href="{% url 'transporte:motorista_detail' rota.motorista.pk %}" class="text-indigo-600 hover:underline">{{ rota.motorista.nome }}</a>{% else %}Não definido{% endif %}</p></div>
+            <div><p class="detail-label">Situação</p><p class="detail-value">{% if rota.ativa %}<span class="badge badge-green">Ativa</span>{% else %}<span class="badge badge-gray">Inativa</span>{% endif %}</p></div>
+        </div>
+        {% if rota.descricao %}<div class="mt-4"><p class="detail-label">Descrição</p><p class="detail-value whitespace-pre-line">{{ rota.descricao }}</p></div>{% endif %}
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Pontos de parada ({{ total_pontos }})</h2><a href="{% url 'transporte:ponto_create' rota.pk %}" class="text-sm text-indigo-600 hover:underline">+ Novo</a></div>
+            <ol class="divide-y divide-gray-100">
+                {% for p in pontos %}
+                <li class="px-6 py-3 flex justify-between gap-3">
+                    <div>
+                        <p class="font-medium"><span class="text-gray-400 mr-1">{{ p.ordem }}.</span>{{ p.nome }}</p>
+                        <p class="text-xs text-gray-500">{{ p.endereco }}{% if p.horario_ida %} · ida {{ p.horario_ida|time:"H:i" }}{% endif %}{% if p.horario_volta %} · volta {{ p.horario_volta|time:"H:i" }}{% endif %}</p>
+                    </div>
+                    <a href="{% url 'transporte:ponto_edit' p.pk %}" class="text-gray-500 hover:text-indigo-600"><i class="fas fa-edit"></i></a>
+                </li>
+                {% empty %}
+                <li class="px-6 py-4 text-sm text-gray-500">Nenhum ponto cadastrado. <a href="{% url 'transporte:ponto_create' rota.pk %}" class="text-indigo-600 hover:underline">Cadastrar ponto</a></li>
+                {% endfor %}
+            </ol>
+        </div>
+        <div class="lg:col-span-2 card">
+            <div class="card-header"><h2 class="card-title">Alunos ({{ total_alunos }})</h2></div>
+            {% if alunos_rota %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Aluno</th><th>Embarque</th><th>Desembarque</th><th>Responsável</th><th>Situação</th><th></th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for a in alunos_rota %}
+                        <tr>
+                            <td class="font-medium"><a href="{% url 'alunos:aluno_detail' a.aluno.pk %}" class="hover:text-indigo-600">{{ a.aluno.nome }}</a></td>
+                            <td>{{ a.ponto_embarque.nome }}</td>
+                            <td>{{ a.ponto_desembarque.nome }}</td>
+                            <td>{{ a.responsavel_nome }}<p class="text-xs text-gray-500">{{ a.responsavel_telefone }}</p></td>
+                            <td><span class="badge {% if a.situacao == 'ATIVO' %}badge-green{% elif a.situacao == 'SUSPENSO' %}badge-yellow{% else %}badge-gray{% endif %}">{{ a.get_situacao_display }}</span></td>
+                            <td class="text-right"><a href="{% url 'transporte:aluno_transporte_edit' a.pk %}" class="text-gray-500 hover:text-indigo-600"><i class="fas fa-edit"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                {% url 'transporte:aluno_transporte_create' rota.pk as vincular_url %}
+                {% include 'partials/empty_state.html' with icon='fa-user-graduate' message='Nenhum aluno vinculado a esta rota.' action_url=vincular_url action_label='Vincular aluno' %}
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h2 class="card-title">Viagens recentes</h2></div>
+        {% if viagens_recentes %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Data</th><th>Tipo</th><th>Horário</th><th>Motorista</th><th>Veículo</th><th>Km</th><th>Alunos</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for v in viagens_recentes %}
+                    <tr>
+                        <td>{{ v.data_viagem|date:"d/m/Y" }}</td>
+                        <td>{{ v.get_tipo_viagem_display }}</td>
+                        <td>{{ v.horario_saida_real|time:"H:i"|default:"—" }}–{{ v.horario_chegada_real|time:"H:i"|default:"—" }}</td>
+                        <td>{{ v.motorista.nome }}</td>
+                        <td>{{ v.veiculo.placa }}</td>
+                        <td>{{ v.km_inicial|default:"—" }} → {{ v.km_final|default:"—" }}</td>
+                        <td>{{ v.alunos_transportados }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="px-6 py-4 text-sm text-gray-500">Nenhuma viagem registrada nesta rota.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

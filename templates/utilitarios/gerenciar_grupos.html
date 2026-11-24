@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Grupos de Acesso - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    {% include 'partials/page_header.html' with title='Grupos de Acesso' subtitle='Perfis de usuário e suas permissões por módulo' icon='fa-user-shield' %}
+    {% include 'utilitarios/_nav.html' %}
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card">
+            <div class="card-header"><h2 class="card-title">Grupos cadastrados</h2></div>
+            {% if grupos %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Grupo</th><th>Usuários</th><th>Módulos com regras</th><th>Situação</th><th></th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for g in grupos %}
+                        <tr>
+                            <td><p class="font-medium">{{ g.nome }}</p><p class="text-xs text-gray-500 whitespace-normal">{{ g.descricao|default:"" }}</p></td>
+                            <td>{{ g.total_usuarios }}</td>
+                            <td>{% if g.total_permissoes %}{{ g.total_permissoes }}{% else %}<span class="text-gray-400">Acesso total</span>{% endif %}</td>
+                            <td>{% if g.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</td>
+                            <td class="text-right"><a href="{% url 'utilitarios:editar_grupo' g.pk %}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-key"></i> Permissões</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                {% include 'partials/empty_state.html' with icon='fa-user-shield' message='Nenhum grupo cadastrado.' %}
+            {% endif %}
+        </div>
+        <form method="post" class="card self-start" novalidate>
+            {% csrf_token %}
+            <div class="card-header"><h2 class="card-title">Novo grupo</h2></div>
+            <div class="card-body">{% include 'partials/form_fields.html' with form=form %}</div>
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end"><button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Criar grupo</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

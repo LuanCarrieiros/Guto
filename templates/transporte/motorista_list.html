@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Motoristas - Transporte - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-2">
+        {% include 'partials/page_header.html' with title='Motoristas' subtitle='Condutores do transporte escolar' icon='fa-id-card' no_margin=True %}
+        <a href="{% url 'transporte:motorista_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Novo motorista</a>
+    </div>
+    <div class="mt-4">{% include 'transporte/_nav.html' %}</div>
+    <div class="card">
+        <form method="get" class="card-header guto-form">
+            <div class="flex flex-wrap gap-3 flex-1">
+                <input type="search" name="busca" value="{{ busca }}" placeholder="Nome, CPF ou CNH" class="!w-64">
+                <select name="ativo" class="!w-40"><option value="">Todos</option><option value="sim" {% if ativo == 'sim' %}selected{% endif %}>Ativos</option><option value="nao" {% if ativo == 'nao' %}selected{% endif %}>Inativos</option></select>
+                <label class="flex items-center gap-2 text-sm text-gray-700"><input type="checkbox" name="alerta" value="cnh" {% if alerta == 'cnh' %}checked{% endif %}> CNH vencendo em 30 dias</label>
+                <button type="submit" class="btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+            </div>
+        </form>
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Nome</th><th>CPF</th><th>CNH</th><th>Validade CNH</th><th>Contato</th><th>Situação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% now "Y-m-d" as hoje %}
+                    {% for m in page_obj %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'transporte:motorista_detail' m.pk %}" class="hover:text-indigo-600">{{ m.nome }}</a></td>
+                        <td>{{ m.cpf }}</td>
+                        <td>{{ m.cnh_numero }} <span class="badge badge-gray">{{ m.cnh_categoria }}</span></td>
+                        <td>{% if m.cnh_validade|date:"Y-m-d" < hoje %}<span class="text-red-600 font-semibold">{{ m.cnh_validade|date:"d/m/Y" }} (vencida)</span>{% else %}{{ m.cnh_validade|date:"d/m/Y" }}{% endif %}</td>
+                        <td>{{ m.celular|default:m.telefone|default:"—" }}</td>
+                        <td>{% if m.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</td>
+                        <td class="text-right space-x-3">
+                            <a href="{% url 'transporte:motorista_detail' m.pk %}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'transporte:motorista_edit' m.pk %}" class="text-gray-600 hover:text-gray-800"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+        {% else %}
+            {% url 'transporte:motorista_create' as novo_url %}
+            {% include 'partials/empty_state.html' with icon='fa-id-card' message='Nenhum motorista encontrado.' action_url=novo_url action_label='Novo motorista' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

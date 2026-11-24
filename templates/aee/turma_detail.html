@@ -1,0 +1,77 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ turma.nome }} - AEE - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'aee:turmas_list' as lista_url %}
+        {% include 'partials/page_header.html' with title=turma.nome subtitle=turma.projeto_pedagogico.nome icon='fa-users' back_url=lista_url no_margin=True %}
+        <div class="flex gap-3 shrink-0">
+            <a href="{% url 'aee:turma_edit' turma.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            {% if turma.situacao == 'ATIVO' and vagas_restantes > 0 %}
+            <a href="{% url 'aee:enturmacao_create' %}?turma={{ turma.pk }}" class="btn-primary"><i class="fas fa-user-plus"></i> Enturmar aluno</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card card-body">
+        <div class="detail-grid">
+            <div><p class="detail-label">Período letivo</p><p class="detail-value">{{ turma.periodo_letivo }}</p></div>
+            <div><p class="detail-label">Turno / horário</p><p class="detail-value">{{ turma.get_turno_display }} · {{ turma.hora_inicio|time:"H:i" }}–{{ turma.hora_fim|time:"H:i" }}</p></div>
+            <div><p class="detail-label">Dias da semana</p><p class="detail-value">{{ turma.get_dias_semana|default:"—" }}</p></div>
+            <div><p class="detail-label">Vagas</p><p class="detail-value">{{ enturmacoes|length }} de {{ turma.maximo_alunos }} ({{ vagas_restantes }} restante{{ vagas_restantes|pluralize }})</p></div>
+            <div><p class="detail-label">Local</p><p class="detail-value">{{ turma.local|default:"—" }}</p></div>
+            <div><p class="detail-label">Situação</p><p class="detail-value">{% if turma.situacao == 'ATIVO' %}<span class="badge badge-green">Ativa</span>{% else %}<span class="badge badge-gray">Encerrada</span>{% endif %}</p></div>
+            {% if turma.atividade_especifica %}<div><p class="detail-label">Atividade</p><p class="detail-value">{{ turma.atividade_especifica }}</p></div>{% endif %}
+        </div>
+        {% if turma.material_necessario %}<div class="mt-4"><p class="detail-label">Material necessário</p><p class="detail-value whitespace-pre-line">{{ turma.material_necessario }}</p></div>{% endif %}
+        {% if turma.observacoes %}<div class="mt-4"><p class="detail-label">Observações</p><p class="detail-value whitespace-pre-line">{{ turma.observacoes }}</p></div>{% endif %}
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card">
+            <div class="card-header"><h2 class="card-title">Alunos ({{ enturmacoes|length }})</h2><span class="text-xs text-gray-500">Ordenação: {{ turma.get_ordenacao_display }}</span></div>
+            {% if enturmacoes %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>#</th><th>Aluno</th><th>Origem</th><th>Ano/Série</th><th>Desde</th><th></th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for e in enturmacoes %}
+                        <tr>
+                            <td class="text-gray-400">{{ forloop.counter }}</td>
+                            <td class="font-medium"><a href="{% url 'alunos:aluno_detail' e.aluno.pk %}" class="hover:text-indigo-600">{{ e.aluno.nome }}</a></td>
+                            <td>{{ e.get_origem_display }}{% if e.escola_origem %}<p class="text-xs text-gray-500">{{ e.escola_origem }}</p>{% endif %}</td>
+                            <td>{{ e.ano_serie }}<p class="text-xs text-gray-500">{{ e.tipo_ensino }}</p></td>
+                            <td>{{ e.data_enturmacao|date:"d/m/Y" }}</td>
+                            <td class="text-right">
+                                <form method="post" action="{% url 'aee:enturmacao_remover' e.pk %}" onsubmit="return confirm('Retirar {{ e.aluno.nome|escapejs }} desta turma?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="text-red-600 hover:text-red-800" title="Retirar da turma"><i class="fas fa-user-minus"></i></button>
+                                </form>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                {% include 'partials/empty_state.html' with icon='fa-user-graduate' message='Nenhum aluno enturmado.' %}
+            {% endif %}
+        </div>
+        <div class="card self-start">
+            <div class="card-header"><h2 class="card-title">Histórico</h2></div>
+            <ul class="divide-y divide-gray-100">
+                {% for h in historico %}
+                <li class="px-6 py-3 text-sm">
+                    <p><span class="badge {% if h.acao == 'ADICIONAR' %}badge-green{% elif h.acao == 'REMOVER' %}badge-red{% else %}badge-gray{% endif %}">{{ h.get_acao_display }}</span> {{ h.aluno.nome|default:"" }}</p>
+                    <p class="text-xs text-gray-500 mt-1">{{ h.data_acao|date:"d/m/Y H:i" }} · {{ h.usuario.username }}</p>
+                </li>
+                {% empty %}
+                <li class="px-6 py-4 text-sm text-gray-500">Sem movimentações.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

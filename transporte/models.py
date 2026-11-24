@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import RegexValidator
 from alunos.models import Aluno
-from funcionarios.models import Funcionario
 from datetime import date
 
 class Motorista(models.Model):

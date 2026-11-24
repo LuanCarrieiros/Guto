@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% comment %}
+Formulário genérico de cadastro/edição.
+Contexto: form, title, subtitle (opcional), icon (opcional), cancel_url, submit_label (opcional)
+{% endcomment %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    {% include 'partials/page_header.html' with title=title subtitle=subtitle icon=icon|default:'fa-edit' back_url=cancel_url %}
+
+    <form method="post" {% if form.is_multipart %}enctype="multipart/form-data"{% endif %} class="card" novalidate>
+        {% csrf_token %}
+        <div class="card-body">
+            {% block form_intro %}{% endblock %}
+            {% include 'partials/form_fields.html' with form=form %}
+            {% block form_extra %}{% endblock %}
+        </div>
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+            {% if cancel_url %}<a href="{{ cancel_url }}" class="btn-secondary">Cancelar</a>{% endif %}
+            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> {{ submit_label|default:"Salvar" }}</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

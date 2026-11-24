@@ -1,7 +1,7 @@
 from django.db import models
+from guto_system.utils import ano_atual
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
-from datetime import date
 from alunos.models import Aluno
 
 class ProjetoPedagogico(models.Model):
@@ -13,7 +13,7 @@ class ProjetoPedagogico(models.Model):
     
     nome = models.CharField(max_length=255, verbose_name="Nome do Projeto")
     tipo_projeto = models.CharField(max_length=10, choices=TIPO_PROJETO_CHOICES, verbose_name="Tipo de Projeto")
-    periodo_letivo = models.CharField(max_length=4, default=str(date.today().year), verbose_name="Período Letivo")
+    periodo_letivo = models.CharField(max_length=4, default=ano_atual, verbose_name="Período Letivo")
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
     carga_horaria = models.IntegerField(default=20, verbose_name="Carga Horária Semanal")
     ativo = models.BooleanField(default=True, verbose_name="Projeto Ativo")
@@ -63,7 +63,7 @@ class TurmaAEE(models.Model):
     
     # Campos obrigatórios (RF806.1)
     nome = models.CharField(max_length=255, verbose_name="Nome da Turma")
-    periodo_letivo = models.CharField(max_length=4, default=str(date.today().year), verbose_name="Período Letivo")
+    periodo_letivo = models.CharField(max_length=4, default=ano_atual, verbose_name="Período Letivo")
     turno = models.CharField(max_length=15, choices=TURNO_CHOICES, verbose_name="Turno")
     projeto_pedagogico = models.ForeignKey(ProjetoPedagogico, on_delete=models.PROTECT, verbose_name="Projeto Pedagógico")
     

@@ -1,37 +1,18 @@
-from django.shortcuts import render, get_object_or_404, redirect
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from django.core.paginator import Paginator
-from django.db.models import Q
-from django.db import transaction
 from django.utils import timezone
-from .models import DiarioEletronico, RegistroChamada, RegistroNota, DiarioOnline, ConteudoAula
-from turma.models import Turma, Disciplina, DivisaoPeriodoLetivo, Enturmacao, Avaliacao, AulaRegistrada, NotaAvaliacao
-from alunos.models import Aluno
-
-
-@login_required
-def diario_dashboard(request):
-    """Dashboard do diário eletrônico - versão bonita"""
-    turmas = Turma.objects.all()
-    total_turmas = turmas.count()
-    diarios_ativos = total_turmas  # Para agora, consideramos todas as turmas como tendo diários ativos
-
-    context = {
-        'turmas': turmas,
-        'total_turmas': total_turmas,
-        'diarios_ativos': diarios_ativos,
-    }
-    return render(request, 'diario/diario_eletronico_dashboard.html', context)
+from .models import DiarioEletronico, RegistroChamada, RegistroNota
+from turma.models import Turma, Disciplina, DivisaoPeriodoLetivo, Avaliacao, AulaRegistrada, NotaAvaliacao
 
 
 @login_required
 def diario_home(request):
     """Página inicial do diário eletrônico"""
-    from django.db.models import Avg, Count
-    from turma.models import AulaRegistrada, NotaAvaliacao, RegistroFrequencia
+    from django.db.models import Avg
+    from turma.models import NotaAvaliacao, RegistroFrequencia
 
     turmas = Turma.objects.all()
 
@@ -99,7 +80,9 @@ def diario_disciplina(request, turma_id, disciplina_id):
         # Não redirecionar, permitir que o usuário crie o relacionamento
 
     # Buscar divisões do período letivo
-    divisoes = DivisaoPeriodoLetivo.objects.filter(ativo=True).order_by('ordem')
+    divisoes = DivisaoPeriodoLetivo.objects.filter(
+        ativo=True, periodo_letivo=turma.periodo_letivo
+    ).order_by('ordem')
     alunos_turma = turma.get_alunos_enturmados()
 
     # Verificar se há diário eletrônico para esta turma/disciplina
@@ -108,7 +91,7 @@ def diario_disciplina(request, turma_id, disciplina_id):
         disciplina=disciplina,
         defaults={
             'professor': request.user,
-            'data_criacao': timezone.now(),
+            'periodo_letivo': turma.periodo_letivo,
             'diario_fechado': False
         }
     )
@@ -145,7 +128,7 @@ def diario_divisao(request, turma_id, disciplina_id, divisao_id):
         disciplina=disciplina,
         defaults={
             'professor': request.user,
-            'data_criacao': timezone.now(),
+            'periodo_letivo': turma.periodo_letivo,
             'diario_fechado': False
         }
     )
@@ -225,7 +208,7 @@ def fechar_diario(request, turma_id, disciplina_id):
 
         # Validações antes do fechamento
         alunos_turma = turma.get_alunos_enturmados()
-        divisoes = DivisaoPeriodoLetivo.objects.filter(ativo=True)
+        divisoes = DivisaoPeriodoLetivo.objects.filter(ativo=True, periodo_letivo=turma.periodo_letivo)
 
         pendencias = []
 
@@ -292,16 +275,3 @@ def abrir_diario(request, turma_id, disciplina_id):
     except DiarioEletronico.DoesNotExist:
         messages.error(request, 'Diário eletrônico não encontrado.')
         return JsonResponse({'success': False, 'error': 'Diário não encontrado'})
-
-
-@login_required
-def gerenciar_avaliacoes_via_diario(request, turma_id):
-    """Gerenciar avaliações via diário - redirecionamento para a view do turma app"""
-    disciplina_id = request.GET.get('disciplina')
-
-    if disciplina_id:
-        # Redirecionar para a view do turma app que já existe
-        return redirect('turma:gerenciar_avaliacoes_diario', turma_id=turma_id)
-    else:
-        messages.error(request, 'Disciplina não especificada.')
-        return redirect('diario:turma', turma_id=turma_id)

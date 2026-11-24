@@ -22,4 +22,5 @@ urlpatterns = [
     # Enturmações
     path('enturmacoes/', views.enturmacoes_list, name='enturmacoes_list'),
     path('enturmacoes/nova/', views.enturmacao_create, name='enturmacao_create'),
+    path('enturmacoes/<int:pk>/remover/', views.enturmacao_remover, name='enturmacao_remover'),
 ]

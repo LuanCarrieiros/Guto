@@ -214,12 +214,12 @@
                                     <h4 class="text-lg font-semibold text-gray-900 truncate">{{ avaliacao.nome }}</h4>
                                     
                                     {% if avaliacao.data_aplicacao %}
-                                        {% if avaliacao.data_aplicacao|date:"Y-m-d" == "now"|date:"Y-m-d" %}
+                                        {% if avaliacao.data_aplicacao == hoje %}
                                             <span class="status-badge inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
                                                 <span class="w-2 h-2 bg-orange-400 rounded-full mr-1 animate-pulse"></span>
                                                 Hoje
                                             </span>
-                                        {% elif avaliacao.data_aplicacao > "now"|date %}
+                                        {% elif avaliacao.data_aplicacao > hoje %}
                                             <span class="status-badge inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                                                 <span class="w-2 h-2 bg-blue-400 rounded-full mr-1"></span>
                                                 Agendada
@@ -274,11 +274,9 @@
                                         <a href="{% url 'turma:avaliacao_edit' avaliacao.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                             <i class="fas fa-edit mr-1"></i>Editar
                                         </a>
-                                        {% if avaliacao.data_aplicacao > "now"|date %}
-                                        <a href="{% url 'turma:lancar_notas_avaliacao' avaliacao.pk %}" class="text-green-600 hover:text-green-800 text-sm font-medium">
+                                        <a href="{% url 'turma:lancar_notas_diario' avaliacao.turma.pk %}?disciplina={{ avaliacao.disciplina.pk }}&divisao={{ avaliacao.divisao_periodo.pk }}" class="text-green-600 hover:text-green-800 text-sm font-medium">
                                             <i class="fas fa-star mr-1"></i>Notas
                                         </a>
-                                        {% endif %}
                                     </div>
                                 </div>
                             </div>

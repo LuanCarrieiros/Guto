@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Impressão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% include 'partials/ui_styles.html' %}
+    <style>@page { size: A4; margin: 1.5cm; } .break-inside-avoid { break-inside: avoid; }</style>
+</head>
+<body class="bg-white text-gray-900 p-6">
+    <div class="flex gap-3 mb-6 no-print">
+        <button onclick="window.print()" class="btn-primary">Imprimir</button>
+        <button onclick="window.close()" class="btn-secondary">Fechar</button>
+    </div>
+    <header class="text-center mb-6 border-b border-gray-300 pb-4">
+        <h1 class="text-2xl font-bold">{{ tipo_relatorio }}</h1>
+        <p class="text-sm text-gray-600">Emitido em {{ data_geracao|date:"d/m/Y H:i" }} por {{ filtro.usuario.get_full_name|default:filtro.usuario.username }}</p>
+    </header>
+    {% include 'opcoes/documentos/_relatorio_conteudo.html' %}
+</body>
+</html>

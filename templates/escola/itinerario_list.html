@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+
+{% block title %}Itinerários Formativos - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        {% url 'escola:escola_home' as home_url %}
+        {% include 'partials/page_header.html' with title='Itinerários Formativos' subtitle='Itinerários do Novo Ensino Médio e suas vagas' icon='fa-route' back_url=home_url no_margin=True %}
+        <a href="{% url 'escola:itinerario_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Novo itinerário</a>
+    </div>
+
+    <div class="card">
+        <form method="get" class="card-header guto-form flex-wrap">
+            <div class="flex flex-wrap gap-3 flex-1">
+                <input type="search" name="busca" value="{{ busca }}" placeholder="Buscar por nome ou habilidade" class="!w-72">
+                <select name="area_conhecimento" class="!w-72">
+                    <option value="">Todas as áreas</option>
+                    {% for codigo, nome in areas_choices %}<option value="{{ codigo }}" {% if codigo == area_conhecimento %}selected{% endif %}>{{ nome }}</option>{% endfor %}
+                </select>
+                <button type="submit" class="btn-secondary"><i class="fas fa-search"></i> Filtrar</button>
+            </div>
+        </form>
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Itinerário</th><th>Área</th><th>Carga horária</th><th>Unidades</th><th>Ocupação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for it in page_obj %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'escola:itinerario_detail' it.pk %}" class="hover:text-indigo-600">{{ it.nome }}</a></td>
+                        <td>{{ it.get_areas_conhecimento_display }}</td>
+                        <td>{{ it.carga_horaria_total }}h</td>
+                        <td>{{ it.total_unidades }}</td>
+                        <td>
+                            <span class="badge {% if it.total_alunos >= it.vagas_disponiveis %}badge-red{% else %}badge-green{% endif %}">{{ it.total_alunos }} / {{ it.vagas_disponiveis }}</span>
+                        </td>
+                        <td class="text-right space-x-3">
+                            <a href="{% url 'escola:itinerario_detail' it.pk %}" class="text-indigo-600 hover:text-indigo-800" title="Detalhes"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'escola:itinerario_edit' it.pk %}" class="text-gray-600 hover:text-gray-800" title="Editar"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+        {% else %}
+            {% url 'escola:itinerario_create' as novo_url %}
+            {% include 'partials/empty_state.html' with icon='fa-route' message='Nenhum itinerário encontrado.' action_url=novo_url action_label='Novo itinerário' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

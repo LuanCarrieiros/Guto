@@ -7,126 +7,95 @@ Sistema completo de gestão escolar desenvolvido em Django para controle de alun
 ## 🚀 Como Executar o Projeto
 
 ### 📋 **Pré-requisitos**
-- Python 3.14 ou superior
+- Python 3.10 ou superior
 - pip (gerenciador de pacotes Python)
 
 ### 🔧 **Instalação e Execução**
 
 #### **Windows**
 ```powershell
-# 1. Extrair o projeto e navegar até a pasta
+# 1. Navegar até a pasta do projeto
 cd caminho\para\Guto
 
-# 2. Criar ambiente virtual
+# 2. Criar e ativar o ambiente virtual
 python -m venv venv
-
-# 3. Ativar ambiente virtual
 venv\Scripts\activate
-
-# 4. Se houver erro de execução de scripts:
+# (se houver erro de execução de scripts:)
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 
-# 5. Instalar dependências
+# 3. Instalar dependências, aplicar migrações e executar
 pip install -r requirements.txt
-
-# 6. Executar o servidor
+python manage.py migrate
 python manage.py runserver
 ```
 
 #### **Linux/Mac**
 ```bash
-# 1. Extrair o projeto e navegar até a pasta
 cd caminho/para/Guto
-
-# 2. Criar ambiente virtual
 python3 -m venv venv
-
-# 3. Ativar ambiente virtual
 source venv/bin/activate
-
-# 4. Instalar dependências
 pip install -r requirements.txt
-
-# 5. Executar o servidor
+python manage.py migrate
 python manage.py runserver
 ```
 
 ### 🌐 **Acessar o Sistema**
 
-1. Abrir navegador em: **http://localhost:8000** ou **http://127.0.0.1:8000**
-2. Fazer login com as credenciais:
-   - **Usuário**: (verifique o banco de dados ou crie um superusuário)
-   - **Senha**: (idem)
+1. Abrir o navegador em **http://127.0.0.1:8000**
+2. Entrar com um usuário existente no banco de demonstração ou criar um administrador:
+   ```bash
+   python manage.py createsuperuser
+   ```
+3. A administração do Django fica em **/admin** (todos os cadastros dos módulos estão registrados lá).
 
-#### **Criar Superusuário (se necessário)**
+### 🧪 **Testes**
 ```bash
-python manage.py createsuperuser
+python manage.py test
 ```
 
 ---
 
 ## 📊 Status do Projeto
 
-### ✅ **Módulos Completamente Funcionais**
+Todos os módulos do menu lateral estão implementados e acessíveis:
 
-| Módulo | Status | Funcionalidades |
-|--------|--------|-----------------|
-| **📚 Alunos** | ✅ 100% | CRUD completo, matrículas, documentação, responsáveis, transporte |
-| **👨‍🏫 Funcionários** | ✅ 90% | CRUD completo, filtros avançados, gestão de cargos e habilitações |
-| **🏠 Dashboard** | ✅ 100% | Estatísticas, atividades recentes, visão geral do sistema |
-| **📖 Diário Eletrônico** | ✅ 95% | Sistema completo de chamada, lançamento de notas, gestão de avaliações |
-| **🎓 Turmas/Avaliação** | ✅ 95% | Gestão de turmas, enturmação, conceitos, avaliações |
+| Módulo | Funcionalidades |
+|--------|-----------------|
+| **🏠 Dashboard** | Estatísticas gerais, alunos por turma, atividades recentes |
+| **📚 Alunos** | CRUD, cadastro completo em abas (identificação, documentação, responsáveis, transporte), matrículas, arquivo permanente, impressão |
+| **👨‍🏫 Funcionários** | CRUD, cadastro completo em abas (habilitações, disciplinas e deficiências incluídas), busca antes do cadastro, arquivo permanente, impressão de lista e de folha de frequência, associação de professores e outros profissionais às turmas |
+| **🎓 Turmas** | Turmas, disciplinas, enturmação, avaliações, conceitos, bimestres/períodos e relatórios (boletim por aluno, frequência e desempenho da turma) |
+| **📖 Diário Eletrônico** | Fluxo Turma → Disciplina → Período, chamada, lançamento de notas, avaliações, abertura/fechamento do diário |
+| **🛣️ Itinerários (Escola)** | Itinerários formativos, unidades curriculares, grade do itinerário e enturmação com controle de vagas |
+| **🎯 AEE** | Projetos pedagógicos, turmas de AEE/Atividade Complementar, enturmação com controle de vagas e histórico |
+| **📘 Programas** | Programas pedagógicos, módulos, inscrição de participantes, aulas e registro de frequência |
+| **🚌 Transporte** | Rotas, pontos de parada, veículos, manutenções, motoristas, alunos transportados, registro de viagens e relatório mensal |
+| **📊 Censo** | Censo escolar por ano, relatórios de matrículas/funcionários/estatísticas e exportação em CSV ou JSON |
+| **🔧 Opções** | Calendário escolar com eventos (visualização e impressão) e emissão de relatórios de turmas com filtros |
+| **⚙️ Utilitários** | Usuários, grupos de acesso e permissões por módulo, instituições, transferências, tipos de avaliação, dados adicionais, configurações, bloqueios de funcionalidade e auditoria |
 
-### 🟡 **Módulos Parcialmente Implementados**
+### 🔐 Controle de acesso
+- **Utilitários** é restrito a administradores (superusuário ou acesso à área administrativa).
+- **Permissões de grupo**: em *Utilitários › Grupos*, cada grupo pode ter regras por módulo (visualizar, incluir, alterar, excluir). Módulos sem regra ficam liberados.
+- **Bloqueios de funcionalidade**: impedem inclusões, alterações ou exclusões em um módulo durante um período (direto, por ano administrativo ou por tipo de ensino).
+- **Auditoria**: logins, logouts e toda alteração bem-sucedida nos módulos são registrados automaticamente.
 
-| Módulo | Status | Observações |
-|--------|--------|-------------|
-| **🎯 AEE** | 🟡 60% | Dashboard funcional, necessita templates CRUD |
-| **🔧 Opções** | 🟡 50% | Calendário escolar básico, sistema de relatórios inicial |
-| **🏫 Escola** | 🟡 40% | Gestão de itinerários formativos implementada |
-| **📊 Censo** | 🟡 40% | Relatórios básicos, necessita exportação |
-
-### 🔴 **Módulos Estruturados (Aguardando Implementação)**
-
-| Módulo | Status | Observações |
-|--------|--------|-------------|
-| **⚙️ Utilitários** | 🟡 30% | Models completos, necessita interface administrativa |
-| **🚌 Transporte** | 🔴 10% | Models prontos, aguarda implementação de views |
-| **📖 Programas** | 🔴 10% | Models prontos, aguarda implementação de views |
+### 🧮 Critérios de aprovação
+Boletins e relatórios usam média mínima **6,0** e frequência mínima **75%**. Os valores podem ser alterados em *Utilitários › Configurações* com as chaves `media_aprovacao` e `frequencia_minima`.
 
 ---
 
-## 🎨 Principais Funcionalidades Implementadas
+## 🎨 Principais Regras Implementadas
 
-### 📚 **Sistema de Diário Eletrônico**
-- ✅ **Navegação em 5 Etapas**: Fluxo intuitivo de seleção (Turma → Disciplina → Período → Diário → Ações)
-- ✅ **Indicador de Progresso Visual**: Bolinhas e barras coloridas mostrando a etapa atual
-- ✅ **Breadcrumb Completo**: Navegação contextual em todas as páginas
-- ✅ **Fazer Chamada por Disciplina**: Registro de presença/ausência específico por matéria
-- ✅ **Lançamento de Notas**: Sistema de múltiplas avaliações com validações
-- ✅ **Gerenciamento de Avaliações**: CRUD completo integrado ao diário
-- ✅ **Relatório de Avaliações**: Visão geral das avaliações da disciplina
-- ✅ **Alturas Padronizadas**: Todas as páginas com estrutura visual consistente
+### 📚 **Diário Eletrônico**
+- ✅ **Navegação em etapas**: Turma → Disciplina → Período → Ações
+- ✅ **Chamada por disciplina** e **lançamento de notas** por período
+- ✅ **Bimestres configuráveis** em *Turmas › Bimestres* (com geração automática dos 4 bimestres do ano)
 
 ### 🎓 **Sistema de Enturmação**
 - ✅ **Constraint de Unicidade**: Um aluno só pode estar ativo em uma turma por vez
 - ✅ **Sistema de Transferência**: Confirmação prévia antes de transferir aluno
 - ✅ **Preservação de Histórico**: Enturmações anteriores mantidas como registro
-- ✅ **Interface Intuitiva**: Feedback claro sobre ações e consequências
-
-### 👥 **Gestão de Alunos**
-- ✅ **CRUD Completo**: Cadastro, edição, consulta, exclusão e impressão
-- ✅ **Sistema de Matrículas**: Gestão completa do ciclo de matrícula
-- ✅ **Arquivo Permanente**: Movimentação de alunos inativos
-- ✅ **Documentação Completa**: Gestão de documentos, responsáveis e transporte
-- ✅ **Validações Avançadas**: Regras de negócio implementadas
-
-### 👨‍🏫 **Gestão de Funcionários**
-- ✅ **Cadastro Completo**: Dados pessoais, funcionais e documentação
-- ✅ **Busca Avançada**: Filtros por nome, código, matrícula, função e status
-- ✅ **Sistema de Abas**: Organização em abas (Dados, Documentação, Funcionais, etc.)
-- ✅ **Validações**: Unicidade de matrícula, campos obrigatórios
-- ✅ **Layout Responsivo**: Formulários otimizados para diferentes telas
 
 ---
 
@@ -135,12 +104,12 @@ python manage.py createsuperuser
 ### **Backend**
 - **Framework**: Django 5.2.6
 - **Database**: SQLite (incluído no projeto com dados de demonstração)
-- **Autenticação**: Sistema Django Auth completo
+- **Autenticação**: Django Auth, com grupos de acesso, permissões por módulo e auditoria
 - **Apps**: dashboard, alunos, funcionarios, turma, diario, opcoes, aee, escola, transporte, programa, utilitarios, censo
 
 ### **Frontend**
-- **CSS Framework**: Tailwind CSS 3.x
-- **JavaScript**: Vanilla JS com validações client-side
+- **CSS Framework**: Tailwind CSS 3.x (CDN) com componentes compartilhados em `templates/partials/ui_styles.html`
+- **JavaScript**: Vanilla JS e Alpine.js
 - **Templates**: Django Template Engine
 - **Ícones**: Font Awesome 6.x
 - **Design**: Interface moderna com gradientes e emojis
@@ -155,12 +124,12 @@ Guto/
 ├── dashboard/        # Dashboard principal
 ├── opcoes/           # Configurações e relatórios
 ├── aee/              # Atendimento Educacional Especializado
-├── escola/           # Gestão escolar e curricular
-├── transporte/       # Transporte escolar (estruturado)
-├── programa/         # Programas pedagógicos (estruturado)
+├── escola/           # Itinerários formativos e unidades curriculares
+├── transporte/       # Transporte escolar
+├── programa/         # Programas pedagógicos
 ├── utilitarios/      # Utilitários do sistema
 ├── censo/            # Relatórios censitários
-├── templates/        # Templates HTML
+├── templates/        # Templates HTML (generic/ e partials/ = componentes reutilizáveis)
 ├── static/           # Arquivos estáticos (CSS, JS, imagens)
 ├── media/            # Arquivos de upload (fotos, documentos)
 ├── guto_system/      # Configurações do projeto
@@ -187,22 +156,22 @@ Isso permite testar o sistema imediatamente após a instalação!
 
 ## 🎯 Requisitos Funcionais Atendidos
 
-### **Módulo Alunos (100%)**
+### **Módulo Alunos**
 - ✅ RF101-RF108: Cadastro completo de alunos
 - ✅ RF201-RF209: Sistema de matrículas
 - ✅ RNF101-RNF205: Todas as regras de negócio
 
-### **Módulo Funcionários (90%)**
+### **Módulo Funcionários**
 - ✅ RF403-RF511: Gestão de funcionários
 - ✅ RNF401-RNF408: Validações e regras
 
-### **Módulo Diário Eletrônico (95%)**
+### **Módulo Diário Eletrônico**
 - ✅ RF701-RF705: Sistema completo de diário
 - ✅ Chamada por disciplina
 - ✅ Lançamento de notas e avaliações
 - ✅ Relatórios e visualizações
 
-### **Módulo Enturmação (100%)**
+### **Módulo Enturmação**
 - ✅ RF301-RF310: Sistema de enturmação
 - ✅ Transferências controladas
 - ✅ Preservação de histórico
@@ -232,7 +201,7 @@ Isso permite testar o sistema imediatamente após a instalação!
 
 | Tecnologia | Versão | Uso |
 |------------|--------|-----|
-| Python | 3.14+ | Linguagem base |
+| Python | 3.10+ | Linguagem base |
 | Django | 5.2.6 | Framework web |
 | SQLite | 3.x | Banco de dados |
 | Tailwind CSS | 3.x | Estilização |
@@ -261,7 +230,7 @@ Este sistema foi desenvolvido como projeto acadêmico, implementando conceitos d
 Para dúvidas sobre a execução do projeto:
 1. Verifique se todas as dependências foram instaladas corretamente
 2. Certifique-se de que o ambiente virtual está ativado
-3. Confirme que o Python 3.14+ está instalado
+3. Confirme que o Python 3.10+ está instalado
 4. Execute `python manage.py migrate` se houver problemas com o banco
 
 ---

@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ motorista.nome }} - Motorista - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'transporte:motorista_list' as lista_url %}
+        {% include 'partials/page_header.html' with title=motorista.nome subtitle='Motorista do transporte escolar' icon='fa-id-card' back_url=lista_url no_margin=True %}
+        <div class="flex gap-3 shrink-0">
+            <a href="{% url 'transporte:motorista_edit' motorista.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            <a href="{% url 'transporte:motorista_delete' motorista.pk %}" class="btn-danger"><i class="fas fa-trash-alt"></i> Excluir</a>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="card card-body"><p class="detail-label">Viagens realizadas</p><p class="text-2xl font-bold">{{ total_viagens }}</p></div>
+        <div class="card card-body"><p class="detail-label">Km percorridos</p><p class="text-2xl font-bold">{{ km_percorridos }}</p></div>
+        <div class="card card-body"><p class="detail-label">Rotas ativas</p><p class="text-2xl font-bold">{{ rotas_ativas|length }}</p></div>
+    </div>
+    <div class="card card-body">
+        <div class="detail-grid">
+            <div><p class="detail-label">CPF</p><p class="detail-value">{{ motorista.cpf }}</p></div>
+            <div><p class="detail-label">RG</p><p class="detail-value">{{ motorista.rg|default:"—" }}</p></div>
+            <div><p class="detail-label">Nascimento</p><p class="detail-value">{{ motorista.data_nascimento|date:"d/m/Y" }}</p></div>
+            <div><p class="detail-label">CNH</p><p class="detail-value">{{ motorista.cnh_numero }} · {{ motorista.get_cnh_categoria_display }}</p></div>
+            <div><p class="detail-label">Validade da CNH</p><p class="detail-value">{{ motorista.cnh_validade|date:"d/m/Y" }}</p></div>
+            <div><p class="detail-label">Situação</p><p class="detail-value">{% if motorista.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</p></div>
+            <div><p class="detail-label">Telefone / celular</p><p class="detail-value">{{ motorista.telefone|default:"—" }} / {{ motorista.celular|default:"—" }}</p></div>
+            <div><p class="detail-label">Contrato</p><p class="detail-value">{{ motorista.data_inicio_contrato|date:"d/m/Y" }}{% if motorista.data_fim_contrato %} a {{ motorista.data_fim_contrato|date:"d/m/Y" }}{% endif %}</p></div>
+            <div><p class="detail-label">Endereço</p><p class="detail-value">{{ motorista.endereco|default:"—" }}</p></div>
+        </div>
+    </div>
+    <div class="grid lg:grid-cols-2 gap-6">
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Rotas ativas</h2></div>
+            <ul class="divide-y divide-gray-100">
+                {% for r in rotas_ativas %}<li class="px-6 py-3"><a href="{% url 'transporte:rota_detail' r.pk %}" class="font-medium hover:text-indigo-600">{{ r.nome }}</a> <span class="text-xs text-gray-500">· {{ r.get_turno_display }}</span></li>
+                {% empty %}<li class="px-6 py-4 text-sm text-gray-500">Nenhuma rota ativa.</li>{% endfor %}
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Viagens recentes</h2></div>
+            <ul class="divide-y divide-gray-100">
+                {% for v in viagens_recentes %}<li class="px-6 py-3 text-sm">{{ v.data_viagem|date:"d/m/Y" }} · {{ v.get_tipo_viagem_display }} · <a href="{% url 'transporte:rota_detail' v.rota.pk %}" class="hover:text-indigo-600">{{ v.rota.nome }}</a> <span class="text-gray-500">({{ v.veiculo.placa }})</span></li>
+                {% empty %}<li class="px-6 py-4 text-sm text-gray-500">Nenhuma viagem registrada.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

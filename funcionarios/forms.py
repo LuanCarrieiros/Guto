@@ -439,12 +439,23 @@ class DadosFuncionaisForm(forms.ModelForm):
         data_demissao = cleaned_data.get('data_demissao')
         data_final_contrato = cleaned_data.get('data_final_contrato')
         
-        # RNF406: Data de demissão/final contrato não pode ser anterior à associação (validação simplificada)
-        if data_demissao and data_demissao < date.today():
-            if hasattr(self.instance, 'funcionario'):
-                # Verificar se tem associações ativas após a data
-                pass  # Implementar validação completa quando models de Turma estiverem prontos
-        
+        # RNF406: a data de demissão/final de contrato não pode ser anterior
+        # ao término das associações do funcionário às turmas
+        funcionario = getattr(self.instance, 'funcionario', None) if self.instance.pk else None
+        if funcionario is not None:
+            for campo, data_limite in (('data_demissao', data_demissao), ('data_final_contrato', data_final_contrato)):
+                if not data_limite:
+                    continue
+                conflitos = [
+                    a for a in list(funcionario.associacoes.all()) + list(funcionario.associacoes_outros.all())
+                    if a.data_inicio > data_limite or a.data_termino is None or a.data_termino > data_limite
+                ]
+                if conflitos:
+                    self.add_error(campo, (
+                        'O funcionário possui associação(ões) a turmas vigentes após esta data '
+                        f'(ex.: {conflitos[0].turma}). Encerre as associações antes.'
+                    ))
+
         return cleaned_data
 
 class DuploVinculoForm(forms.ModelForm):
@@ -604,6 +615,30 @@ class DeficienciaFuncionarioForm(forms.ModelForm):
             })
         }
 
+def opcoes_turmas(atual=None):
+    """Turmas cadastradas (o valor salvo é o nome da turma)."""
+    from turma.models import Turma
+    nomes = list(Turma.objects.order_by('-periodo_letivo', 'nome').values_list('nome', flat=True).distinct())
+    if atual and atual not in nomes:
+        nomes.insert(0, atual)
+    return [('', 'Selecione a turma...')] + [(n, n) for n in nomes]
+
+
+def opcoes_disciplinas(atual=None):
+    """Disciplinas ativas (o valor salvo é o nome da disciplina)."""
+    from turma.models import Disciplina
+    nomes = list(Disciplina.objects.filter(ativo=True).order_by('nome').values_list('nome', flat=True))
+    if atual and atual not in nomes:
+        nomes.insert(0, atual)
+    return [('', 'Selecione a disciplina...')] + [(n, n) for n in nomes]
+
+
+def validar_periodo(form, dados):
+    inicio, termino = dados.get('data_inicio'), dados.get('data_termino')
+    if inicio and termino and termino < inicio:
+        form.add_error('data_termino', 'A data de término deve ser posterior ao início.')
+
+
 class AssociacaoProfessorForm(forms.ModelForm):
     class Meta:
         model = AssociacaoProfessor
@@ -645,7 +680,14 @@ class AssociacaoProfessorForm(forms.ModelForm):
         self.fields['funcionario'].queryset = Funcionario.objects.filter(
             dados_funcionais__funcao='DOCENTE',
             tipo_arquivo='CORRENTE'
-        )
+        ).order_by('nome')
+        self.fields['turma'] = forms.ChoiceField(label='Turma', choices=opcoes_turmas(self.instance.turma))
+        self.fields['disciplina'] = forms.ChoiceField(label='Disciplina', choices=opcoes_disciplinas(self.instance.disciplina))
+
+    def clean(self):
+        dados = super().clean()
+        validar_periodo(self, dados)
+        return dados
 
 class AssociacaoOutrosProfissionaisForm(forms.ModelForm):
     class Meta:
@@ -695,6 +737,12 @@ class AssociacaoOutrosProfissionaisForm(forms.ModelForm):
                     dados_funcionais__funcao='TRADUTOR_LIBRAS',
                     tipo_arquivo='CORRENTE'
                 )
+        self.fields['turma'] = forms.ChoiceField(label='Turma', choices=opcoes_turmas(self.instance.turma))
+
+    def clean(self):
+        dados = super().clean()
+        validar_periodo(self, dados)
+        return dados
 
 class BuscaRedeForm(forms.Form):
     TIPO_BUSCA_CHOICES = [

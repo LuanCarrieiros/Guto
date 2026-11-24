@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Rotas - Transporte - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        {% include 'partials/page_header.html' with title='Rotas' subtitle='Itinerários do transporte escolar' icon='fa-route' no_margin=True %}
+        <a href="{% url 'transporte:rota_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Nova rota</a>
+    </div>
+    {% include 'transporte/_nav.html' %}
+    <div class="card">
+        <form method="get" class="card-header guto-form">
+            <div class="flex flex-wrap gap-3 flex-1">
+                <input type="search" name="busca" value="{{ busca }}" placeholder="Nome da rota" class="!w-56">
+                <select name="turno" class="!w-44"><option value="">Todos os turnos</option>{% for c, n in turnos %}<option value="{{ c }}" {% if turno|upper == c %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+                <select name="ativa" class="!w-36"><option value="">Todas</option><option value="sim" {% if ativa == 'sim' %}selected{% endif %}>Ativas</option><option value="nao" {% if ativa == 'nao' %}selected{% endif %}>Inativas</option></select>
+                <button type="submit" class="btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+            </div>
+        </form>
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Rota</th><th>Turno</th><th>Ida</th><th>Veículo</th><th>Motorista</th><th>Alunos</th><th>Situação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for r in page_obj %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'transporte:rota_detail' r.pk %}" class="hover:text-indigo-600">{{ r.nome }}</a></td>
+                        <td>{{ r.get_turno_display }}</td>
+                        <td>{{ r.horario_saida_ida|time:"H:i" }}–{{ r.horario_chegada_ida|time:"H:i" }}</td>
+                        <td>{{ r.veiculo.placa|default:"—" }}</td>
+                        <td>{{ r.motorista.nome|default:"—" }}</td>
+                        <td>{{ r.alunos_ativos }}{% if r.veiculo %} / {{ r.veiculo.capacidade_passageiros }}{% endif %}</td>
+                        <td>{% if r.ativa %}<span class="badge badge-green">Ativa</span>{% else %}<span class="badge badge-gray">Inativa</span>{% endif %}</td>
+                        <td class="text-right space-x-3">
+                            <a href="{% url 'transporte:rota_detail' r.pk %}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'transporte:rota_edit' r.pk %}" class="text-gray-600 hover:text-gray-800"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+        {% else %}
+            {% url 'transporte:rota_create' as novo_url %}
+            {% include 'partials/empty_state.html' with icon='fa-route' message='Nenhuma rota encontrada.' action_url=novo_url action_label='Nova rota' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

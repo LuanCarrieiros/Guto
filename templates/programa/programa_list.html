@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Programas - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        {% include 'partials/page_header.html' with title='Programas' subtitle='Todos os programas pedagógicos' icon='fa-list' no_margin=True %}
+        <a href="{% url 'programa:programa_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Novo programa</a>
+    </div>
+    {% include 'programa/_nav.html' %}
+    <div class="card">
+        <form method="get" class="card-header guto-form">
+            <div class="flex flex-wrap gap-3 flex-1">
+                <input type="search" name="busca" value="{{ busca }}" placeholder="Buscar programa" class="!w-56">
+                <select name="tipo" class="!w-56"><option value="">Todos os tipos</option>{% for c, n in tipo_choices %}<option value="{{ c }}" {% if c == tipo %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+                <select name="status" class="!w-44"><option value="">Todas as situações</option>{% for c, n in status_choices %}<option value="{{ c }}" {% if c == status %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+                <button type="submit" class="btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+            </div>
+        </form>
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Programa</th><th>Tipo</th><th>Período</th><th>Coordenador</th><th>Módulos</th><th>Vagas</th><th>Situação</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for p in page_obj %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'programa:programa_detail' p.pk %}" class="hover:text-indigo-600">{{ p.nome }}</a><p class="text-xs text-gray-500">{{ p.get_modalidade_display }}</p></td>
+                        <td>{{ p.get_tipo_programa_display }}</td>
+                        <td>{{ p.data_inicio|date:"d/m/Y" }} a {{ p.data_fim|date:"d/m/Y" }}</td>
+                        <td>{{ p.coordenador.nome|default:"—" }}</td>
+                        <td>{{ p.total_modulos }}</td>
+                        <td><span class="badge {% if p.ativos >= p.vagas_disponiveis %}badge-red{% else %}badge-green{% endif %}">{{ p.ativos }}/{{ p.vagas_disponiveis }}</span></td>
+                        <td><span class="badge {% if p.status == 'ATIVO' %}badge-green{% elif p.status == 'PLANEJAMENTO' %}badge-blue{% elif p.status == 'SUSPENSO' %}badge-yellow{% else %}badge-gray{% endif %}">{{ p.get_status_display }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+        {% else %}
+            {% url 'programa:programa_create' as novo_url %}
+            {% include 'partials/empty_state.html' with icon='fa-book-open' message='Nenhum programa encontrado.' action_url=novo_url action_label='Novo programa' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

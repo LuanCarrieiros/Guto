@@ -1,8 +1,7 @@
 from django.db import models
+from guto_system.utils import ano_atual
 from django.contrib.auth.models import User
-from django.core.validators import MinValueValidator, MaxValueValidator, DecimalValidator
-from datetime import date, datetime
-from decimal import Decimal
+from django.core.validators import MinValueValidator, MaxValueValidator
 from alunos.models import Aluno
 
 class Conceito(models.Model):
@@ -84,7 +83,7 @@ class Turma(models.Model):
     ]
     
     nome = models.CharField(max_length=255, verbose_name="Nome da Turma")
-    periodo_letivo = models.CharField(max_length=4, default=str(date.today().year), verbose_name="Período Letivo")
+    periodo_letivo = models.CharField(max_length=4, default=ano_atual, verbose_name="Período Letivo")
     tipo_ensino = models.CharField(max_length=50, choices=TIPO_ENSINO_CHOICES, verbose_name="Tipo de Ensino")
     ano_serie = models.CharField(max_length=50, choices=ANO_SERIE_CHOICES, verbose_name="Ano/Série")
     turno = models.CharField(max_length=20, choices=TURNO_CHOICES, verbose_name="Turno")
@@ -118,7 +117,7 @@ class Turma(models.Model):
         return Aluno.objects.filter(
             enturmacoes__turma=self,
             enturmacoes__ativo=True
-        ).select_related('usuario_cadastro', 'documentacao', 'transporte')
+        ).select_related('usuario_cadastro', 'documentacao', 'transporte').order_by('nome')
     
     def get_percentual_ocupacao(self):
         """Retorna o percentual de ocupação da turma"""

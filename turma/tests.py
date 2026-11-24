@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
 from datetime import date
-from turma.models import Turma, Disciplina, Enturmacao, Conceito, TipoAvaliacao, Avaliacao, NotaAvaliacao
+from turma.models import Turma, Disciplina, Enturmacao, Conceito, TipoAvaliacao
 from alunos.models import Aluno
 
 

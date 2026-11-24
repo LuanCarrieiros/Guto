@@ -2,20 +2,21 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.urls import reverse
-from django.db.models import Count, Avg
+from django.db.models import Count, Avg, Q
 from django.db import models
 from django.core.paginator import Paginator
 from django.http import JsonResponse
+from django.views.decorators.http import require_POST
 from datetime import date, datetime
 from .models import (
-    Conceito, Turma, Disciplina, LancamentoNota, AtestadoMedico,
-    MediaGlobalConceito, RecuperacaoEspecial, ParecerDescritivo,
-    AvaliacaoDescritiva, PendenciaAvaliacao,
-    Enturmacao, AulaRegistrada, RegistroFrequencia, TipoAvaliacao,
-    Avaliacao, NotaAvaliacao, DivisaoPeriodoLetivo
+    Conceito, Turma, Disciplina, LancamentoNota, PendenciaAvaliacao,
+    Enturmacao, AulaRegistrada, RegistroFrequencia,
+    TipoAvaliacao, Avaliacao,
+    NotaAvaliacao, DivisaoPeriodoLetivo
 )
-from diario.models import DiarioOnline, ConteudoAula
-from .forms import TurmaForm, DisciplinaForm, EnturmacaoForm
+from diario.models import DiarioEletronico
+from .forms import TurmaForm, DisciplinaForm, AvaliacaoForm, DivisaoPeriodoLetivoForm
+from . import relatorios as relatorios_turma
 from alunos.models import Aluno
 from dashboard.models import AtividadeRecente
 
@@ -112,7 +113,7 @@ def turma_create(request):
             # Registrar atividade
             AtividadeRecente.objects.create(
                 usuario=request.user,
-                acao='CREATE',
+                acao='CRIAR',
                 modulo='AVALIACAO',
                 objeto_nome=turma.nome,
                 descricao=f'Criou a turma {turma.nome}'
@@ -149,7 +150,7 @@ def turma_edit(request, pk):
             # Registrar atividade
             AtividadeRecente.objects.create(
                 usuario=request.user,
-                acao='UPDATE',
+                acao='EDITAR',
                 modulo='AVALIACAO',
                 objeto_nome=turma.nome,
                 descricao=f'Editou a turma {turma.nome}'
@@ -195,13 +196,13 @@ def turma_delete(request, pk):
         # Registrar atividade
         AtividadeRecente.objects.create(
             usuario=request.user,
-            acao='DELETE',
+            acao='DELETAR',
             modulo='AVALIACAO',
             objeto_nome=nome_turma,
             descricao=f'Excluiu a turma {nome_turma}'
         )
         
-        return redirect('avaliacao:turmas_list')
+        return redirect('turma:turmas_list')
     
     return render(request, 'turma/turma_confirm_delete.html', {'turma': turma})
 
@@ -234,7 +235,7 @@ def disciplina_create(request):
             # Registrar atividade
             AtividadeRecente.objects.create(
                 usuario=request.user,
-                acao='CREATE',
+                acao='CRIAR',
                 modulo='AVALIACAO',
                 objeto_nome=disciplina.nome,
                 descricao=f'Criou a disciplina {disciplina.nome}'
@@ -261,7 +262,7 @@ def disciplina_edit(request, pk):
             # Registrar atividade
             AtividadeRecente.objects.create(
                 usuario=request.user,
-                acao='UPDATE',
+                acao='EDITAR',
                 modulo='AVALIACAO',
                 objeto_nome=disciplina.nome,
                 descricao=f'Editou a disciplina {disciplina.nome}'
@@ -287,7 +288,7 @@ def disciplina_delete(request, pk):
         # Registrar atividade
         AtividadeRecente.objects.create(
             usuario=request.user,
-            acao='DELETE',
+            acao='DELETAR',
             modulo='AVALIACAO',
             objeto_nome=nome_disciplina,
             descricao=f'Excluiu a disciplina {nome_disciplina}'
@@ -334,80 +335,62 @@ def notas_list(request):
 
 @login_required
 def lancar_notas(request):
-    """Formulário para lançar notas"""
-    return render(request, 'turma/lancar_notas.html')
+    """Seleção da avaliação para lançamento de notas (com filtros por turma e disciplina)"""
+    turma_id = request.GET.get('turma', '')
+    disciplina_id = request.GET.get('disciplina', '')
+
+    avaliacoes = Avaliacao.objects.filter(ativo=True).select_related(
+        'turma', 'disciplina', 'tipo_avaliacao', 'divisao_periodo'
+    ).order_by('-data_aplicacao')
+    if turma_id:
+        avaliacoes = avaliacoes.filter(turma_id=turma_id)
+    if disciplina_id:
+        avaliacoes = avaliacoes.filter(disciplina_id=disciplina_id)
+
+    context = {
+        'avaliacoes': avaliacoes,
+        'turmas': Turma.objects.order_by('nome'),
+        'disciplinas': Disciplina.objects.filter(ativo=True).order_by('nome'),
+        'turma_selecionada': turma_id,
+        'disciplina_selecionada': disciplina_id,
+    }
+    return render(request, 'turma/lancar_notas.html', context)
 
 
 @login_required
-def avaliacao_create(request, turma_id=None):
-    """Cria uma nova avaliação"""
+def avaliacao_create(request):
+    """Cria uma nova avaliação (visão da coordenação)"""
     if request.method == 'POST':
-        if not turma_id:
-            turma_id = request.POST.get('turma')
-        disciplina_id = request.POST.get('disciplina')
-        tipo_avaliacao_id = request.POST.get('tipo_avaliacao')
-        nome = request.POST.get('nome')
-        descricao = request.POST.get('descricao')
-        data_aplicacao = request.POST.get('data_aplicacao')
-        valor_maximo = request.POST.get('valor_maximo', 10.0)
-        peso = request.POST.get('peso', 1.0)
-        ativo = request.POST.get('ativo', 'true') == 'true'
-        
-        try:
-            turma = Turma.objects.get(id=turma_id)
-            disciplina = Disciplina.objects.get(id=disciplina_id)
-            tipo_avaliacao = TipoAvaliacao.objects.get(id=tipo_avaliacao_id)
-            
-            # Criar ou obter DivisaoPeriodoLetivo
-            divisao_periodo, created = DivisaoPeriodoLetivo.objects.get_or_create(
-                periodo_letivo=turma.periodo_letivo,
-                defaults={
-                    'nome': f'1º Bimestre - {turma.periodo_letivo}',
-                    'data_inicio': date.today(),
-                    'data_fim': date.today(),
-                }
-            )
-            
-            avaliacao = Avaliacao.objects.create(
-                nome=nome,
-                descricao=descricao,
-                turma=turma,
-                disciplina=disciplina,
-                tipo_avaliacao=tipo_avaliacao,
-                divisao_periodo=divisao_periodo,
-                data_aplicacao=data_aplicacao,
-                valor_maximo=float(valor_maximo),
-                peso=float(peso),
-                ativo=ativo,
-                professor=request.user
-            )
-            
-            messages.success(request, f'Avaliação "{nome}" criada com sucesso!')
-            
-            # Registrar atividade
-            AtividadeRecente.objects.create(
+        form = AvaliacaoForm(request.POST, user=request.user)
+        if form.is_valid():
+            avaliacao = form.save(commit=False)
+            avaliacao.professor = request.user
+            avaliacao.save()
+            AtividadeRecente.registrar_atividade(
                 usuario=request.user,
-                acao='CREATE',
+                acao='CRIAR',
                 modulo='AVALIACAO',
-                objeto_nome=nome,
-                descricao=f'Criou a avaliação {nome} para a turma {turma.nome}'
+                objeto_nome=avaliacao.nome,
+                objeto_id=avaliacao.pk,
+                descricao=f'Criou a avaliação {avaliacao.nome} para a turma {avaliacao.turma.nome}'
             )
-            
-            return redirect('turma:lancar_notas_avaliacao', avaliacao_id=avaliacao.id)
-            
-        except Exception as e:
-            messages.error(request, f'Erro ao criar avaliação: {str(e)}')
-    
-    turmas = Turma.objects.all().order_by('nome')
-    disciplinas = Disciplina.objects.all().order_by('nome')
-    tipos_avaliacao = TipoAvaliacao.objects.all().order_by('nome')
-    
-    context = {
-        'turmas': turmas,
-        'disciplinas': disciplinas,
-        'tipos_avaliacao': tipos_avaliacao,
-    }
-    return render(request, 'turma/avaliacao_form.html', context)
+            messages.success(request, f'Avaliação "{avaliacao.nome}" criada com sucesso!')
+            return redirect('turma:avaliacao_detail', pk=avaliacao.pk)
+    else:
+        form = AvaliacaoForm(user=request.user, initial={
+            'data_aplicacao': date.today(),
+            'turma': request.GET.get('turma'),
+            'disciplina': request.GET.get('disciplina'),
+        })
+
+    return render(request, 'generic/form.html', {
+        'form': form,
+        'title': 'Nova Avaliação',
+        'subtitle': 'Cadastre uma avaliação para uma turma, disciplina e período',
+        'icon': 'fa-clipboard-check',
+        'cancel_url': reverse('turma:avaliacoes_list'),
+        'submit_label': 'Criar avaliação',
+    })
 
 
 @login_required
@@ -423,8 +406,99 @@ def conceitos_list(request):
 
 @login_required
 def relatorios(request):
-    """Dashboard de relatórios"""
-    return render(request, 'turma/relatorios.html')
+    """Central de relatórios das turmas: boletins, frequência e desempenho"""
+    turmas = Turma.objects.annotate(
+        total_alunos=Count('enturmacoes', filter=Q(enturmacoes__ativo=True))
+    ).order_by('-periodo_letivo', 'nome')
+    turma = None
+    alunos = []
+    turma_id = request.GET.get('turma')
+    if turma_id:
+        turma = get_object_or_404(Turma, pk=turma_id)
+        alunos = turma.get_alunos_enturmados()
+    return render(request, 'turma/relatorios.html', {'turmas': turmas, 'turma': turma, 'alunos': alunos})
+
+
+@login_required
+def divisoes(request):
+    """Cadastro das divisões do período letivo (bimestres, trimestres...) usadas pelo diário"""
+    periodo = request.GET.get('periodo') or str(date.today().year)
+    form = DivisaoPeriodoLetivoForm(request.POST or None, initial={
+        'periodo_letivo': periodo, 'tipo_divisao': 'BIMESTRE',
+        'ordem': DivisaoPeriodoLetivo.objects.filter(periodo_letivo=periodo).count() + 1,
+    })
+
+    if request.method == 'POST':
+        acao = request.POST.get('acao')
+        if acao == 'gerar_bimestres':
+            ano = int(request.POST.get('ano') or periodo)
+            if DivisaoPeriodoLetivo.objects.filter(periodo_letivo=str(ano)).exists():
+                messages.error(request, f'Já existem divisões cadastradas para {ano}.')
+            else:
+                limites = [((2, 1), (4, 15)), ((4, 16), (6, 30)), ((8, 1), (9, 30)), ((10, 1), (12, 15))]
+                for ordem, (inicio, fim) in enumerate(limites, start=1):
+                    DivisaoPeriodoLetivo.objects.create(
+                        nome=f'{ordem}º Bimestre', tipo_divisao='BIMESTRE', periodo_letivo=str(ano), ordem=ordem,
+                        data_inicio=date(ano, *inicio), data_fim=date(ano, *fim),
+                    )
+                messages.success(request, f'4 bimestres criados para {ano}. Ajuste as datas se necessário.')
+            return redirect(f"{reverse('turma:divisoes')}?periodo={ano}")
+        if acao == 'alternar':
+            divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=request.POST.get('divisao'))
+            divisao.ativo = not divisao.ativo
+            divisao.save(update_fields=['ativo'])
+            messages.success(request, f'{divisao.nome} {"ativada" if divisao.ativo else "desativada"}.')
+            return redirect(f"{reverse('turma:divisoes')}?periodo={divisao.periodo_letivo}")
+        if form.is_valid():
+            divisao = form.save()
+            messages.success(request, f'{divisao.nome} cadastrado com sucesso.')
+            return redirect(f"{reverse('turma:divisoes')}?periodo={divisao.periodo_letivo}")
+
+    anos = sorted(
+        set(DivisaoPeriodoLetivo.objects.values_list('periodo_letivo', flat=True))
+        | set(Turma.objects.values_list('periodo_letivo', flat=True)) | {periodo},
+        reverse=True,
+    )
+    context = {
+        'form': form,
+        'periodo': periodo,
+        'anos': anos,
+        'divisoes': DivisaoPeriodoLetivo.objects.filter(periodo_letivo=periodo).annotate(
+            total_avaliacoes=Count('avaliacao')
+        ).order_by('ordem'),
+    }
+    return render(request, 'turma/divisoes.html', context)
+
+
+@login_required
+def boletim_aluno(request, turma_id, aluno_id):
+    """Boletim escolar do aluno na turma"""
+    turma = get_object_or_404(Turma, pk=turma_id)
+    aluno = get_object_or_404(Aluno, pk=aluno_id)
+    if not Enturmacao.objects.filter(turma=turma, aluno=aluno).exists():
+        messages.error(request, 'O aluno não pertence a esta turma.')
+        return redirect(f"{reverse('turma:relatorios')}?turma={turma.pk}")
+    context = {'turma': turma, 'aluno': aluno, **relatorios_turma.calcular_boletim(turma, aluno)}
+    return render(request, 'turma/boletim_aluno.html', context)
+
+
+@login_required
+def relatorio_frequencia(request, turma_id):
+    """Frequência dos alunos da turma por disciplina"""
+    turma = get_object_or_404(Turma, pk=turma_id)
+    alunos = list(turma.get_alunos_enturmados())
+    context = {'turma': turma, **relatorios_turma.calcular_frequencia_turma(turma, alunos)}
+    return render(request, 'turma/relatorio_frequencia.html', context)
+
+
+@login_required
+def relatorio_desempenho(request, turma_id):
+    """Desempenho da turma: médias por disciplina e distribuição dos alunos"""
+    turma = get_object_or_404(Turma, pk=turma_id)
+    alunos = list(turma.get_alunos_enturmados())
+    context = {'turma': turma, 'total_alunos': len(alunos),
+               **relatorios_turma.calcular_desempenho_turma(turma, alunos)}
+    return render(request, 'turma/relatorio_desempenho.html', context)
 
 
 @login_required
@@ -563,92 +637,21 @@ def desenturmar_aluno(request, pk, aluno_id):
 
 
 @login_required
-def diario_dashboard(request):
-    """Dashboard do diário eletrônico - versão bonita"""
-    turmas = Turma.objects.all()
-    total_turmas = turmas.count()
-    diarios_ativos = total_turmas  # Para agora, consideramos todas as turmas como tendo diários ativos
-    
-    context = {
-        'turmas': turmas,
-        'total_turmas': total_turmas,
-        'diarios_ativos': diarios_ativos,
-    }
-    return render(request, 'diario/diario_eletronico_dashboard.html', context)
-
-
-@login_required
-def lancar_notas_avaliacao(request, avaliacao_id):
-    """Lança notas para uma avaliação específica"""
-    avaliacao = get_object_or_404(Avaliacao, pk=avaliacao_id)
-    
-    # Obter alunos da turma
-    enturmacoes = Enturmacao.objects.filter(
-        turma=avaliacao.turma,
-        ativo=True
-    )
-    
-    if request.method == 'POST':
-        for enturmacao in enturmacoes:
-            nota_value = request.POST.get(f'nota_{enturmacao.aluno.id}')
-            if nota_value:
-                try:
-                    nota_value = float(nota_value)
-                    
-                    # Criar ou atualizar nota
-                    nota, created = NotaAvaliacao.objects.get_or_create(
-                        avaliacao=avaliacao,
-                        aluno=enturmacao.aluno,
-                        defaults={
-                            'nota': nota_value,
-                            'usuario_lancamento': request.user
-                        }
-                    )
-                    
-                    if not created:
-                        nota.nota = nota_value
-                        nota.save()
-                        
-                except ValueError:
-                    continue
-        
-        messages.success(request, 'Notas lançadas com sucesso!')
-        return redirect('turma:avaliacao_detail', pk=avaliacao.id)
-    
-    # Obter notas já lançadas
-    notas_existentes = NotaAvaliacao.objects.filter(
-        avaliacao=avaliacao
-    )
-    
-    notas_dict = {nota.aluno.id: nota.nota for nota in notas_existentes}
-    
-    context = {
-        'avaliacao': avaliacao,
-        'enturmacoes': enturmacoes,
-        'notas_dict': notas_dict,
-    }
-    return render(request, 'turma/lancar_notas_avaliacao.html', context)
-
-
-@login_required
 def gerenciar_disciplinas_turma(request, turma_id):
     """Gerencia as disciplinas de uma turma"""
     turma = get_object_or_404(Turma, pk=turma_id)
     
     if request.method == 'POST':
         disciplinas_ids = request.POST.getlist('disciplinas')
-        
-        # Remover diários eletrônicos existentes
-        DiarioEletronico.objects.filter(turma=turma).delete()
-        
-        # Criar novos diários eletrônicos para as disciplinas selecionadas
-        for disciplina_id in disciplinas_ids:
-            disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-            DiarioEletronico.objects.create(
+        selecionadas = Disciplina.objects.filter(pk__in=disciplinas_ids)
+
+        # Diários das disciplinas desmarcadas são desativados (o histórico é preservado)
+        DiarioEletronico.objects.filter(turma=turma).exclude(disciplina__in=selecionadas).update(ativo=False)
+        for disciplina in selecionadas:
+            DiarioEletronico.objects.update_or_create(
                 turma=turma,
                 disciplina=disciplina,
-                periodo_letivo=turma.periodo_letivo,
-                usuario_criacao=request.user
+                defaults={'periodo_letivo': turma.periodo_letivo, 'ativo': True},
             )
         
         messages.success(request, f'{len(disciplinas_ids)} disciplina(s) vinculada(s) à turma com sucesso!')
@@ -657,7 +660,7 @@ def gerenciar_disciplinas_turma(request, turma_id):
     todas_disciplinas = Disciplina.objects.all().order_by('nome')
     # Buscar disciplinas que têm diários para esta turma
     disciplinas_turma = Disciplina.objects.filter(
-        diarioeletronico__turma=turma
+        diarioeletronico__turma=turma, diarioeletronico__ativo=True
     ).distinct().order_by('nome')
     
     context = {
@@ -685,7 +688,15 @@ def avaliacoes_list(request):
         avaliacoes = avaliacoes.filter(disciplina_id=disciplina_id)
     if tipo_id:
         avaliacoes = avaliacoes.filter(tipo_avaliacao_id=tipo_id)
-    
+    hoje = date.today()
+    if status == 'agendada':
+        avaliacoes = avaliacoes.filter(data_aplicacao__gt=hoje)
+    elif status == 'em_andamento':
+        avaliacoes = avaliacoes.filter(data_aplicacao=hoje)
+    elif status == 'finalizada':
+        avaliacoes = avaliacoes.filter(data_aplicacao__lt=hoje)
+    avaliacoes = avaliacoes.select_related('turma', 'disciplina', 'tipo_avaliacao', 'divisao_periodo')
+
     paginator = Paginator(avaliacoes, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -700,6 +711,7 @@ def avaliacoes_list(request):
         'turmas': turmas,
         'disciplinas': disciplinas,
         'tipos': tipos,
+        'hoje': hoje,
         'current_filters': {
             'turma': turma_id,
             'disciplina': disciplina_id,
@@ -712,87 +724,63 @@ def avaliacoes_list(request):
 
 @login_required
 def avaliacao_detail(request, pk):
-    """Detalhe de uma avaliação"""
-    avaliacao = get_object_or_404(Avaliacao, pk=pk)
-    notas = NotaAvaliacao.objects.filter(avaliacao=avaliacao)
-    
-    # Estatísticas
-    if notas.exists():
-        media = notas.aggregate(Avg('nota'))['nota__avg']
-        maior_nota = notas.aggregate(models.Max('nota'))['nota__max']
-        menor_nota = notas.aggregate(models.Min('nota'))['nota__min']
-    else:
-        media = maior_nota = menor_nota = None
-    
+    """Detalhe de uma avaliação com as notas lançadas"""
+    avaliacao = get_object_or_404(
+        Avaliacao.objects.select_related('turma', 'disciplina', 'divisao_periodo', 'tipo_avaliacao', 'professor'),
+        pk=pk
+    )
+    notas = avaliacao.notas.select_related('aluno', 'conceito').order_by('aluno__nome')
+    estatisticas = notas.filter(nota__isnull=False).aggregate(
+        media=Avg('nota'), maior_nota=models.Max('nota'), menor_nota=models.Min('nota')
+    )
+    estatisticas['total_notas'] = notas.count()
+    estatisticas['total_alunos'] = avaliacao.turma.enturmacoes.filter(ativo=True).count()
+
     context = {
         'avaliacao': avaliacao,
         'notas': notas,
-        'estatisticas': {
-            'media': media,
-            'maior_nota': maior_nota,
-            'menor_nota': menor_nota,
-            'total_notas': notas.count(),
-        }
+        'estatisticas': estatisticas,
     }
     return render(request, 'turma/avaliacao_detail.html', context)
 
 
 @login_required
 def avaliacao_edit(request, pk):
-    """Edita uma avaliação existente"""
-    avaliacao = get_object_or_404(Avaliacao, pk=pk)
-    
-    if request.method == 'POST':
-        avaliacao.nome = request.POST.get('nome', avaliacao.nome)
-        avaliacao.descricao = request.POST.get('descricao', avaliacao.descricao)
-        avaliacao.data_aplicacao = request.POST.get('data_aplicacao', avaliacao.data_aplicacao)
-        avaliacao.peso = request.POST.get('peso', avaliacao.peso)
-        
-        avaliacao.save()
-        
-        messages.success(request, f'Avaliação "{avaliacao.nome}" editada com sucesso!')
-        
-        # Registrar atividade
-        AtividadeRecente.objects.create(
-            usuario=request.user,
-            acao='UPDATE',
-            modulo='AVALIACAO',
-            objeto_nome=avaliacao.nome,
-            descricao=f'Editou a avaliação {avaliacao.nome}'
-        )
-        
-        return redirect('turma:avaliacao_detail', pk=pk)
-    
-    context = {
-        'avaliacao': avaliacao,
-    }
-    return render(request, 'turma/avaliacao_edit.html', context)
+    """A edição de avaliações é feita pelo diário eletrônico"""
+    return redirect('turma:editar_avaliacao_diario', avaliacao_id=pk)
 
 
 @login_required
 def avaliacao_delete(request, pk):
     """Exclui uma avaliação"""
     avaliacao = get_object_or_404(Avaliacao, pk=pk)
-    
-    if request.method == 'POST':
+
+    if request.method == 'POST' and request.POST.get('confirmar') == 'sim':
         nome_avaliacao = avaliacao.nome
         avaliacao.delete()
-        messages.success(request, f'Avaliação "{nome_avaliacao}" excluída com sucesso!')
-        
-        # Registrar atividade
-        AtividadeRecente.objects.create(
+        AtividadeRecente.registrar_atividade(
             usuario=request.user,
-            acao='DELETE',
+            acao='DELETAR',
             modulo='AVALIACAO',
             objeto_nome=nome_avaliacao,
             descricao=f'Excluiu a avaliação {nome_avaliacao}'
         )
-        
+        messages.success(request, f'Avaliação "{nome_avaliacao}" excluída com sucesso!')
         return redirect('turma:avaliacoes_list')
-    
-    return render(request, 'turma/avaliacao_confirm_delete.html', {'avaliacao': avaliacao})
+
+    return render(request, 'generic/confirm_delete.html', {
+        'title': 'Excluir Avaliação',
+        'object_label': avaliacao.nome,
+        'cancel_url': reverse('turma:avaliacao_detail', args=[avaliacao.pk]),
+        'details': [
+            f'Turma: {avaliacao.turma.nome}',
+            f'Disciplina: {avaliacao.disciplina.nome}',
+            f'{avaliacao.notas.count()} nota(s) lançada(s) também serão excluídas.',
+        ],
+    })
 
 
+@login_required
 def get_anos_series_por_tipo(request):
     """AJAX endpoint para obter anos/séries por tipo de ensino"""
     tipo_ensino = request.GET.get('tipo_ensino')
@@ -812,47 +800,6 @@ def get_anos_series_por_tipo(request):
 # ==========================================
 
 @login_required
-def diario_home(request):
-    """Página inicial do Diário Eletrônico - Seleção de turma"""
-    turmas = Turma.objects.all().order_by('nome')
-    
-    context = {
-        'turmas': turmas,
-        'page_title': 'Diário Eletrônico'
-    }
-    
-    return render(request, 'diario/diario_home.html', context)
-
-
-@login_required
-def diario_turma(request, turma_id):
-    """Interface principal do Diário para uma turma específica"""
-    turma = get_object_or_404(Turma, pk=turma_id)
-    
-    # Buscar alunos da turma
-    alunos = Aluno.objects.filter(
-        enturmacoes__turma=turma,
-        enturmacoes__ativo=True
-    ).order_by('nome')
-    
-    # Buscar disciplinas ativas do sistema
-    disciplinas = Disciplina.objects.filter(ativo=True).order_by('nome')
-    
-    # Estatísticas da turma
-    total_alunos = alunos.count()
-    
-    context = {
-        'turma': turma,
-        'alunos': alunos,
-        'disciplinas': disciplinas,
-        'total_alunos': total_alunos,
-        'page_title': f'Diário - {turma.nome}'
-    }
-    
-    return render(request, 'diario/turma_diario.html', context)
-
-
-@login_required
 def fazer_chamada(request, turma_id):
     """Interface para fazer chamada de presença"""
     turma = get_object_or_404(Turma, pk=turma_id)
@@ -868,9 +815,10 @@ def fazer_chamada(request, turma_id):
 
     # Obter divisão (bimestre/período) da URL
     divisao_id = request.GET.get('divisao')
-    divisao = None
-    if divisao_id:
-        divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
+    if not divisao_id:
+        messages.info(request, 'Selecione o período (bimestre/trimestre) para continuar.')
+        return redirect('diario:disciplina', turma_id=turma.pk, disciplina_id=disciplina.pk)
+    divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
 
     # Buscar alunos da turma
     alunos = Aluno.objects.filter(
@@ -934,7 +882,7 @@ def fazer_chamada(request, turma_id):
             )
         except Exception as e:
             messages.error(request, f'Erro ao criar aula: {str(e)}')
-            return redirect('diario:chamada', turma_id=turma_id)
+            return redirect('diario:divisao', turma_id=turma.pk, disciplina_id=disciplina.pk, divisao_id=divisao.pk)
         
         for aluno in alunos:
             # Novo sistema de toggle - o JavaScript envia o status do toggle
@@ -986,9 +934,10 @@ def lancar_notas_diario(request, turma_id):
 
     # Obter divisão (bimestre/período) da URL
     divisao_id = request.GET.get('divisao')
-    divisao = None
-    if divisao_id:
-        divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
+    if not divisao_id:
+        messages.info(request, 'Selecione o período (bimestre/trimestre) para continuar.')
+        return redirect('diario:disciplina', turma_id=turma.pk, disciplina_id=disciplina.pk)
+    divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
 
     # Buscar alunos da turma
     alunos = Aluno.objects.filter(
@@ -1108,9 +1057,10 @@ def gerenciar_avaliacoes_diario(request, turma_id):
 
     # Obter divisão (opcional) da URL
     divisao_id = request.GET.get('divisao')
-    divisao = None
-    if divisao_id:
-        divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
+    if not divisao_id:
+        messages.info(request, 'Selecione o período (bimestre/trimestre) para continuar.')
+        return redirect('diario:disciplina', turma_id=turma.pk, disciplina_id=disciplina.pk)
+    divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
 
     # Processar formulário de criação
     if request.method == 'POST':
@@ -1124,26 +1074,13 @@ def gerenciar_avaliacoes_diario(request, turma_id):
             try:
                 tipo_avaliacao = get_object_or_404(TipoAvaliacao, pk=tipo_avaliacao_id)
                 
-                # Obter uma divisão de período padrão
-                divisao_periodo = DivisaoPeriodoLetivo.objects.first()
-                if not divisao_periodo:
-                    # Criar uma divisão padrão se não existir
-                    divisao_periodo = DivisaoPeriodoLetivo.objects.create(
-                        nome="1º Bimestre",
-                        tipo_divisao="BIMESTRE",
-                        ano_letivo=turma.periodo_letivo,
-                        data_inicio=date.today(),
-                        data_fim=date.today(),
-                        usuario_criacao=request.user
-                    )
-                
                 avaliacao = Avaliacao.objects.create(
                     nome=nome,
                     descricao=descricao,
                     tipo_avaliacao=tipo_avaliacao,
                     turma=turma,
                     disciplina=disciplina,
-                    divisao_periodo=divisao_periodo,
+                    divisao_periodo=divisao,
                     peso=float(peso),
                     data_aplicacao=data_aplicacao,
                     professor=request.user
@@ -1153,12 +1090,10 @@ def gerenciar_avaliacoes_diario(request, turma_id):
                 if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
                     return JsonResponse({'success': True, 'message': f'Avaliação "{nome}" criada com sucesso!'})
 
-                # Preservar parâmetros GET no redirect
-                divisao_id = request.GET.get('divisao', '')
-                redirect_url = f"{reverse('turma:gerenciar_avaliacoes_diario', args=[turma_id])}?disciplina={disciplina_id}"
-                if divisao_id:
-                    redirect_url += f"&divisao={divisao_id}"
-                return redirect(redirect_url)
+                return redirect(
+                    f"{reverse('turma:gerenciar_avaliacoes_diario', args=[turma_id])}"
+                    f"?disciplina={disciplina.pk}&divisao={divisao.pk}"
+                )
                 
             except Exception as e:
                 error_msg = f'Erro ao criar avaliação: {str(e)}'
@@ -1196,6 +1131,7 @@ def gerenciar_avaliacoes_diario(request, turma_id):
     return render(request, 'diario/gerenciar_avaliacoes_diario.html', context)
 
 
+@login_required
 def visualizar_avaliacoes_diario(request, turma_id):
     """Visualiza avaliações no contexto do diário (Espelho do Diário)"""
     turma = get_object_or_404(Turma, pk=turma_id)
@@ -1210,9 +1146,10 @@ def visualizar_avaliacoes_diario(request, turma_id):
 
     # Obter divisão da URL
     divisao_id = request.GET.get('divisao')
-    divisao = None
-    if divisao_id:
-        divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
+    if not divisao_id:
+        messages.info(request, 'Selecione o período (bimestre/trimestre) para continuar.')
+        return redirect('diario:disciplina', turma_id=turma.pk, disciplina_id=disciplina.pk)
+    divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
 
     # Buscar avaliações da turma e disciplina
     avaliacoes = Avaliacao.objects.filter(
@@ -1283,7 +1220,10 @@ def editar_avaliacao_diario(request, avaliacao_id):
                 avaliacao.save()
                 
                 messages.success(request, f'Avaliação "{nome}" atualizada com sucesso!')
-                return redirect(f'/diario/disciplina/avaliacoes/turma/{avaliacao.turma.pk}/?disciplina={avaliacao.disciplina.pk}')
+                return redirect(
+                    f"{reverse('turma:gerenciar_avaliacoes_diario', args=[avaliacao.turma.pk])}"
+                    f"?disciplina={avaliacao.disciplina.pk}&divisao={avaliacao.divisao_periodo.pk}"
+                )
                 
             except Exception as e:
                 messages.error(request, f'Erro ao atualizar avaliação: {str(e)}')
@@ -1306,23 +1246,20 @@ def editar_avaliacao_diario(request, avaliacao_id):
 
 
 @login_required
+@require_POST
 def excluir_avaliacao_diario(request, avaliacao_id):
-    """Exclui avaliação no contexto do diário"""
+    """Exclui avaliação no contexto do diário (somente via POST)"""
     avaliacao = get_object_or_404(Avaliacao, pk=avaliacao_id)
     turma_id = avaliacao.turma.pk
-    disciplina_id = avaliacao.disciplina.pk
+    destino = (
+        f"{reverse('turma:gerenciar_avaliacoes_diario', args=[turma_id])}"
+        f"?disciplina={avaliacao.disciplina.pk}&divisao={avaliacao.divisao_periodo.pk}"
+    )
     nome_avaliacao = avaliacao.nome
-    
-    try:
-        avaliacao.delete()
-        success_msg = f'Avaliação "{nome_avaliacao}" excluída com sucesso!'
-        messages.success(request, success_msg)
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': True, 'message': success_msg})
-    except Exception as e:
-        error_msg = f'Erro ao excluir avaliação: {str(e)}'
-        messages.error(request, error_msg)
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'success': False, 'error': error_msg})
-    
-    return redirect('turma:gerenciar_avaliacoes_diario', turma_id=turma_id)
+    avaliacao.delete()
+
+    success_msg = f'Avaliação "{nome_avaliacao}" excluída com sucesso!'
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        return JsonResponse({'success': True, 'message': success_msg})
+    messages.success(request, success_msg)
+    return redirect(destino)

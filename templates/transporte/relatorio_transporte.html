@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+
+{% block title %}Relatório de Transporte - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        {% include 'partials/page_header.html' with title='Relatório de Transporte' subtitle=mes_atual icon='fa-chart-bar' no_margin=True %}
+        <button type="button" onclick="window.print()" class="btn-secondary shrink-0 no-print"><i class="fas fa-print"></i> Imprimir</button>
+    </div>
+    {% include 'transporte/_nav.html' %}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="card card-body"><p class="detail-label">Viagens no mês</p><p class="text-3xl font-bold">{{ viagens_mes }}</p></div>
+        <div class="card card-body"><p class="detail-label">Km percorridos no mês</p><p class="text-3xl font-bold">{{ km_mes }}</p></div>
+        <div class="card card-body"><p class="detail-label">Alunos transportados no mês</p><p class="text-3xl font-bold">{{ alunos_mes }}</p><p class="text-xs text-gray-500">Soma dos alunos de todas as viagens</p></div>
+    </div>
+    <div class="grid md:grid-cols-2 gap-6">
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Rotas ativas por turno</h2></div>
+            <ul class="divide-y divide-gray-100">{% for turno, total in rotas_por_turno.items %}<li class="px-6 py-3 flex justify-between"><span>{{ turno }}</span><span class="font-semibold">{{ total }}</span></li>{% endfor %}</ul>
+        </div>
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Veículos ativos por tipo</h2></div>
+            <ul class="divide-y divide-gray-100">{% for tipo, total in veiculos_por_tipo.items %}<li class="px-6 py-3 flex justify-between"><span>{{ tipo }}</span><span class="font-semibold">{{ total }}</span></li>{% endfor %}</ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

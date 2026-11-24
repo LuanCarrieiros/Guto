@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static math_filters %}
 
 {% block title %}{{ title }} - GUTO{% endblock %}
 
@@ -288,8 +288,8 @@
             <div class="flex items-center justify-between">
                 <div>
                     <p class="text-gray-300 text-sm font-medium mb-1">Atualizado</p>
-                    <h3 class="text-lg font-bold">{{ "now"|date:"d/m/Y" }}</h3>
-                    <p class="text-xs text-gray-400">{{ "now"|date:"H:i" }}</p>
+                    <h3 class="text-lg font-bold">{% now "d/m/Y" %}</h3>
+                    <p class="text-xs text-gray-400">{% now "H:i" %}</p>
                 </div>
                 <div class="p-3 bg-white bg-opacity-20 rounded-full">
                     <i class="fas fa-clock text-2xl"></i>
@@ -362,7 +362,7 @@
     <div class="print-only hidden mt-8 pt-4 border-t border-gray-200">
         <div class="text-center text-sm text-gray-600">
             <p>{{ title }} - GUTO Sistema de Gestão Educacional</p>
-            <p>Relatório gerado em {{ "now"|date:"d/m/Y H:i" }}</p>
+            <p>Relatório gerado em {% now "d/m/Y H:i" %}</p>
             <p>Total de {{ total_alunos }} aluno{{ total_alunos|pluralize:"s" }} analisado{{ total_alunos|pluralize:"s" }}</p>
         </div>
     </div>

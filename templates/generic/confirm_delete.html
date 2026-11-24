@@ -1,0 +1,36 @@
+{% extends 'base.html' %}
+{% comment %}
+Confirmação genérica de exclusão.
+Contexto: title, object_label, cancel_url, warning (opcional), details (lista opcional de textos)
+O formulário envia confirmar=sim via POST.
+{% endcomment %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    {% include 'partials/page_header.html' with title=title icon='fa-trash-alt' back_url=cancel_url %}
+    <div class="card">
+        <div class="card-body space-y-4">
+            <div class="flex items-start gap-4 p-4 rounded-lg bg-red-50 border border-red-200">
+                <i class="fas fa-exclamation-triangle text-red-600 text-xl mt-0.5"></i>
+                <div>
+                    <p class="font-semibold text-red-800">Tem certeza que deseja excluir <span class="underline">{{ object_label }}</span>?</p>
+                    <p class="text-sm text-red-700 mt-1">{{ warning|default:"Esta ação não pode ser desfeita." }}</p>
+                </div>
+            </div>
+            {% if details %}
+            <ul class="list-disc list-inside text-sm text-gray-700 space-y-1">
+                {% for item in details %}<li>{{ item }}</li>{% endfor %}
+            </ul>
+            {% endif %}
+        </div>
+        <form method="post" class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl flex flex-col-reverse sm:flex-row sm:justify-end gap-3">
+            {% csrf_token %}
+            <input type="hidden" name="confirmar" value="sim">
+            <a href="{{ cancel_url }}" class="btn-secondary">Cancelar</a>
+            <button type="submit" class="btn-danger"><i class="fas fa-trash-alt"></i> Confirmar exclusão</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

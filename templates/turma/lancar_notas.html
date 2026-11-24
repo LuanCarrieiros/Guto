@@ -4,99 +4,22 @@
 
 {% block content %}
 <div class="max-w-7xl mx-auto">
-    <!-- Breadcrumb e Header -->
-    <div class="mb-8">
-        <nav class="flex items-center space-x-2 text-sm text-gray-500 mb-4">
-            <a href="{% url 'diario:home' %}" class="hover:text-blue-600 transition-colors">📚 Diário</a>
-            <i class="fas fa-chevron-right text-xs"></i>
-            <a href="{% url 'diario:turma' view.kwargs.turma_id %}" class="hover:text-blue-600 transition-colors">🎓 Turma</a>
-            {% if request.GET.disciplina %}
-            <i class="fas fa-chevron-right text-xs"></i>
-            <a href="{% url 'diario:disciplina' view.kwargs.turma_id request.GET.disciplina %}" class="hover:text-blue-600 transition-colors">📖 Disciplina</a>
-            {% endif %}
-            {% if request.GET.disciplina and request.GET.divisao %}
-            <i class="fas fa-chevron-right text-xs"></i>
-            <a href="{% url 'diario:divisao' view.kwargs.turma_id request.GET.disciplina request.GET.divisao %}" class="hover:text-blue-600 transition-colors">📅 Período</a>
-            {% endif %}
-            <i class="fas fa-chevron-right text-xs"></i>
-            <span class="text-gray-900 font-medium">⭐ Lançar Notas</span>
-        </nav>
-
-        <div class="bg-gradient-to-r from-orange-500 to-red-600 rounded-xl p-6 text-white shadow-xl">
-            <div class="flex items-center justify-between">
-                <div>
-                    <h1 class="text-3xl font-bold flex items-center">
-                        <span class="text-4xl mr-3">⭐</span>
-                        Lançar Notas
-                    </h1>
-                    <p class="mt-2 text-orange-100">Selecione uma avaliação para lançar as notas</p>
-                    <div class="mt-3 flex items-center space-x-4">
-                        <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
-                            📊 {{ avaliacoes.count }} avaliações
-                        </span>
-                    </div>
-                </div>
-                <div class="flex space-x-3">
-                    {% if request.GET.disciplina and request.GET.divisao %}
-                    <a href="{% url 'diario:divisao' 1 request.GET.disciplina request.GET.divisao %}"
-                       class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Voltar ao Diário
-                    </a>
-                    {% elif request.GET.disciplina %}
-                    <a href="{% url 'diario:disciplina' 1 request.GET.disciplina %}"
-                       class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Voltar à Disciplina
-                    </a>
-                    {% else %}
-                    <a href="{% url 'diario:turma' 1 %}"
-                       class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
-                        <i class="fas fa-arrow-left mr-2"></i>
-                        Voltar à Turma
-                    </a>
-                    {% endif %}
-                    <a href="{% url 'turma:avaliacao_create' %}" class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
-                        <i class="fas fa-plus mr-2"></i>Nova Avaliação
-                    </a>
-                </div>
+    <!-- Cabeçalho -->
+    <div class="mb-8 bg-gradient-to-r from-orange-500 to-red-600 rounded-xl p-6 text-white shadow-xl">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            <div>
+                <h1 class="text-3xl font-bold flex items-center"><span class="text-4xl mr-3">⭐</span>Lançar Notas</h1>
+                <p class="mt-2 text-orange-100">Selecione uma avaliação para lançar as notas no diário eletrônico</p>
+                <span class="inline-block mt-3 bg-white/20 px-3 py-1 rounded-full text-sm font-medium">📊 {{ avaliacoes|length }} avaliações</span>
             </div>
-        </div>
-    </div>
-
-    <!-- Indicador de Progresso - 5 Etapas -->
-    <div class="mb-8">
-        <div class="bg-gradient-to-r from-slate-100 to-gray-100 rounded-xl p-6 shadow-lg">
-            <h2 class="text-xl font-bold text-center text-gray-700 mb-6">
-                📋 Processo do Diário Eletrônico
-            </h2>
-            <div class="flex items-center justify-center space-x-4">
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
-                    <div class="text-purple-600 font-medium ml-2">1. Diário</div>
-                </div>
-                <div class="flex-1 h-2 bg-gradient-to-r from-purple-500 to-cyan-500 rounded max-w-20"></div>
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
-                    <div class="text-cyan-600 font-medium ml-2">2. Turma</div>
-                </div>
-                <div class="flex-1 h-2 bg-gradient-to-r from-cyan-500 to-emerald-500 rounded max-w-20"></div>
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
-                    <div class="text-green-600 font-medium ml-2">3. Disciplina</div>
-                </div>
-                <div class="flex-1 h-2 bg-gradient-to-r from-emerald-500 to-yellow-500 rounded max-w-20"></div>
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-yellow-500 to-orange-500 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg">✓</div>
-                    <div class="text-orange-600 font-medium ml-2">4. Período</div>
-                </div>
-                <div class="flex-1 h-2 bg-gradient-to-r from-orange-500 to-red-500 rounded max-w-20"></div>
-                <div class="flex items-center">
-                    <div class="w-12 h-12 bg-gradient-to-br from-orange-500 to-red-600 rounded-full flex items-center justify-center text-white font-bold text-sm shadow-lg animate-pulse">✓</div>
-                    <div class="text-red-600 font-medium ml-2">5. Ações</div>
-                </div>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'diario:home' %}" class="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
+                    <i class="fas fa-book mr-2"></i>Ir para o Diário
+                </a>
+                <a href="{% url 'turma:avaliacao_create' %}{% if turma_selecionada %}?turma={{ turma_selecionada }}{% if disciplina_selecionada %}&disciplina={{ disciplina_selecionada }}{% endif %}{% endif %}" class="bg-white/20 text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
+                    <i class="fas fa-plus mr-2"></i>Nova Avaliação
+                </a>
             </div>
-            <p class="text-center text-gray-600 text-sm mt-4">⭐ Lançando notas das avaliações</p>
         </div>
     </div>
 
@@ -146,7 +69,7 @@
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h2 class="text-lg font-semibold text-gray-800">Avaliações Disponíveis</h2>
-            <span class="text-sm text-gray-500">{{ avaliacoes.count }} avaliação{{ avaliacoes.count|pluralize:"ões" }}</span>
+            <span class="text-sm text-gray-500">{{ avaliacoes|length }} avaliaç{{ avaliacoes|length|pluralize:"ão,ões" }}</span>
         </div>
 
         {% if avaliacoes %}
@@ -199,7 +122,7 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{% url 'turma:lancar_notas_avaliacao' avaliacao.id %}" 
+                            <a href="{% url 'turma:lancar_notas_diario' avaliacao.turma_id %}?disciplina={{ avaliacao.disciplina_id }}&divisao={{ avaliacao.divisao_periodo_id }}" 
                                class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200">
                                 {% if avaliacao.notas_lancadas %}
                                     <i class="fas fa-edit mr-2"></i>Editar Notas

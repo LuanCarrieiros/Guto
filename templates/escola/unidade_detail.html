@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ unidade.nome }} - Unidade Curricular - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'escola:unidade_list' as lista_url %}
+        {% with carga=unidade.carga_horaria|stringformat:"s" %}
+        {% include 'partials/page_header.html' with title=unidade.nome subtitle="Carga horária: "|add:carga|add:"h" icon='fa-book' back_url=lista_url no_margin=True %}
+        {% endwith %}
+        <a href="{% url 'escola:unidade_edit' unidade.pk %}" class="btn-secondary shrink-0"><i class="fas fa-edit"></i> Editar</a>
+    </div>
+    <div class="card card-body space-y-4">
+        <div><p class="detail-label">Ementa</p><p class="detail-value whitespace-pre-line">{{ unidade.ementa }}</p></div>
+        <div><p class="detail-label">Habilidades específicas</p><p class="detail-value whitespace-pre-line">{{ unidade.habilidades_especificas }}</p></div>
+        <p class="text-xs text-gray-500">Cadastrada em {{ unidade.data_cadastro|date:"d/m/Y" }} por {{ unidade.usuario_cadastro.username }}</p>
+    </div>
+    <div class="card">
+        <div class="card-header"><h2 class="card-title">Itinerários que utilizam esta unidade</h2></div>
+        <ul class="divide-y divide-gray-100">
+            {% for assoc in itinerarios_associados %}
+            <li class="px-6 py-3"><a href="{% url 'escola:itinerario_detail' assoc.itinerario.pk %}" class="font-medium hover:text-indigo-600">{{ assoc.itinerario.nome }}</a> <span class="text-xs text-gray-500">· posição {{ assoc.ordem }} na grade</span></li>
+            {% empty %}
+            <li class="px-6 py-4 text-sm text-gray-500">Esta unidade ainda não faz parte de nenhum itinerário.</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}

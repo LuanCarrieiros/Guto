@@ -1,5 +1,5 @@
 {% extends 'base.html' %}
-{% load static %}
+{% load static math_filters %}
 
 {% block title %}{{ title }} - GUTO{% endblock %}
 
@@ -43,8 +43,8 @@
             </div>
             <div class="flex items-center space-x-4">
                 <select id="year-selector" class="bg-white border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent">
-                    {% for y in "2020,2021,2022,2023,2024,2025"|split:"," %}
-                        <option value="{{ y }}" {% if y|add:0 == ano %}selected{% endif %}>{{ y }}</option>
+                    {% for y in anos_disponiveis %}
+                        <option value="{{ y }}" {% if y == ano %}selected{% endif %}>{{ y }}</option>
                     {% endfor %}
                 </select>
                 <a href="{% url 'censo:exportar_dados' 'matriculas' %}?ano={{ ano }}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors duration-200">
@@ -244,7 +244,7 @@ document.addEventListener('DOMContentLoaded', function() {
     if (yearSelector) {
         yearSelector.addEventListener('change', function() {
             const selectedYear = this.value;
-            window.location.href = `{% url 'censo:censo_escolar_ano' ano=0 %}`.replace('0', selectedYear);
+            window.location.href = `{% url 'censo:censo_escolar' %}${selectedYear}/`;
         });
     }
 

@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Alunos no Transporte - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    {% include 'partials/page_header.html' with title='Alunos no Transporte' subtitle='Alunos vinculados às rotas do transporte escolar' icon='fa-user-graduate' %}
+    {% include 'transporte/_nav.html' %}
+    <div class="card">
+        <form method="get" class="card-header guto-form">
+            <div class="flex flex-wrap gap-3 flex-1">
+                <input type="search" name="busca" value="{{ busca }}" placeholder="Aluno ou responsável" class="!w-56">
+                <select name="rota" class="!w-56"><option value="">Todas as rotas</option>{% for r in rotas_ativas %}<option value="{{ r.pk }}" {% if rota_id == r.pk|stringformat:"s" %}selected{% endif %}>{{ r.nome }}</option>{% endfor %}</select>
+                <select name="situacao" class="!w-40"><option value="">Todas</option>{% for c, n in situacoes %}<option value="{{ c }}" {% if situacao|upper == c %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+                <button type="submit" class="btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+            </div>
+        </form>
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Aluno</th><th>Rota</th><th>Embarque</th><th>Desembarque</th><th>Responsável</th><th>Situação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for a in page_obj %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'alunos:aluno_detail' a.aluno.pk %}" class="hover:text-indigo-600">{{ a.aluno.nome }}</a></td>
+                        <td><a href="{% url 'transporte:rota_detail' a.rota.pk %}" class="hover:text-indigo-600">{{ a.rota.nome }}</a></td>
+                        <td>{{ a.ponto_embarque.nome }}</td>
+                        <td>{{ a.ponto_desembarque.nome }}</td>
+                        <td>{{ a.responsavel_nome }}<p class="text-xs text-gray-500">{{ a.responsavel_telefone }}</p></td>
+                        <td><span class="badge {% if a.situacao == 'ATIVO' %}badge-green{% elif a.situacao == 'SUSPENSO' %}badge-yellow{% else %}badge-gray{% endif %}">{{ a.get_situacao_display }}</span></td>
+                        <td class="text-right"><a href="{% url 'transporte:aluno_transporte_edit' a.pk %}" class="text-gray-500 hover:text-indigo-600"><i class="fas fa-edit"></i></a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+        {% else %}
+            {% include 'partials/empty_state.html' with icon='fa-user-graduate' message='Nenhum aluno encontrado. Para vincular um aluno, abra uma rota e use "Vincular aluno".' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

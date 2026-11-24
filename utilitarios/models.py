@@ -1,7 +1,7 @@
 from django.db import models
+from guto_system.utils import ano_atual
 from django.contrib.auth.models import User
-from django.core.validators import RegexValidator, EmailValidator
-from datetime import date, datetime
+from django.core.validators import RegexValidator
 from alunos.models import Aluno
 
 # ============================================
@@ -196,7 +196,7 @@ class ValorDadoAdicional(models.Model):
 class MatriculaRapida(models.Model):
     """Model para configuração de Matrícula Rápida (RF1902)"""
     nome = models.CharField(max_length=100, verbose_name="Nome da Configuração")
-    ano_administrativo = models.CharField(max_length=4, default=str(date.today().year), verbose_name="Ano Administrativo")
+    ano_administrativo = models.CharField(max_length=4, default=ano_atual, verbose_name="Ano Administrativo")
     tipo_ensino = models.CharField(max_length=50, verbose_name="Tipo de Ensino")
     serie = models.CharField(max_length=50, verbose_name="Série")
     turno = models.CharField(max_length=20, blank=True, null=True, verbose_name="Turno")
@@ -389,27 +389,3 @@ class BloqueioFuncionalidade(models.Model):
     
     def __str__(self):
         return f"{self.modulo} - {self.get_funcionalidade_display()} ({self.get_tipo_bloqueio_display()})"
-
-# ============================================
-# MÓDULO TIPOS DE AVALIAÇÃO (RF1904)
-# ============================================
-
-class TipoAvaliacao(models.Model):
-    """Model para Tipos de Avaliação (RF1904)"""
-    nome = models.CharField(max_length=100, verbose_name="Nome do Tipo")
-    descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
-    peso = models.DecimalField(max_digits=5, decimal_places=2, default=1.0, verbose_name="Peso")
-    valor_maximo = models.DecimalField(max_digits=5, decimal_places=2, default=10.0, verbose_name="Valor Máximo")
-    ativo = models.BooleanField(default=True, verbose_name="Tipo Ativo")
-    
-    # Controle
-    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
-    usuario_criacao = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Criado por")
-    
-    class Meta:
-        verbose_name = "Tipo de Avaliação"
-        verbose_name_plural = "Tipos de Avaliação"
-        ordering = ['nome']
-    
-    def __str__(self):
-        return f"{self.nome} (Peso: {self.peso})"

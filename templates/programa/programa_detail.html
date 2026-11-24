@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ programa.nome }} - Programa - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'programa:programa_list' as lista_url %}
+        {% include 'partials/page_header.html' with title=programa.nome subtitle=programa.get_tipo_programa_display icon='fa-book-open' back_url=lista_url no_margin=True %}
+        <div class="flex flex-wrap gap-3 shrink-0">
+            <a href="{% url 'programa:programa_edit' programa.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            <a href="{% url 'programa:participante_list' programa.pk %}" class="btn-secondary"><i class="fas fa-users"></i> Participantes</a>
+            <a href="{% url 'programa:modulo_create' %}?programa={{ programa.pk }}" class="btn-primary"><i class="fas fa-plus"></i> Novo módulo</a>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="card card-body"><p class="detail-label">Situação</p><p class="mt-1"><span class="badge {% if programa.status == 'ATIVO' %}badge-green{% elif programa.status == 'PLANEJAMENTO' %}badge-blue{% elif programa.status == 'SUSPENSO' %}badge-yellow{% else %}badge-gray{% endif %}">{{ programa.get_status_display }}</span>{% if programa.aprovado %} <span class="badge badge-purple">Aprovado</span>{% endif %}</p></div>
+        <div class="card card-body"><p class="detail-label">Participantes</p><p class="text-2xl font-bold">{{ total_participantes }} / {{ programa.vagas_disponiveis }}</p></div>
+        <div class="card card-body"><p class="detail-label">Aulas realizadas</p><p class="text-2xl font-bold">{{ aulas_realizadas }} / {{ total_aulas }}</p></div>
+        <div class="card card-body"><p class="detail-label">Carga horária</p><p class="text-2xl font-bold">{{ programa.carga_horaria_total }}h</p></div>
+    </div>
+
+    <div class="card card-body space-y-4">
+        <div class="detail-grid">
+            <div><p class="detail-label">Período</p><p class="detail-value">{{ programa.data_inicio|date:"d/m/Y" }} a {{ programa.data_fim|date:"d/m/Y" }} ({{ programa.dias_duracao }} dias)</p></div>
+            <div><p class="detail-label">Modalidade</p><p class="detail-value">{{ programa.get_modalidade_display }}</p></div>
+            <div><p class="detail-label">Coordenador</p><p class="detail-value">{{ programa.coordenador.nome|default:"Não definido" }}</p></div>
+            <div><p class="detail-label">Faixa etária</p><p class="detail-value">{% if programa.idade_minima or programa.idade_maxima %}{{ programa.idade_minima|default:"0" }} a {{ programa.idade_maxima|default:"—" }} anos{% else %}Livre{% endif %}</p></div>
+            {% if programa.data_aprovacao %}<div><p class="detail-label">Aprovado em</p><p class="detail-value">{{ programa.data_aprovacao|date:"d/m/Y" }}</p></div>{% endif %}
+        </div>
+        <div><p class="detail-label">Descrição</p><p class="detail-value whitespace-pre-line">{{ programa.descricao }}</p></div>
+        <details class="group">
+            <summary class="cursor-pointer text-sm font-medium text-indigo-600">Objetivos, público-alvo e recursos</summary>
+            <div class="mt-4 grid md:grid-cols-2 gap-4">
+                <div><p class="detail-label">Objetivos gerais</p><p class="detail-value whitespace-pre-line">{{ programa.objetivos_gerais }}</p></div>
+                <div><p class="detail-label">Objetivos específicos</p><p class="detail-value whitespace-pre-line">{{ programa.objetivos_especificos }}</p></div>
+                <div><p class="detail-label">Competências</p><p class="detail-value whitespace-pre-line">{{ programa.competencias }}</p></div>
+                <div><p class="detail-label">Habilidades</p><p class="detail-value whitespace-pre-line">{{ programa.habilidades }}</p></div>
+                <div><p class="detail-label">Público-alvo</p><p class="detail-value whitespace-pre-line">{{ programa.publico_alvo }}</p></div>
+                <div><p class="detail-label">Critérios de aprovação</p><p class="detail-value whitespace-pre-line">{{ programa.criterios_aprovacao|default:"—" }}</p></div>
+                <div><p class="detail-label">Recursos humanos</p><p class="detail-value whitespace-pre-line">{{ programa.recursos_humanos|default:"—" }}</p></div>
+                <div><p class="detail-label">Recursos materiais / tecnológicos</p><p class="detail-value whitespace-pre-line">{{ programa.recursos_materiais|default:"—" }} {{ programa.recursos_tecnologicos|default:"" }}</p></div>
+            </div>
+        </details>
+    </div>
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card">
+            <div class="card-header"><h2 class="card-title">Módulos</h2></div>
+            {% if modulos %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>#</th><th>Módulo</th><th>Período</th><th>Professor</th><th>Aulas</th><th></th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for m in modulos %}
+                        <tr>
+                            <td class="text-gray-400">{{ m.ordem }}</td>
+                            <td class="font-medium"><a href="{% url 'programa:modulo_detail' m.pk %}" class="hover:text-indigo-600">{{ m.nome }}</a>{% if not m.ativo %} <span class="badge badge-gray">Inativo</span>{% endif %}</td>
+                            <td>{{ m.data_inicio|date:"d/m" }}–{{ m.data_fim|date:"d/m/Y" }}</td>
+                            <td>{{ m.professor_responsavel.nome|default:"—" }}</td>
+                            <td>{{ m.total_aulas }}</td>
+                            <td class="text-right"><a href="{% url 'programa:aula_create' %}?modulo={{ m.pk }}" class="text-indigo-600 hover:underline text-xs">+ aula</a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                {% url 'programa:modulo_create' as novo_url %}
+                {% include 'partials/empty_state.html' with icon='fa-layer-group' message='Nenhum módulo cadastrado.' %}
+            {% endif %}
+        </div>
+        <div class="card self-start">
+            <div class="card-header"><h2 class="card-title">Participantes</h2><a href="{% url 'programa:participante_create' programa.pk %}" class="text-sm text-indigo-600 hover:underline">+ Inscrever</a></div>
+            <ul class="divide-y divide-gray-100">
+                {% for p in participantes %}
+                <li class="px-6 py-3 text-sm flex justify-between"><span>{{ p.aluno.nome }}</span><span class="text-gray-500">{{ p.frequencia_total|floatformat:0 }}%</span></li>
+                {% empty %}
+                <li class="px-6 py-4 text-sm text-gray-500">Nenhum participante ativo.</li>
+                {% endfor %}
+            </ul>
+            {% if total_participantes > 10 %}<div class="px-6 py-3 border-t border-gray-100"><a href="{% url 'programa:participante_list' programa.pk %}" class="text-sm text-indigo-600 hover:underline">Ver todos ({{ total_participantes }}) →</a></div>{% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

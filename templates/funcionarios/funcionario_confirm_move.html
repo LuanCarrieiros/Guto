@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+
+{% block title %}Arquivo do Funcionário - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto">
+    {% url 'funcionarios:funcionario_detail' funcionario.pk as detalhe_url %}
+    {% include 'partials/page_header.html' with title='Mover para outro arquivo' subtitle=funcionario.nome icon='fa-archive' back_url=detalhe_url %}
+    <div class="card">
+        <div class="card-body">
+            {% if destino == 'PERMANENTE' %}
+            <p class="text-gray-700">O funcionário <strong>{{ funcionario.nome }}</strong> será movido para o <strong>Arquivo Permanente</strong> e deixará de aparecer entre os funcionários ativos. O cadastro e o histórico são preservados e ele pode voltar ao arquivo corrente a qualquer momento.</p>
+            {% else %}
+            <p class="text-gray-700">O funcionário <strong>{{ funcionario.nome }}</strong> voltará para o <strong>Arquivo Corrente</strong> e aparecerá novamente entre os funcionários ativos.</p>
+            {% endif %}
+        </div>
+        <form method="post" class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl flex justify-end gap-3">
+            {% csrf_token %}
+            <a href="{{ detalhe_url }}" class="btn-secondary">Cancelar</a>
+            <button type="submit" class="btn-warning"><i class="fas fa-archive"></i> Mover para o arquivo {{ destino|lower }}</button>
+        </form>
+    </div>
+</div>
+{% endblock %}

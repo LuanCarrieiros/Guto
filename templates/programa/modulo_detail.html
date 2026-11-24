@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ modulo.nome }} - Módulo - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'programa:programa_detail' modulo.programa.pk as programa_url %}
+        {% include 'partials/page_header.html' with title=modulo.nome subtitle=modulo.programa.nome icon='fa-layer-group' back_url=programa_url no_margin=True %}
+        <div class="flex gap-3 shrink-0">
+            <a href="{% url 'programa:modulo_edit' modulo.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            <a href="{% url 'programa:aula_create' %}?modulo={{ modulo.pk }}" class="btn-primary"><i class="fas fa-plus"></i> Nova aula</a>
+        </div>
+    </div>
+    <div class="card card-body space-y-4">
+        <div class="detail-grid">
+            <div><p class="detail-label">Ordem no programa</p><p class="detail-value">{{ modulo.ordem }}º módulo</p></div>
+            <div><p class="detail-label">Período</p><p class="detail-value">{{ modulo.data_inicio|date:"d/m/Y" }} a {{ modulo.data_fim|date:"d/m/Y" }}</p></div>
+            <div><p class="detail-label">Carga horária</p><p class="detail-value">{{ modulo.carga_horaria }}h</p></div>
+            <div><p class="detail-label">Professor responsável</p><p class="detail-value">{{ modulo.professor_responsavel.nome|default:"—" }}</p></div>
+            <div><p class="detail-label">Situação</p><p class="detail-value">{% if modulo.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</p></div>
+        </div>
+        <div><p class="detail-label">Descrição</p><p class="detail-value whitespace-pre-line">{{ modulo.descricao }}</p></div>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div><p class="detail-label">Conteúdo programático</p><p class="detail-value whitespace-pre-line">{{ modulo.conteudo_programatico }}</p></div>
+            <div><p class="detail-label">Metodologia</p><p class="detail-value whitespace-pre-line">{{ modulo.metodologia }}</p></div>
+        </div>
+    </div>
+    <div class="card">
+        <div class="card-header"><h2 class="card-title">Aulas ({{ aulas|length }})</h2></div>
+        {% if aulas %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Nº</th><th>Aula</th><th>Data</th><th>Horário</th><th>Professor</th><th>Presença</th><th>Situação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for a in aulas %}
+                    <tr>
+                        <td class="text-gray-400">{{ a.numero_aula }}</td>
+                        <td class="font-medium">{{ a.titulo }}<p class="text-xs text-gray-500">{{ a.get_tipo_aula_display }}</p></td>
+                        <td>{{ a.data_planejada|date:"d/m/Y" }}</td>
+                        <td>{{ a.horario_inicio|time:"H:i" }}–{{ a.horario_fim|time:"H:i" }}</td>
+                        <td>{{ a.professor.nome|default:"—" }}</td>
+                        <td>{% if a.total_alunos %}{{ a.presentes }}/{{ a.total_alunos }} ({{ a.taxa_presenca|floatformat:0 }}%){% else %}—{% endif %}</td>
+                        <td><span class="badge {% if a.status == 'REALIZADA' %}badge-green{% elif a.status == 'PLANEJADA' %}badge-blue{% elif a.status == 'ADIADA' %}badge-yellow{% else %}badge-gray{% endif %}">{{ a.get_status_display }}</span></td>
+                        <td class="text-right">{% if a.status != 'CANCELADA' %}<a href="{% url 'programa:frequencia_aula' a.pk %}" class="btn-sm btn-secondary"><i class="fas fa-user-check"></i> Frequência</a>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% include 'partials/empty_state.html' with icon='fa-chalkboard' message='Nenhuma aula cadastrada neste módulo.' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

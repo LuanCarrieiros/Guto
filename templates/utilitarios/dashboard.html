@@ -1,451 +1,48 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Centro de Controle - GUTO{% endblock %}
-
-{% block extra_css %}
-<style>
-    .stats-card {
-        background: linear-gradient(135deg, var(--tw-gradient-from), var(--tw-gradient-to));
-        transition: all 0.3s ease;
-    }
-    .stats-card:hover {
-        transform: translateY(-4px);
-        box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
-    }
-    
-    .activity-item {
-        border-left: 3px solid transparent;
-        transition: all 0.2s ease;
-    }
-    .activity-item:hover {
-        border-left-color: #4F46E5;
-        background-color: #F8FAFC;
-    }
-    
-    .pulse-dot {
-        animation: pulse 2s infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { opacity: 1; }
-        50% { opacity: 0.5; }
-    }
-</style>
-{% endblock %}
+{% block title %}Utilitários - GUTO{% endblock %}
 
 {% block content %}
-<div class="p-8 max-w-7xl mx-auto">
-    <!-- Header Section -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-8">
-        <div>
-            <h1 class="text-4xl font-bold text-gray-900 mb-2">
-                <i class="fas fa-tools text-guto-blue mr-3"></i>
-                Centro de Controle
-            </h1>
-            <p class="text-lg text-gray-600">Administração e monitoramento do sistema GUTO</p>
-            <div class="flex items-center mt-2 text-sm text-gray-500">
-                <i class="fas fa-clock mr-2"></i>
-                <span>Última atualização: <span id="last-update">{{ now|date:"H:i" }}</span></span>
-            </div>
-        </div>
-        
-        <!-- Quick Actions -->
-        <div class="flex flex-wrap gap-3 mt-4 lg:mt-0">
-            <a href="{% url 'utilitarios:gerenciar_usuarios' %}" class="flex items-center space-x-2 bg-guto-blue text-white px-4 py-2 rounded-xl hover:bg-blue-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                <i class="fas fa-plus w-4 h-4"></i>
-                <span>Novo Usuário</span>
-            </a>
-            <button class="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-xl hover:bg-green-700 transition-all duration-300 shadow-lg hover:shadow-xl">
-                <i class="fas fa-download w-4 h-4"></i>
-                <span>Backup</span>
-            </button>
-            <a href="{% url 'utilitarios:auditoria' %}" class="flex items-center space-x-2 bg-orange-500 text-white px-4 py-2 rounded-xl hover:bg-orange-600 transition-all duration-300 shadow-lg hover:shadow-xl">
-                <i class="fas fa-chart-line w-4 h-4"></i>
-                <span>Relatórios</span>
-            </a>
-        </div>
+<div class="max-w-7xl mx-auto">
+    {% include 'partials/page_header.html' with title='Utilitários' subtitle='Administração de usuários, permissões, cadastros auxiliares e auditoria do sistema' icon='fa-tools' %}
+    {% include 'utilitarios/_nav.html' %}
+
+    <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="card card-body border-l-4 border-teal-500"><p class="detail-label">Usuários ativos</p><p class="text-3xl font-bold text-gray-900">{{ usuarios_ativos }}<span class="text-base text-gray-500 font-normal"> / {{ total_usuarios }}</span></p></div>
+        <div class="card card-body border-l-4 border-indigo-500"><p class="detail-label">Grupos de acesso</p><p class="text-3xl font-bold text-gray-900">{{ total_grupos }}</p></div>
+        <div class="card card-body border-l-4 border-amber-500"><p class="detail-label">Transferências pendentes</p><p class="text-3xl font-bold text-gray-900">{{ total_solicitacoes }}</p></div>
+        <div class="card card-body border-l-4 border-red-500"><p class="detail-label">Bloqueios ativos</p><p class="text-3xl font-bold text-gray-900">{{ bloqueios_ativos }}</p></div>
     </div>
 
-    <!-- Statistics Cards -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Total Users Card -->
-        <div class="stats-card bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl p-6 text-white relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-white bg-opacity-10 rounded-full -translate-y-6 translate-x-6"></div>
-            <div class="relative">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white bg-opacity-20 rounded-xl">
-                        <i class="fas fa-users text-2xl"></i>
-                    </div>
-                    <span class="pulse-dot w-3 h-3 bg-green-400 rounded-full"></span>
-                </div>
-                <h3 class="text-3xl font-bold mb-1">{{ total_usuarios|default:"0" }}</h3>
-                <p class="text-blue-100 text-sm">Usuários Cadastrados</p>
-                <div class="flex items-center mt-3 text-xs">
-                    <i class="fas fa-arrow-up mr-1"></i>
-                    <span>Sistema ativo</span>
-                </div>
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card">
+            <div class="card-header"><h2 class="card-title">Ações rápidas</h2></div>
+            <div class="card-body grid sm:grid-cols-2 gap-4">
+                <a href="{% url 'utilitarios:criar_usuario' %}" class="action-card group"><div class="action-card-icon bg-teal-100 text-teal-600"><i class="fas fa-user-plus"></i></div><div class="action-card-content"><p class="action-card-title">Novo usuário</p><p class="action-card-description">Cadastrar acesso ao sistema</p></div></a>
+                <a href="{% url 'utilitarios:gerenciar_grupos' %}" class="action-card group"><div class="action-card-icon bg-indigo-100 text-indigo-600"><i class="fas fa-user-shield"></i></div><div class="action-card-content"><p class="action-card-title">Grupos e permissões</p><p class="action-card-description">Definir o que cada perfil pode fazer</p></div></a>
+                <a href="{% url 'utilitarios:instituicoes' %}" class="action-card group"><div class="action-card-icon bg-sky-100 text-sky-600"><i class="fas fa-school"></i></div><div class="action-card-content"><p class="action-card-title">Instituições</p><p class="action-card-description">{{ total_instituicoes }} cadastrada{{ total_instituicoes|pluralize }}</p></div></a>
+                <a href="{% url 'utilitarios:solicitacoes_transferencia' %}" class="action-card group"><div class="action-card-icon bg-amber-100 text-amber-600"><i class="fas fa-exchange-alt"></i></div><div class="action-card-content"><p class="action-card-title">Transferências</p><p class="action-card-description">Solicitar e processar transferências</p></div></a>
+                <a href="{% url 'utilitarios:bloqueios_funcionalidade' %}" class="action-card group"><div class="action-card-icon bg-red-100 text-red-600"><i class="fas fa-ban"></i></div><div class="action-card-content"><p class="action-card-title">Bloqueios</p><p class="action-card-description">Bloquear inclusão/alteração por módulo</p></div></a>
+                <a href="{% url 'admin:index' %}" class="action-card group"><div class="action-card-icon bg-gray-100 text-gray-600"><i class="fas fa-database"></i></div><div class="action-card-content"><p class="action-card-title">Administração Django</p><p class="action-card-description">Acesso direto aos cadastros</p></div></a>
             </div>
         </div>
-
-        <!-- Access Groups Card -->
-        <div class="stats-card bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl p-6 text-white relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-white bg-opacity-10 rounded-full -translate-y-6 translate-x-6"></div>
-            <div class="relative">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white bg-opacity-20 rounded-xl">
-                        <i class="fas fa-user-tag text-2xl"></i>
-                    </div>
-                    <span class="pulse-dot w-3 h-3 bg-yellow-400 rounded-full"></span>
-                </div>
-                <h3 class="text-3xl font-bold mb-1">{{ total_grupos|default:"0" }}</h3>
-                <p class="text-purple-100 text-sm">Grupos de Acesso</p>
-                <div class="flex items-center mt-3 text-xs">
-                    <i class="fas fa-check mr-1"></i>
-                    <span>Todos configurados</span>
-                </div>
+        <div class="card">
+            <div class="card-header">
+                <h2 class="card-title">Atividade recente</h2>
+                <span class="badge badge-gray">{{ registros_hoje }} hoje</span>
             </div>
-        </div>
-
-        <!-- Institutions Card -->
-        <div class="stats-card bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl p-6 text-white relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-white bg-opacity-10 rounded-full -translate-y-6 translate-x-6"></div>
-            <div class="relative">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white bg-opacity-20 rounded-xl">
-                        <i class="fas fa-building text-2xl"></i>
-                    </div>
-                    <span class="pulse-dot w-3 h-3 bg-blue-400 rounded-full"></span>
-                </div>
-                <h3 class="text-3xl font-bold mb-1">{{ total_instituicoes|default:"0" }}</h3>
-                <p class="text-emerald-100 text-sm">Instituições</p>
-                <div class="flex items-center mt-3 text-xs">
-                    <i class="fas fa-sync mr-1"></i>
-                    <span>Sincronizado</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Pending Requests Card -->
-        <div class="stats-card bg-gradient-to-br from-orange-500 to-red-500 rounded-2xl p-6 text-white relative overflow-hidden">
-            <div class="absolute top-0 right-0 w-24 h-24 bg-white bg-opacity-10 rounded-full -translate-y-6 translate-x-6"></div>
-            <div class="relative">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="p-3 bg-white bg-opacity-20 rounded-xl">
-                        <i class="fas fa-clock text-2xl"></i>
-                    </div>
-                    {% if total_solicitacoes > 0 %}
-                        <span class="pulse-dot w-3 h-3 bg-red-400 rounded-full"></span>
-                    {% else %}
-                        <span class="w-3 h-3 bg-green-400 rounded-full"></span>
-                    {% endif %}
-                </div>
-                <h3 class="text-3xl font-bold mb-1">{{ total_solicitacoes|default:"0" }}</h3>
-                <p class="text-orange-100 text-sm">Solicitações Pendentes</p>
-                {% if total_solicitacoes > 0 %}
-                    <div class="flex items-center mt-3 text-xs">
-                        <i class="fas fa-exclamation-triangle mr-1"></i>
-                        <span>Requer atenção</span>
-                    </div>
-                {% else %}
-                    <div class="flex items-center mt-3 text-xs">
-                        <i class="fas fa-check mr-1"></i>
-                        <span>Tudo em dia</span>
-                    </div>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-
-    <!-- Main Content Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        
-        <!-- Quick Access Panel -->
-        <div class="lg:col-span-2">
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                <div class="bg-gradient-to-r from-gray-50 to-blue-50 px-6 py-4 border-b border-gray-100">
-                    <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-                        <i class="fas fa-bolt text-guto-blue mr-3"></i>
-                        Acesso Rápido
-                    </h2>
-                </div>
-                
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <!-- User Management -->
-                        <a href="{% url 'utilitarios:gerenciar_usuarios' %}" class="group flex items-center p-4 rounded-xl border-2 border-gray-100 hover:border-blue-200 hover:bg-blue-50 transition-all duration-300">
-                            <div class="p-3 bg-blue-100 rounded-xl group-hover:bg-blue-200 transition-colors duration-300">
-                                <i class="fas fa-users-cog text-blue-600 text-xl"></i>
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-semibold text-gray-900 group-hover:text-blue-700">Gerenciar Usuários</h3>
-                                <p class="text-sm text-gray-600">Criar, editar e gerenciar usuários</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-400 group-hover:text-blue-500 group-hover:transform group-hover:translate-x-1 transition-all duration-300"></i>
-                        </a>
-
-                        <!-- Access Groups -->
-                        <a href="{% url 'utilitarios:gerenciar_grupos' %}" class="group flex items-center p-4 rounded-xl border-2 border-gray-100 hover:border-purple-200 hover:bg-purple-50 transition-all duration-300">
-                            <div class="p-3 bg-purple-100 rounded-xl group-hover:bg-purple-200 transition-colors duration-300">
-                                <i class="fas fa-user-shield text-purple-600 text-xl"></i>
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-semibold text-gray-900 group-hover:text-purple-700">Grupos de Acesso</h3>
-                                <p class="text-sm text-gray-600">Configurar permissões e grupos</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-400 group-hover:text-purple-500 group-hover:transform group-hover:translate-x-1 transition-all duration-300"></i>
-                        </a>
-
-                        <!-- System Audit -->
-                        <a href="{% url 'utilitarios:auditoria' %}" class="group flex items-center p-4 rounded-xl border-2 border-gray-100 hover:border-emerald-200 hover:bg-emerald-50 transition-all duration-300">
-                            <div class="p-3 bg-emerald-100 rounded-xl group-hover:bg-emerald-200 transition-colors duration-300">
-                                <i class="fas fa-search text-emerald-600 text-xl"></i>
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-semibold text-gray-900 group-hover:text-emerald-700">Auditoria do Sistema</h3>
-                                <p class="text-sm text-gray-600">Logs e atividades do sistema</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-400 group-hover:text-emerald-500 group-hover:transform group-hover:translate-x-1 transition-all duration-300"></i>
-                        </a>
-
-                        <!-- System Settings -->
-                        <a href="{% url 'utilitarios:configuracoes_sistema' %}" class="group flex items-center p-4 rounded-xl border-2 border-gray-100 hover:border-orange-200 hover:bg-orange-50 transition-all duration-300">
-                            <div class="p-3 bg-orange-100 rounded-xl group-hover:bg-orange-200 transition-colors duration-300">
-                                <i class="fas fa-cog text-orange-600 text-xl"></i>
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-semibold text-gray-900 group-hover:text-orange-700">Configurações</h3>
-                                <p class="text-sm text-gray-600">Configurações gerais do sistema</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-400 group-hover:text-orange-500 group-hover:transform group-hover:translate-x-1 transition-all duration-300"></i>
-                        </a>
-
-                        <!-- Transfer Requests -->
-                        <a href="{% url 'utilitarios:solicitacoes_transferencia' %}" class="group flex items-center p-4 rounded-xl border-2 border-gray-100 hover:border-indigo-200 hover:bg-indigo-50 transition-all duration-300">
-                            <div class="p-3 bg-indigo-100 rounded-xl group-hover:bg-indigo-200 transition-colors duration-300">
-                                <i class="fas fa-exchange-alt text-indigo-600 text-xl"></i>
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-semibold text-gray-900 group-hover:text-indigo-700">Transferências</h3>
-                                <p class="text-sm text-gray-600">Solicitações de transferência</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-400 group-hover:text-indigo-500 group-hover:transform group-hover:translate-x-1 transition-all duration-300"></i>
-                        </a>
-
-                        <!-- System Blocks -->
-                        <a href="{% url 'utilitarios:bloqueios_funcionalidade' %}" class="group flex items-center p-4 rounded-xl border-2 border-gray-100 hover:border-red-200 hover:bg-red-50 transition-all duration-300">
-                            <div class="p-3 bg-red-100 rounded-xl group-hover:bg-red-200 transition-colors duration-300">
-                                <i class="fas fa-ban text-red-600 text-xl"></i>
-                            </div>
-                            <div class="ml-4 flex-1">
-                                <h3 class="font-semibold text-gray-900 group-hover:text-red-700">Bloqueios</h3>
-                                <p class="text-sm text-gray-600">Bloqueios de funcionalidades</p>
-                            </div>
-                            <i class="fas fa-chevron-right text-gray-400 group-hover:text-red-500 group-hover:transform group-hover:translate-x-1 transition-all duration-300"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- System Health -->
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden mt-8">
-                <div class="bg-gradient-to-r from-gray-50 to-green-50 px-6 py-4 border-b border-gray-100">
-                    <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-                        <i class="fas fa-heartbeat text-green-600 mr-3"></i>
-                        Status do Sistema
-                    </h2>
-                </div>
-                
-                <div class="p-6">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <!-- Database Status -->
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-database text-green-600"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-gray-600">Banco de Dados</p>
-                                <p class="font-semibold text-green-600 flex items-center">
-                                    <span class="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-                                    Online
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Server Status -->
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-server text-blue-600"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-gray-600">Servidor</p>
-                                <p class="font-semibold text-blue-600 flex items-center">
-                                    <span class="w-2 h-2 bg-blue-500 rounded-full mr-2"></span>
-                                    Ativo
-                                </p>
-                            </div>
-                        </div>
-
-                        <!-- Backup Status -->
-                        <div class="flex items-center">
-                            <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                                <i class="fas fa-shield-alt text-purple-600"></i>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-sm text-gray-600">Último Backup</p>
-                                <p class="font-semibold text-purple-600 flex items-center">
-                                    <span class="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
-                                    Hoje
-                                </p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Recent Activity -->
-        <div class="lg:col-span-1">
-            <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
-                <div class="bg-gradient-to-r from-gray-50 to-indigo-50 px-6 py-4 border-b border-gray-100">
-                    <h2 class="text-xl font-semibold text-gray-900 flex items-center">
-                        <i class="fas fa-history text-indigo-600 mr-3"></i>
-                        Atividade Recente
-                    </h2>
-                </div>
-                
-                <div class="p-6 max-h-96 overflow-y-auto">
-                    <div class="space-y-4">
-                        <!-- Sample Activity Items -->
-                        <div class="activity-item flex items-start p-3 rounded-lg">
-                            <div class="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center mr-3">
-                                <i class="fas fa-user-plus text-blue-600 text-sm"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Novo usuário cadastrado</p>
-                                <p class="text-xs text-gray-600">Sistema - Administrador</p>
-                                <p class="text-xs text-gray-400 mt-1">há 2 minutos</p>
-                            </div>
-                        </div>
-
-                        <div class="activity-item flex items-start p-3 rounded-lg">
-                            <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center mr-3">
-                                <i class="fas fa-cog text-green-600 text-sm"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Configuração alterada</p>
-                                <p class="text-xs text-gray-600">Sistema de backup automático</p>
-                                <p class="text-xs text-gray-400 mt-1">há 15 minutos</p>
-                            </div>
-                        </div>
-
-                        <div class="activity-item flex items-start p-3 rounded-lg">
-                            <div class="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center mr-3">
-                                <i class="fas fa-key text-purple-600 text-sm"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Permissão atualizada</p>
-                                <p class="text-xs text-gray-600">Grupo Coordenadores</p>
-                                <p class="text-xs text-gray-400 mt-1">há 1 hora</p>
-                            </div>
-                        </div>
-
-                        <div class="activity-item flex items-start p-3 rounded-lg">
-                            <div class="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center mr-3">
-                                <i class="fas fa-download text-orange-600 text-sm"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Backup realizado</p>
-                                <p class="text-xs text-gray-600">Backup automático diário</p>
-                                <p class="text-xs text-gray-400 mt-1">há 3 horas</p>
-                            </div>
-                        </div>
-
-                        <div class="activity-item flex items-start p-3 rounded-lg">
-                            <div class="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center mr-3">
-                                <i class="fas fa-shield-alt text-red-600 text-sm"></i>
-                            </div>
-                            <div class="flex-1">
-                                <p class="text-sm font-medium text-gray-900">Tentativa de acesso</p>
-                                <p class="text-xs text-gray-600">Login bloqueado por segurança</p>
-                                <p class="text-xs text-gray-400 mt-1">há 6 horas</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-6 text-center">
-                        <a href="{% url 'utilitarios:auditoria' %}" class="text-guto-blue hover:text-blue-700 text-sm font-medium flex items-center justify-center">
-                            Ver todos os logs
-                            <i class="fas fa-arrow-right ml-2 text-xs"></i>
-                        </a>
-                    </div>
-                </div>
-            </div>
+            <ul class="divide-y divide-gray-100">
+                {% for r in ultimos_registros %}
+                <li class="px-6 py-3 text-sm">
+                    <p class="text-gray-900"><span class="font-medium">{{ r.usuario.username }}</span> · {{ r.get_acao_display }} · {{ r.tela }}</p>
+                    <p class="text-xs text-gray-500">{{ r.data_acao|date:"d/m/Y H:i" }} · {{ r.funcionalidade }}</p>
+                </li>
+                {% empty %}
+                <li class="px-6 py-6 text-sm text-gray-500 text-center">Nenhum registro de auditoria ainda.</li>
+                {% endfor %}
+            </ul>
+            <div class="px-6 py-3 border-t border-gray-100"><a href="{% url 'utilitarios:auditoria' %}" class="text-sm text-indigo-600 hover:underline">Ver auditoria completa →</a></div>
         </div>
     </div>
 </div>
-
-<!-- JavaScript for Dashboard Interactions -->
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    // Stats card hover effects
-    const statsCards = document.querySelectorAll('.stats-card');
-    statsCards.forEach(card => {
-        card.addEventListener('mouseenter', function() {
-            this.style.transform = 'translateY(-8px) scale(1.02)';
-        });
-        
-        card.addEventListener('mouseleave', function() {
-            this.style.transform = 'translateY(0) scale(1)';
-        });
-    });
-
-    // Auto-refresh data every 30 seconds
-    function refreshDashboardData() {
-        const now = new Date();
-        document.getElementById('last-update').textContent = now.getHours().toString().padStart(2, '0') + ':' + now.getMinutes().toString().padStart(2, '0');
-        
-        // Simulate real-time updates
-        const pulseElements = document.querySelectorAll('.pulse-dot');
-        pulseElements.forEach(dot => {
-            dot.style.opacity = '0.3';
-            setTimeout(() => {
-                dot.style.opacity = '1';
-            }, 500);
-        });
-    }
-
-    // Refresh data periodically
-    setInterval(refreshDashboardData, 30000);
-
-    // Add click analytics
-    const quickAccessLinks = document.querySelectorAll('a[href*="utilitarios"]');
-    quickAccessLinks.forEach(link => {
-        link.addEventListener('click', function(e) {
-            const linkName = this.querySelector('h3').textContent;
-            console.log(`Quick access clicked: ${linkName}`);
-            
-            // Add visual feedback
-            this.style.transform = 'scale(0.98)';
-            setTimeout(() => {
-                this.style.transform = 'scale(1)';
-            }, 150);
-        });
-    });
-
-    // Add loading states for buttons
-    const actionButtons = document.querySelectorAll('button, a[class*="bg-"]');
-    actionButtons.forEach(button => {
-        button.addEventListener('click', function() {
-            const originalContent = this.innerHTML;
-            if (this.tagName === 'BUTTON') {
-                this.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Carregando...';
-                setTimeout(() => {
-                    this.innerHTML = originalContent;
-                }, 1500);
-            }
-        });
-    });
-});
-</script>
 {% endblock %}

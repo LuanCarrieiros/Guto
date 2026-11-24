@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
-from datetime import date, timedelta
-from alunos.models import Aluno, Matricula, DocumentacaoAluno, Responsavel, TransporteAluno
+from datetime import date
+from alunos.models import Aluno, Matricula, DocumentacaoAluno
 
 
 class AlunoModelTest(TestCase):
@@ -259,7 +259,7 @@ class AlunoViewsTest(TestCase):
             'sexo': 'F',
         }
 
-        response = self.client.post(
+        self.client.post(
             f'/alunos/{self.aluno.codigo}/editar/',
             data
         )

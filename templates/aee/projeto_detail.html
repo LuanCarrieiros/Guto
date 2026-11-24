@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ projeto.nome }} - AEE - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'aee:projetos_list' as lista_url %}
+        {% include 'partials/page_header.html' with title=projeto.nome subtitle=projeto.get_tipo_projeto_display icon='fa-lightbulb' back_url=lista_url no_margin=True %}
+        <div class="flex gap-3 shrink-0">
+            <a href="{% url 'aee:projeto_edit' projeto.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            {% if projeto.ativo %}<a href="{% url 'aee:turma_create' %}?projeto={{ projeto.pk }}" class="btn-primary"><i class="fas fa-plus"></i> Nova turma</a>{% endif %}
+        </div>
+    </div>
+    <div class="card card-body">
+        <div class="detail-grid">
+            <div><p class="detail-label">Período letivo</p><p class="detail-value">{{ projeto.periodo_letivo }}</p></div>
+            <div><p class="detail-label">Carga horária semanal</p><p class="detail-value">{{ projeto.carga_horaria }}h</p></div>
+            <div><p class="detail-label">Situação</p><p class="detail-value">{% if projeto.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</p></div>
+        </div>
+        {% if projeto.descricao %}<div class="mt-4"><p class="detail-label">Descrição</p><p class="detail-value whitespace-pre-line">{{ projeto.descricao }}</p></div>{% endif %}
+        <p class="text-xs text-gray-500 mt-4">Criado em {{ projeto.data_criacao|date:"d/m/Y" }} por {{ projeto.usuario_criacao.username }}</p>
+    </div>
+    <div class="card">
+        <div class="card-header"><h2 class="card-title">Turmas do projeto</h2></div>
+        {% if turmas %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Turma</th><th>Turno</th><th>Horário</th><th>Dias</th><th>Alunos</th><th>Situação</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for t in turmas %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'aee:turma_detail' t.pk %}" class="hover:text-indigo-600">{{ t.nome }}</a></td>
+                        <td>{{ t.get_turno_display }}</td>
+                        <td>{{ t.hora_inicio|time:"H:i" }}–{{ t.hora_fim|time:"H:i" }}</td>
+                        <td>{{ t.get_dias_semana|default:"—" }}</td>
+                        <td>{{ t.total_alunos }} / {{ t.maximo_alunos }}</td>
+                        <td>{% if t.situacao == 'ATIVO' %}<span class="badge badge-green">Ativa</span>{% else %}<span class="badge badge-gray">Encerrada</span>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% include 'partials/empty_state.html' with icon='fa-users' message='Nenhuma turma vinculada a este projeto.' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

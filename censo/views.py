@@ -1,9 +1,19 @@
-from django.shortcuts import render
+import csv
+from datetime import date, datetime
+
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from datetime import datetime
+from django.http import HttpResponse, JsonResponse
+from django.shortcuts import render
+
 from alunos.models import Aluno, Matricula
 from funcionarios.models import Funcionario
+
+
+def anos_disponiveis():
+    """Anos com matrículas cadastradas, incluindo sempre o ano corrente."""
+    anos = set(Matricula.objects.values_list('ano_administrativo', flat=True))
+    anos.add(date.today().year)
+    return sorted(anos, reverse=True)
 
 @login_required
 def censo_home(request):
@@ -55,6 +65,7 @@ def censo_escolar_ano(request, ano):
         'matriculas_por_tipo': matriculas_por_tipo,
         'matriculas_ativas': matriculas.filter(status='ATIVA').count(),
         'matriculas_encerradas': matriculas.filter(status='ENCERRADA').count(),
+        'anos_disponiveis': anos_disponiveis(),
     }
     return render(request, 'censo/censo_escolar.html', context)
 
@@ -71,16 +82,27 @@ def relatorios(request):
 @login_required
 def relatorio_matriculas(request):
     """
-    Relatório de matrículas
+    Relatório de matrículas com filtros por ano, status e tipo de ensino
     """
-    ano = request.GET.get('ano', datetime.now().year)
-    
-    matriculas = Matricula.objects.filter(ano_administrativo=ano)
-    
+    ano = request.GET.get('ano', str(date.today().year))
+    status = request.GET.get('status', '')
+    tipo_ensino = request.GET.get('tipo_ensino', '')
+
+    matriculas = Matricula.objects.select_related('aluno').order_by('aluno__nome')
+    if ano:
+        matriculas = matriculas.filter(ano_administrativo=ano)
+    if status:
+        matriculas = matriculas.filter(status=status)
+    if tipo_ensino:
+        matriculas = matriculas.filter(tipo_ensino=tipo_ensino)
+
     context = {
-        'title': f'Relatório de Matrículas {ano}',
+        'title': f'Relatório de Matrículas {ano}' if ano else 'Relatório de Matrículas',
         'ano': ano,
         'matriculas': matriculas,
+        'anos_disponiveis': anos_disponiveis(),
+        'status_choices': Matricula.STATUS_CHOICES,
+        'tipo_ensino_choices': Matricula.TIPO_ENSINO_CHOICES,
     }
     return render(request, 'censo/relatorio_matriculas.html', context)
 
@@ -89,8 +111,14 @@ def relatorio_funcionarios(request):
     """
     Relatório de funcionários
     """
-    funcionarios = Funcionario.objects.filter(tipo_arquivo='CORRENTE')
-    
+    tipo_arquivo = request.GET.get('tipo_arquivo', '')
+    nome = request.GET.get('nome', '').strip()
+    funcionarios = Funcionario.objects.order_by('nome')
+    if tipo_arquivo:
+        funcionarios = funcionarios.filter(tipo_arquivo=tipo_arquivo)
+    if nome:
+        funcionarios = funcionarios.filter(nome__icontains=nome)
+
     context = {
         'title': 'Relatório de Funcionários',
         'funcionarios': funcionarios,
@@ -107,7 +135,6 @@ def relatorio_estatisticas(request):
     alunos_feminino = Aluno.objects.filter(sexo='F').count()
     
     # Estatísticas de idade (faixas)
-    from datetime import date
     hoje = date.today()
     
     idades = []
@@ -141,7 +168,10 @@ def exportar_dados(request, tipo):
     Exportar dados em diferentes formatos
     """
     if tipo == 'matriculas':
-        data = list(Matricula.objects.values(
+        matriculas = Matricula.objects.all()
+        if request.GET.get('ano'):
+            matriculas = matriculas.filter(ano_administrativo=request.GET['ano'])
+        data = list(matriculas.values(
             'aluno__nome',
             'ano_administrativo',
             'tipo_ensino',
@@ -154,12 +184,26 @@ def exportar_dados(request, tipo):
             'documentacao__cpf',
             'data_nascimento',
             'tipo_arquivo'
-        ).filter(documentacao__isnull=False))
+        ).order_by('nome'))
     else:
-        data = {'erro': 'Tipo de exportação não reconhecido'}
+        return JsonResponse({'erro': 'Tipo de exportação não reconhecido'}, status=400)
     
-    return JsonResponse({
+    if request.GET.get('formato') == 'csv' and isinstance(data, list):
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = f'attachment; filename="censo_{tipo}.csv"'
+        response.write('\ufeff')  # BOM para o Excel reconhecer UTF-8
+        escritor = csv.writer(response, delimiter=';')
+        if data:
+            escritor.writerow(data[0].keys())
+            for linha in data:
+                escritor.writerow(linha.values())
+        return response
+
+    response = JsonResponse({
         'tipo': tipo,
         'total': len(data) if isinstance(data, list) else 0,
         'dados': data
-    })
+    }, json_dumps_params={'ensure_ascii': False, 'indent': 2})
+    if isinstance(data, list):
+        response['Content-Disposition'] = f'attachment; filename="censo_{tipo}.json"'
+    return response

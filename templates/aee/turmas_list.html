@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Turmas AEE/AC - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        {% url 'aee:aee_home' as home_url %}
+        {% include 'partials/page_header.html' with title='Turmas AEE/AC' subtitle='Turmas de atendimento especializado e atividades complementares' icon='fa-users' back_url=home_url no_margin=True %}
+        <a href="{% url 'aee:turma_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Nova turma</a>
+    </div>
+    <div class="card">
+        <div class="card-header justify-start gap-2">
+            <a href="?" class="btn-sm btn {% if not situacao %}bg-indigo-600 text-white{% else %}bg-white border border-gray-200 text-gray-700{% endif %}">Todas</a>
+            {% for c, n in situacoes %}<a href="?situacao={{ c }}" class="btn-sm btn {% if situacao == c %}bg-indigo-600 text-white{% else %}bg-white border border-gray-200 text-gray-700{% endif %}">{{ n }}</a>{% endfor %}
+        </div>
+        {% if turmas %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Turma</th><th>Projeto</th><th>Turno / horário</th><th>Dias</th><th>Vagas</th><th>Situação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for t in turmas %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'aee:turma_detail' t.pk %}" class="hover:text-indigo-600">{{ t.nome }}</a><p class="text-xs text-gray-500">{{ t.periodo_letivo }}</p></td>
+                        <td>{{ t.projeto_pedagogico.nome }}</td>
+                        <td>{{ t.get_turno_display }}<p class="text-xs text-gray-500">{{ t.hora_inicio|time:"H:i" }}–{{ t.hora_fim|time:"H:i" }}</p></td>
+                        <td class="whitespace-normal">{{ t.get_dias_semana|default:"—" }}</td>
+                        <td><span class="badge {% if t.total_alunos >= t.maximo_alunos %}badge-red{% else %}badge-green{% endif %}">{{ t.total_alunos }} / {{ t.maximo_alunos }}</span></td>
+                        <td>{% if t.situacao == 'ATIVO' %}<span class="badge badge-green">Ativa</span>{% else %}<span class="badge badge-gray">Encerrada</span>{% endif %}</td>
+                        <td class="text-right space-x-3">
+                            <a href="{% url 'aee:turma_detail' t.pk %}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'aee:turma_edit' t.pk %}" class="text-gray-600 hover:text-gray-800"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% url 'aee:turma_create' as novo_url %}
+            {% include 'partials/empty_state.html' with icon='fa-users' message='Nenhuma turma encontrada.' action_url=novo_url action_label='Nova turma' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

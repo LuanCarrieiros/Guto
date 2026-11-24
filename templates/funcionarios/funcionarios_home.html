@@ -116,7 +116,27 @@
                 </div>
             </a>
 
-            <a href="{% url 'funcionarios:funcionario_list' %}?funcao=PROFESSOR" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <a href="{% url 'funcionarios:associacao_professor_list' %}" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="bg-indigo-500 rounded-lg p-2 mr-3">
+                    <i class="fas fa-link text-white"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800">Associação às Turmas</p>
+                    <p class="text-sm text-gray-600">Professores e disciplinas</p>
+                </div>
+            </a>
+
+            <a href="{% url 'funcionarios:funcionario_busca_rede' %}" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+                <div class="bg-sky-500 rounded-lg p-2 mr-3">
+                    <i class="fas fa-search text-white"></i>
+                </div>
+                <div>
+                    <p class="font-semibold text-gray-800">Buscar Funcionário</p>
+                    <p class="text-sm text-gray-600">Por nome, CPF ou matrícula</p>
+                </div>
+            </a>
+
+            <a href="{% url 'funcionarios:funcionario_list' %}?cargo=DOCENTE" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div class="bg-blue-500 rounded-lg p-2 mr-3">
                     <i class="fas fa-chalkboard-teacher text-white"></i>
                 </div>
@@ -126,7 +146,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'funcionarios:funcionario_list' %}?funcao=COORDENADOR" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <a href="{% url 'funcionarios:funcionario_list' %}?cargo=COORDENADOR_PEDAGOGICO" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div class="bg-indigo-500 rounded-lg p-2 mr-3">
                     <i class="fas fa-user-graduate text-white"></i>
                 </div>
@@ -136,7 +156,7 @@
                 </div>
             </a>
 
-            <a href="{% url 'funcionarios:funcionario_list' %}?funcao=SECRETARIO" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
+            <a href="{% url 'funcionarios:funcionario_list' %}?cargo=SECRETARIO_ESCOLAR" class="flex items-center p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                 <div class="bg-green-500 rounded-lg p-2 mr-3">
                     <i class="fas fa-user-tie text-white"></i>
                 </div>

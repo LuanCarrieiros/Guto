@@ -1,29 +1,33 @@
-from django.shortcuts import render
+import datetime
+
+from django.contrib.auth import views as auth_views
 from django.contrib.auth.decorators import login_required
 from django.db.models import Count, Q
-from django.db import models
-from django.contrib.auth.models import User
+from django.shortcuts import render
+
 from .models import AtividadeRecente
 from alunos.models import Aluno
 from funcionarios.models import Funcionario
-from turma.models import Turma, Enturmacao, Avaliacao
-import datetime
-import locale
+from transporte.models import Rota
+from turma.models import Turma, Avaliacao
+
+
+class LoginLembrarView(auth_views.LoginView):
+    """Login que respeita a opção "Lembrar-me" da tela de entrada."""
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if not self.request.POST.get('remember_me'):
+            # Sessão expira ao fechar o navegador
+            self.request.session.set_expiry(0)
+        return response
+
 
 @login_required
 def home(request):
     """
     View principal do dashboard - mostra resumo geral do sistema
     """
-    # Configurar localização para português
-    try:
-        locale.setlocale(locale.LC_TIME, 'pt_BR.UTF-8')
-    except:
-        try:
-            locale.setlocale(locale.LC_TIME, 'Portuguese_Brazil.1252')
-        except:
-            pass  # Usar padrão se não conseguir configurar
-    
     # Data atual com dia da semana
     hoje = datetime.date.today()
     dias_semana = {
@@ -73,7 +77,7 @@ def home(request):
         'total_alunos': total_alunos,
         'total_funcionarios': total_funcionarios,
         'avaliacoes_pendentes': avaliacoes_pendentes,
-        'transportes_ativos': 0,  # Será implementado quando o módulo transporte for criado
+        'transportes_ativos': Rota.objects.filter(ativa=True).count(),
         'escola_nome': 'Sistema GUTO',
         'data_atual': hoje,
         'dia_semana': dia_semana,
@@ -87,37 +91,3 @@ def home(request):
     }
     
     return render(request, 'dashboard/home.html', context)
-
-def estatisticas(request):
-    """
-    View para página de estatísticas detalhadas
-    """
-    context = {
-        'page_title': 'Estatísticas',
-    }
-    return render(request, 'dashboard/estatisticas.html', context)
-
-def configuracoes(request):
-    """
-    View para configurações do sistema
-    """
-    context = {
-        'page_title': 'Configurações',
-    }
-    return render(request, 'dashboard/configuracoes.html', context)
-
-
-def em_desenvolvimento(request):
-    """
-    View para páginas em desenvolvimento
-    """
-    # Obter parâmetros da URL
-    funcionalidade = request.GET.get('funcionalidade', '')
-    progresso = request.GET.get('progresso', '75')
-    
-    context = {
-        'funcionalidade': funcionalidade,
-        'progresso': progresso,
-    }
-    
-    return render(request, 'em_desenvolvimento.html', context)

@@ -2,11 +2,10 @@ from django import forms
 from django.core.exceptions import ValidationError
 from .models import (
     Turma, Disciplina, DivisaoPeriodoLetivo, LancamentoNota, 
-    Conceito, AtestadoMedico, RecuperacaoEspecial, AulaRegistrada,
-    RegistroFrequencia, TipoAvaliacao, Avaliacao, NotaAvaliacao
+    AulaRegistrada, RegistroFrequencia, TipoAvaliacao, Avaliacao,
+    NotaAvaliacao
 )
 from alunos.models import Aluno
-from funcionarios.models import Funcionario
 
 
 class TurmaForm(forms.ModelForm):
@@ -142,8 +141,19 @@ class DivisaoPeriodoLetivoForm(forms.ModelForm):
             'data_fim': forms.DateInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
                 'type': 'date'
-            }),
+            }, format='%Y-%m-%d'),
         }
+
+    def clean(self):
+        dados = super().clean()
+        inicio, fim = dados.get('data_inicio'), dados.get('data_fim')
+        if inicio and fim and fim < inicio:
+            self.add_error('data_fim', 'A data de fim deve ser posterior ao início.')
+        periodo, ordem = dados.get('periodo_letivo'), dados.get('ordem')
+        if periodo and ordem and DivisaoPeriodoLetivo.objects.filter(
+                periodo_letivo=periodo, ordem=ordem).exclude(pk=self.instance.pk).exists():
+            self.add_error('ordem', f'Já existe uma divisão com a ordem {ordem} em {periodo}.')
+        return dados
 
 
 class EnturmacaoForm(forms.Form):

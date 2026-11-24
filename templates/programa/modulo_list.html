@@ -1,0 +1,42 @@
+{% extends 'base.html' %}
+
+{% block title %}Módulos - Programas - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        {% include 'partials/page_header.html' with title='Módulos' subtitle='Módulos de todos os programas' icon='fa-layer-group' no_margin=True %}
+        <a href="{% url 'programa:modulo_create' %}{% if programa_id %}?programa={{ programa_id }}{% endif %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Novo módulo</a>
+    </div>
+    {% include 'programa/_nav.html' %}
+    <div class="card">
+        <form method="get" class="card-header guto-form">
+            <div class="flex gap-3 flex-1">
+                <select name="programa" class="!w-72" onchange="this.form.submit()"><option value="">Todos os programas</option>{% for p in programas %}<option value="{{ p.pk }}" {% if programa_id == p.pk|stringformat:"s" %}selected{% endif %}>{{ p.nome }}</option>{% endfor %}</select>
+            </div>
+        </form>
+        {% if modulos %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Programa</th><th>#</th><th>Módulo</th><th>Período</th><th>Carga</th><th>Professor</th><th>Aulas</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for m in modulos %}
+                    <tr>
+                        <td><a href="{% url 'programa:programa_detail' m.programa.pk %}" class="hover:text-indigo-600">{{ m.programa.nome }}</a></td>
+                        <td class="text-gray-400">{{ m.ordem }}</td>
+                        <td class="font-medium"><a href="{% url 'programa:modulo_detail' m.pk %}" class="hover:text-indigo-600">{{ m.nome }}</a></td>
+                        <td>{{ m.data_inicio|date:"d/m/Y" }} a {{ m.data_fim|date:"d/m/Y" }}</td>
+                        <td>{{ m.carga_horaria }}h</td>
+                        <td>{{ m.professor_responsavel.nome|default:"—" }}</td>
+                        <td>{{ m.total_aulas }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% include 'partials/empty_state.html' with icon='fa-layer-group' message='Nenhum módulo encontrado.' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

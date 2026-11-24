@@ -1,20 +1,21 @@
+import calendar
+from datetime import date
+
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Count
-from django.http import JsonResponse
 from django.core.paginator import Paginator
 from dashboard.models import AtividadeRecente
 from .models import (
-    Funcionario, DocumentacaoFuncionario, DadosFuncionais, DuploVinculo,
-    Habilitacao, Escolaridade, FormacaoSuperior, Disponibilidade,
-    DisciplinaFuncionario, DeficienciaFuncionario, AssociacaoProfessor, AssociacaoOutrosProfissionais
+    Funcionario, DocumentacaoFuncionario, DadosFuncionais, Escolaridade,
+    Disponibilidade, DeficienciaFuncionario, AssociacaoProfessor, AssociacaoOutrosProfissionais
 )
 from .forms import (
     FuncionarioForm, DocumentacaoFuncionarioForm, DadosFuncionaisForm,
-    DuploVinculoForm, HabilitacaoForm, EscolaridadeForm, FormacaoSuperiorForm,
-    DisponibilidadeForm, DisciplinaFuncionarioForm, DeficienciaFuncionarioForm,
-    AssociacaoProfessorForm, AssociacaoOutrosProfissionaisForm, BuscaRedeForm
+    EscolaridadeForm, HabilitacaoForm, DisciplinaFuncionarioForm, DeficienciaFuncionarioForm, DisponibilidadeForm, AssociacaoProfessorForm, AssociacaoOutrosProfissionaisForm,
+    BuscaRedeForm
 )
 
 @login_required
@@ -27,8 +28,8 @@ def funcionarios_home(request):
     funcionarios_ativos = Funcionario.objects.filter(tipo_arquivo='CORRENTE').count()
 
     # Contagem por função
-    total_professores = DadosFuncionais.objects.filter(funcao='PROFESSOR').count()
-    total_administrativos = DadosFuncionais.objects.exclude(funcao='PROFESSOR').count()
+    total_professores = DadosFuncionais.objects.filter(funcao='DOCENTE').count()
+    total_administrativos = DadosFuncionais.objects.exclude(funcao='DOCENTE').count()
 
     # Últimos 5 funcionários cadastrados
     funcionarios_recentes = Funcionario.objects.all().order_by('-codigo')[:5]
@@ -96,6 +97,7 @@ def funcionario_list(request):
     
     context = {
         'funcionarios': funcionarios_page,
+        'funcoes': DadosFuncionais.FUNCAO_CHOICES,
     }
     
     return render(request, 'funcionarios/funcionario_list.html', context)
@@ -111,8 +113,7 @@ def funcionario_busca_rede(request):
             busca = form.cleaned_data['busca']
             tipo_busca = form.cleaned_data['tipo_busca']
             
-            # Simular busca na rede (implementar integração real posteriormente)
-            funcionarios_encontrados = []
+            funcionarios_encontrados = Funcionario.objects.none()
             
             if tipo_busca == 'nome':
                 funcionarios_encontrados = Funcionario.objects.filter(nome__icontains=busca)
@@ -156,7 +157,7 @@ def funcionario_create(request):
                     modulo='FUNCIONARIOS',
                     objeto_nome=funcionario.nome,
                     objeto_id=funcionario.codigo,
-                    descricao=f'Novo funcionário cadastrado no sistema'
+                    descricao='Novo funcionário cadastrado no sistema'
                 )
                 
                 messages.success(request, 'Funcionário cadastrado com sucesso')
@@ -196,7 +197,7 @@ def funcionario_edit(request, pk):
                 modulo='FUNCIONARIOS',
                 objeto_nome=funcionario.nome,
                 objeto_id=funcionario.codigo,
-                descricao=f'Dados do funcionário atualizados'
+                descricao='Dados do funcionário atualizados'
             )
             
             messages.success(request, 'Dados alterados com sucesso')
@@ -263,6 +264,38 @@ def funcionario_edit_extended(request, pk):
     except Disponibilidade.DoesNotExist:
         disponibilidade = None
     
+    # Abas com listas (habilitações, disciplinas e deficiências): inclusão e remoção
+    listas = {
+        'habilitacao': (HabilitacaoForm, funcionario.habilitacoes, 'Habilitação'),
+        'disciplinas': (DisciplinaFuncionarioForm, funcionario.disciplinas, 'Disciplina'),
+        'deficiencias': (DeficienciaFuncionarioForm, funcionario.deficiencias, 'Deficiência'),
+    }
+    if request.method == 'POST' and request.POST.get('aba_ativa') in listas:
+        aba = request.POST['aba_ativa']
+        form_class, relacionados, rotulo = listas[aba]
+        remover_id = request.POST.get('remover_id')
+        if remover_id:
+            relacionados.filter(pk=remover_id).delete()
+            messages.success(request, f'{rotulo} removida.')
+        else:
+            form = form_class(request.POST, prefix=aba)
+            if form.is_valid():
+                item = form.save(commit=False)
+                item.funcionario = funcionario
+                item.save()
+                messages.success(request, f'{rotulo} adicionada com sucesso.')
+                # RNF408: mais de uma deficiência marca automaticamente "Deficiência Múltipla"
+                if aba == 'deficiencias' and funcionario.deficiencias.exclude(tipo_deficiencia='MULTIPLA').count() > 1:
+                    DeficienciaFuncionario.objects.get_or_create(
+                        funcionario=funcionario, tipo_deficiencia='MULTIPLA',
+                        defaults={'descricao': 'Marcação automática por múltiplas deficiências'},
+                    )
+            else:
+                for erros in form.errors.values():
+                    for erro in erros:
+                        messages.error(request, erro)
+        return redirect(f"{reverse('funcionarios:funcionario_edit_extended', args=[funcionario.pk])}?aba={aba}")
+
     if request.method == 'POST':
         aba_ativa = request.POST.get('aba_ativa', 'dados_pessoais')
 
@@ -326,8 +359,11 @@ def funcionario_edit_extended(request, pk):
                     for error in errors:
                         messages.error(request, f'{field}: {error}')
 
-        return redirect('funcionarios:funcionario_edit_extended', pk=funcionario.pk)
-    
+        aba_destino = {
+            'dados_pessoais': 'pessoais', 'dados_funcionais': 'funcionais',
+        }.get(aba_ativa, aba_ativa)
+        return redirect(f"{reverse('funcionarios:funcionario_edit_extended', args=[funcionario.pk])}?aba={aba_destino}")
+
     # Forms para cada aba
     funcionario_form = FuncionarioForm(instance=funcionario)
     doc_form = DocumentacaoFuncionarioForm(instance=documentacao)
@@ -347,8 +383,14 @@ def funcionario_edit_extended(request, pk):
         'disciplinas': funcionario.disciplinas.all(),
         'deficiencias': funcionario.deficiencias.all(),
         'duplos_vinculos': funcionario.duplos_vinculos.all(),
+        'habilitacao_form': HabilitacaoForm(prefix='habilitacao'),
+        'disciplina_form': DisciplinaFuncionarioForm(prefix='disciplinas'),
+        'deficiencia_form': DeficienciaFuncionarioForm(prefix='deficiencias'),
+        'aba_inicial': request.GET.get('aba') if request.GET.get('aba') in (
+            'pessoais', 'documentacao', 'funcionais', 'habilitacao', 'escolaridade',
+            'disponibilidade', 'disciplinas', 'deficiencias') else 'pessoais',
     }
-    
+
     return render(request, 'funcionarios/funcionario_edit_extended.html', context)
 
 @login_required
@@ -384,7 +426,7 @@ def funcionario_delete(request, pk):
                     modulo='FUNCIONARIOS',
                     objeto_nome=nome_funcionario,
                     objeto_id=codigo_funcionario,
-                    descricao=f'Funcionário movido para arquivo permanente'
+                    descricao='Funcionário movido para arquivo permanente'
                 )
                 
                 messages.success(request, f'Funcionário {nome_funcionario} movido para arquivo permanente')
@@ -399,7 +441,7 @@ def funcionario_delete(request, pk):
                     modulo='FUNCIONARIOS',
                     objeto_nome=nome_funcionario,
                     objeto_id=codigo_funcionario,
-                    descricao=f'Funcionário removido permanentemente do sistema'
+                    descricao='Funcionário removido permanentemente do sistema'
                 )
                 
                 funcionario.delete()
@@ -413,112 +455,114 @@ def funcionario_delete(request, pk):
 @login_required
 def funcionario_move_to_permanent(request, pk):
     """
-    RF407.1: Mover funcionário para arquivo permanente
+    RF407.1: Mover funcionário para o arquivo permanente (ou de volta ao corrente)
     """
     funcionario = get_object_or_404(Funcionario, pk=pk)
-    
+    destino = 'CORRENTE' if funcionario.tipo_arquivo == 'PERMANENTE' else 'PERMANENTE'
+
     if request.method == 'POST':
-        funcionario.tipo_arquivo = 'PERMANENTE'
-        funcionario.save()
-        messages.success(request, f'Funcionário {funcionario.nome} movido para o Arquivo Permanente')
+        funcionario.tipo_arquivo = destino
+        funcionario.save(update_fields=['tipo_arquivo'])
+        AtividadeRecente.registrar_atividade(
+            usuario=request.user, acao='EDITAR', modulo='FUNCIONARIOS',
+            objeto_nome=funcionario.nome, objeto_id=funcionario.pk,
+            descricao=f'Movido para o arquivo {destino.lower()}',
+        )
+        messages.success(request, f'Funcionário {funcionario.nome} movido para o Arquivo {destino.capitalize()}.')
         return redirect('funcionarios:funcionario_detail', pk=funcionario.pk)
-    
-    return render(request, 'funcionarios/funcionario_confirm_move.html', {'funcionario': funcionario})
+
+    return render(request, 'funcionarios/funcionario_confirm_move.html', {
+        'funcionario': funcionario, 'destino': destino,
+    })
+
 
 @login_required
-def funcionario_print_list(request):
+def funcionario_print(request):
     """
-    RF410.1: Imprimir Lista com Código, Matrícula, Nome e CPF
+    RF410: Impressão da lista de funcionários (RF410.1) ou da folha de frequência mensal em branco (RF410.2).
+    Usa os mesmos filtros da lista de funcionários.
     """
-    funcionarios_ids = request.GET.getlist('funcionarios')
-    funcionarios = Funcionario.objects.filter(id__in=funcionarios_ids)
-    
+    funcionarios = Funcionario.objects.select_related('dados_funcionais', 'documentacao').order_by('nome')
+    cargo = request.GET.get('cargo', '')
+    ativo = request.GET.get('ativo', '')
+    search = request.GET.get('search', '')
+    if search:
+        funcionarios = funcionarios.filter(
+            Q(nome__icontains=search) | Q(codigo__icontains=search) | Q(dados_funcionais__matricula__icontains=search)
+        )
+    if cargo:
+        funcionarios = funcionarios.filter(dados_funcionais__funcao=cargo)
+    if ativo == 'True':
+        funcionarios = funcionarios.filter(tipo_arquivo='CORRENTE')
+    elif ativo == 'False':
+        funcionarios = funcionarios.filter(tipo_arquivo='PERMANENTE')
+
+    tipo = 'frequencia' if request.GET.get('tipo') == 'frequencia' else 'lista'
+    hoje = date.today()
+    dias_mes = calendar.monthrange(hoje.year, hoje.month)[1]
     context = {
         'funcionarios': funcionarios,
-        'tipo_relatorio': 'lista'
+        'tipo_relatorio': tipo,
+        'dias': range(1, dias_mes + 1),
+        'mes_referencia': hoje,
     }
-    
     return render(request, 'funcionarios/funcionario_print.html', context)
 
-@login_required
-def funcionario_print_frequencia(request):
-    """
-    RF410.2: Imprimir Frequência mensal em branco
-    """
-    funcionarios_ids = request.GET.getlist('funcionarios')
-    funcionarios = Funcionario.objects.filter(id__in=funcionarios_ids)
-    
-    context = {
-        'funcionarios': funcionarios,
-        'tipo_relatorio': 'frequencia'
-    }
-    
-    return render(request, 'funcionarios/funcionario_print.html', context)
 
 # Views para Associação de Professor (RF501-RF511)
 @login_required
 def associacao_professor_list(request):
     """
-    RF501: Acessar associação de professores
+    RF501-RF503: Associações de professores e outros profissionais às turmas
     """
-    # Filtros (RF502)
-    periodo_letivo = request.GET.get('periodo_letivo')
-    tipo_ensino = request.GET.get('tipo_ensino')
-    serie = request.GET.get('serie')
-    turno = request.GET.get('turno')
-    turma = request.GET.get('turma')
-    tipo_associacao = request.GET.get('tipo_associacao', 'DISCIPLINA')  # RF503
-    
-    associacoes = AssociacaoProfessor.objects.all()
-    
-    # Aplicar filtros
+    turma = request.GET.get('turma', '')
+    tipo_associacao = request.GET.get('tipo_associacao', '')
+    vigentes = request.GET.get('vigentes', '1')
+
+    associacoes = AssociacaoProfessor.objects.select_related('funcionario').order_by('turma', 'disciplina')
+    outros = AssociacaoOutrosProfissionais.objects.select_related('funcionario').order_by('turma')
     if turma:
         associacoes = associacoes.filter(turma=turma)
+        outros = outros.filter(turma=turma)
     if tipo_associacao:
         associacoes = associacoes.filter(tipo_associacao=tipo_associacao)
-    
-    # RF501: Apenas docentes para associação de disciplinas
-    docentes = Funcionario.objects.filter(
-        dados_funcionais__funcao='DOCENTE',
-        tipo_arquivo='CORRENTE'
-    )
-    
+    if vigentes == '1':
+        hoje = date.today()
+        associacoes = associacoes.filter(Q(data_termino__isnull=True) | Q(data_termino__gte=hoje))
+        outros = outros.filter(Q(data_termino__isnull=True) | Q(data_termino__gte=hoje))
+
     context = {
         'associacoes': associacoes,
-        'docentes': docentes,
-        'filtros': {
-            'periodo_letivo': periodo_letivo,
-            'tipo_ensino': tipo_ensino,
-            'serie': serie,
-            'turno': turno,
-            'turma': turma,
-            'tipo_associacao': tipo_associacao,
-        }
+        'outros': outros,
+        'turmas': sorted(set(AssociacaoProfessor.objects.values_list('turma', flat=True))
+                         | set(AssociacaoOutrosProfissionais.objects.values_list('turma', flat=True))),
+        'tipos': AssociacaoProfessor.TIPO_ASSOCIACAO_CHOICES,
+        'filtros': {'turma': turma, 'tipo_associacao': tipo_associacao, 'vigentes': vigentes},
     }
-    
     return render(request, 'funcionarios/associacao_professor_list.html', context)
+
+
+def _form_associacao(request, form, title, icon):
+    return render(request, 'generic/form.html', {
+        'form': form, 'title': title, 'icon': icon,
+        'cancel_url': reverse('funcionarios:associacao_professor_list'),
+    })
+
 
 @login_required
 def associacao_professor_create(request):
     """
-    RF505: Associar professor à disciplina
+    RF505: Associar professor à disciplina/turma
     """
-    if request.method == 'POST':
-        form = AssociacaoProfessorForm(request.POST)
-        if form.is_valid():
-            associacao = form.save(commit=False)
-            associacao.usuario_cadastro = request.user
-            associacao.save()
-            
-            messages.success(request, 'Professor associado com sucesso')
-            return redirect('funcionarios:associacao_professor_list')
-    else:
-        form = AssociacaoProfessorForm()
-    
-    return render(request, 'funcionarios/associacao_professor_form.html', {
-        'form': form,
-        'title': 'Associar Professor'
-    })
+    form = AssociacaoProfessorForm(request.POST or None, initial={'data_inicio': date.today()})
+    if request.method == 'POST' and form.is_valid():
+        associacao = form.save(commit=False)
+        associacao.usuario_cadastro = request.user
+        associacao.save()
+        messages.success(request, 'Professor associado com sucesso.')
+        return redirect('funcionarios:associacao_professor_list')
+    return _form_associacao(request, form, 'Associar Professor', 'fa-chalkboard-teacher')
+
 
 @login_required
 def associacao_professor_edit(request, pk):
@@ -526,74 +570,24 @@ def associacao_professor_edit(request, pk):
     RF506/RF507: Gerenciar histórico e substituição de professor
     """
     associacao = get_object_or_404(AssociacaoProfessor, pk=pk)
-    
-    if request.method == 'POST':
-        form = AssociacaoProfessorForm(request.POST, instance=associacao)
-        if form.is_valid():
-            form.save()
-            messages.success(request, 'Associação atualizada com sucesso')
-            return redirect('funcionarios:associacao_professor_list')
-    else:
-        form = AssociacaoProfessorForm(instance=associacao)
-    
-    return render(request, 'funcionarios/associacao_professor_form.html', {
-        'form': form,
-        'associacao': associacao,
-        'title': 'Editar Associação'
-    })
+    form = AssociacaoProfessorForm(request.POST or None, instance=associacao)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Associação atualizada com sucesso.')
+        return redirect('funcionarios:associacao_professor_list')
+    return _form_associacao(request, form, 'Editar Associação de Professor', 'fa-chalkboard-teacher')
+
 
 @login_required
 def associacao_outros_profissionais_create(request):
     """
     RF509: Associar outros profissionais (Auxiliar, Monitor, Tradutor)
     """
-    if request.method == 'POST':
-        form = AssociacaoOutrosProfissionaisForm(request.POST)
-        if form.is_valid():
-            associacao = form.save(commit=False)
-            associacao.usuario_cadastro = request.user
-            associacao.save()
-            
-            messages.success(request, 'Profissional associado com sucesso')
-            return redirect('funcionarios:associacao_professor_list')
-    else:
-        form = AssociacaoOutrosProfissionaisForm()
-    
-    return render(request, 'funcionarios/associacao_outros_form.html', {
-        'form': form,
-        'title': 'Associar Outro Profissional'
-    })
-
-@login_required
-def check_matricula_duplicada(request):
-    """
-    RNF405: Verificar se matrícula já está em uso
-    """
-    matricula = request.GET.get('matricula')
-    funcionario_id = request.GET.get('funcionario_id')
-    
-    exists = DadosFuncionais.objects.filter(matricula=matricula)
-    if funcionario_id:
-        exists = exists.exclude(funcionario_id=funcionario_id)
-    
-    return JsonResponse({'exists': exists.exists()})
-
-@login_required
-def validate_deficiencia_multipla(request):
-    """
-    RNF408: Marcar automaticamente "Deficiência Múltipla"
-    """
-    funcionario_id = request.GET.get('funcionario_id')
-    deficiencias_selecionadas = request.GET.getlist('deficiencias')
-    
-    if len(deficiencias_selecionadas) > 1:
-        # Adicionar ou atualizar deficiência múltipla
-        funcionario = get_object_or_404(Funcionario, pk=funcionario_id)
-        DeficienciaFuncionario.objects.get_or_create(
-            funcionario=funcionario,
-            tipo_deficiencia='MULTIPLA',
-            defaults={'descricao': 'Marcação automática por múltiplas deficiências'}
-        )
-        return JsonResponse({'multipla_marcada': True})
-    
-    return JsonResponse({'multipla_marcada': False})
+    form = AssociacaoOutrosProfissionaisForm(request.POST or None, initial={'data_inicio': date.today()})
+    if request.method == 'POST' and form.is_valid():
+        associacao = form.save(commit=False)
+        associacao.usuario_cadastro = request.user
+        associacao.save()
+        messages.success(request, 'Profissional associado com sucesso.')
+        return redirect('funcionarios:associacao_professor_list')
+    return _form_associacao(request, form, 'Associar Outro Profissional', 'fa-user-friends')

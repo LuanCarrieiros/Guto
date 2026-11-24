@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+
+{% block title %}Frequência - {{ aula.titulo }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    {% url 'programa:modulo_detail' aula.modulo.pk as modulo_url %}
+    {% include 'partials/page_header.html' with title='Frequência da Aula' subtitle=aula|stringformat:"s" icon='fa-user-check' back_url=modulo_url %}
+
+    <div class="card">
+        <div class="card-header">
+            <div>
+                <p class="font-semibold">{{ aula.numero_aula }}. {{ aula.titulo }}</p>
+                <p class="text-sm text-gray-500">{{ aula.data_planejada|date:"d/m/Y" }} · {{ aula.horario_inicio|time:"H:i" }}–{{ aula.horario_fim|time:"H:i" }} · {{ aula.modulo.nome }}</p>
+            </div>
+            {% if ja_registrada %}<span class="badge badge-green">Frequência já registrada</span>{% endif %}
+        </div>
+        {% if linhas %}
+        <form method="post" x-data>
+            {% csrf_token %}
+            <div class="px-6 py-3 border-b border-gray-100 flex gap-3 text-sm">
+                <button type="button" class="btn-sm btn-secondary" @click="document.querySelectorAll('.chk-presenca').forEach(c => c.checked = true)">Todos presentes</button>
+                <button type="button" class="btn-sm btn-secondary" @click="document.querySelectorAll('.chk-presenca').forEach(c => c.checked = false)">Todos ausentes</button>
+            </div>
+            <ul class="divide-y divide-gray-100 guto-form">
+                {% for l in linhas %}
+                <li class="px-6 py-3 flex flex-col sm:flex-row sm:items-center gap-3" x-data="{ presente: {{ l.presente|yesno:'true,false' }} }">
+                    <label class="flex items-center gap-3 flex-1">
+                        <input type="checkbox" name="presentes" value="{{ l.participante.pk }}" class="chk-presenca" x-model="presente" {% if l.presente %}checked{% endif %}>
+                        <span class="font-medium">{{ l.participante.aluno.nome }}</span>
+                    </label>
+                    <input type="text" name="justificativa_{{ l.participante.pk }}" value="{{ l.justificativa|default:'' }}" placeholder="Justificativa da falta" class="sm:!w-72" x-show="!presente">
+                </li>
+                {% endfor %}
+            </ul>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl flex justify-end gap-3">
+                <a href="{{ modulo_url }}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar frequência</button>
+            </div>
+        </form>
+        {% else %}
+            {% url 'programa:participante_create' programa.pk as inscrever_url %}
+            {% include 'partials/empty_state.html' with icon='fa-users' message='O programa não possui participantes ativos.' action_url=inscrever_url action_label='Inscrever participante' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

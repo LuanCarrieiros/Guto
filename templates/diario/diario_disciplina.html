@@ -131,10 +131,10 @@
                     <div class="text-6xl mb-4">📅</div>
                     <h3 class="text-xl font-semibold text-gray-800 mb-3">Nenhuma divisão encontrada</h3>
                     <p class="text-gray-600 mb-6">Configure as divisões do período letivo para começar!</p>
-                    <a href="#"
-                       class="inline-flex items-center px-6 py-3 bg-gray-400 text-white rounded-lg cursor-not-allowed font-medium">
-                        <i class="fas fa-exclamation-triangle mr-2"></i>
-                        Configuração em Desenvolvimento
+                    <a href="{% url 'turma:divisoes' %}?periodo={{ turma.periodo_letivo }}"
+                       class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                        <i class="fas fa-calendar-plus mr-2"></i>
+                        Configurar bimestres de {{ turma.periodo_letivo }}
                     </a>
                 </div>
             </div>

@@ -1,0 +1,87 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ itinerario.nome }} - Itinerário - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'escola:itinerario_list' as lista_url %}
+        {% include 'partials/page_header.html' with title=itinerario.nome subtitle=itinerario.get_areas_conhecimento_display icon='fa-route' back_url=lista_url no_margin=True %}
+        <div class="flex gap-3 shrink-0">
+            <a href="{% url 'escola:itinerario_edit' itinerario.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            {% if vagas_restantes > 0 %}
+            <a href="{% url 'escola:enturmacao_create' itinerario.pk %}" class="btn-primary"><i class="fas fa-user-plus"></i> Enturmar aluno</a>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="card card-body"><p class="detail-label">Carga horária total</p><p class="text-2xl font-bold">{{ itinerario.carga_horaria_total }}h</p></div>
+        <div class="card card-body"><p class="detail-label">Carga das unidades</p><p class="text-2xl font-bold {% if carga_unidades > itinerario.carga_horaria_total %}text-red-600{% endif %}">{{ carga_unidades }}h</p></div>
+        <div class="card card-body"><p class="detail-label">Alunos enturmados</p><p class="text-2xl font-bold">{{ total_alunos }} / {{ itinerario.vagas_disponiveis }}</p></div>
+        <div class="card card-body"><p class="detail-label">Vagas restantes</p><p class="text-2xl font-bold {% if vagas_restantes == 0 %}text-red-600{% else %}text-green-600{% endif %}">{{ vagas_restantes }}</p></div>
+    </div>
+
+    <div class="card card-body">
+        <p class="detail-label">Habilidades</p>
+        <p class="detail-value whitespace-pre-line">{{ itinerario.habilidades }}</p>
+        <p class="text-xs text-gray-500 mt-4">Cadastrado em {{ itinerario.data_cadastro|date:"d/m/Y" }} por {{ itinerario.usuario_cadastro.username }}</p>
+    </div>
+
+    <div class="grid lg:grid-cols-2 gap-6">
+        <!-- Grade curricular -->
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Grade curricular</h2></div>
+            {% if unidades %}
+            <ul class="divide-y divide-gray-100">
+                {% for assoc in unidades %}
+                <li class="px-6 py-3 flex items-center justify-between gap-4">
+                    <div>
+                        <p class="font-medium"><span class="text-gray-400 mr-2">{{ assoc.ordem }}.</span><a href="{% url 'escola:unidade_detail' assoc.unidade.pk %}" class="hover:text-indigo-600">{{ assoc.unidade.nome }}</a></p>
+                        <p class="text-xs text-gray-500">{{ assoc.unidade.carga_horaria }}h</p>
+                    </div>
+                    <form method="post" action="{% url 'escola:desassociar_unidade' assoc.pk %}" onsubmit="return confirm('Remover esta unidade do itinerário?')">
+                        {% csrf_token %}
+                        <button type="submit" class="text-red-600 hover:text-red-800" title="Remover"><i class="fas fa-times"></i></button>
+                    </form>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <p class="px-6 py-4 text-sm text-gray-500">Nenhuma unidade curricular na grade.</p>
+            {% endif %}
+            {% if associacao_form.fields.unidade.queryset.exists %}
+            <form method="post" action="{% url 'escola:associar_unidade' itinerario.pk %}" class="px-6 py-4 border-t border-gray-100 guto-form flex flex-col sm:flex-row gap-3 items-end">
+                {% csrf_token %}
+                <div class="flex-1 w-full"><label class="form-label" for="id_unidade">Adicionar unidade</label>{{ associacao_form.unidade }}</div>
+                <div class="w-full sm:w-24"><label class="form-label" for="id_ordem">Ordem</label>{{ associacao_form.ordem }}</div>
+                <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Adicionar</button>
+            </form>
+            {% else %}
+            <p class="px-6 py-3 border-t border-gray-100 text-xs text-gray-500">Todas as unidades já estão na grade. <a href="{% url 'escola:unidade_create' %}" class="text-indigo-600 hover:underline">Cadastrar nova unidade</a>.</p>
+            {% endif %}
+        </div>
+
+        <!-- Alunos -->
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Alunos enturmados</h2></div>
+            {% if alunos_enturmados %}
+            <ul class="divide-y divide-gray-100">
+                {% for ent in alunos_enturmados %}
+                <li class="px-6 py-3 flex items-center justify-between gap-4">
+                    <div>
+                        <a href="{% url 'alunos:aluno_detail' ent.aluno.pk %}" class="font-medium hover:text-indigo-600">{{ ent.aluno.nome }}</a>
+                        <p class="text-xs text-gray-500">Desde {{ ent.data_enturmacao|date:"d/m/Y" }}</p>
+                    </div>
+                    <a href="{% url 'escola:enturmacao_delete' ent.pk %}" class="text-red-600 hover:text-red-800" title="Remover do itinerário"><i class="fas fa-user-minus"></i></a>
+                </li>
+                {% endfor %}
+            </ul>
+            {% else %}
+                {% if vagas_restantes > 0 %}{% url 'escola:enturmacao_create' itinerario.pk as enturmar_url %}{% endif %}
+                {% include 'partials/empty_state.html' with icon='fa-users' message='Nenhum aluno enturmado.' action_url=enturmar_url action_label='Enturmar aluno' %}
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

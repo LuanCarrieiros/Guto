@@ -1,0 +1,12 @@
+{% comment %}
+Estado vazio. Uso: {% include 'partials/empty_state.html' with icon="fa-bus" message="Nenhum..." action_url=url action_label="Cadastrar" %}
+{% endcomment %}
+<div class="text-center py-12 px-6">
+    <div class="w-16 h-16 mx-auto rounded-full bg-gray-100 text-gray-400 flex items-center justify-center text-2xl mb-4">
+        <i class="fas {{ icon|default:'fa-inbox' }}"></i>
+    </div>
+    <p class="text-gray-600">{{ message|default:"Nenhum registro encontrado." }}</p>
+    {% if action_url %}
+    <a href="{{ action_url }}" class="btn-primary mt-4"><i class="fas fa-plus"></i> {{ action_label|default:"Cadastrar" }}</a>
+    {% endif %}
+</div>

@@ -1,6 +1,6 @@
 from django.db import models
+from guto_system.utils import ano_atual
 from django.contrib.auth.models import User
-from datetime import date
 
 class TipoRelatorio(models.Model):
     """Model para os tipos de relatórios disponíveis (RF605)"""
@@ -59,7 +59,7 @@ class FiltroRelatorio(models.Model):
     usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuário")
     
     # Filtros obrigatórios (RF607)
-    periodo_letivo = models.CharField(max_length=4, default=str(date.today().year), verbose_name="Período Letivo")
+    periodo_letivo = models.CharField(max_length=4, default=ano_atual, verbose_name="Período Letivo")
     tipo_ensino = models.CharField(max_length=20, choices=TIPO_ENSINO_CHOICES, default='TODOS', verbose_name="Tipo de Ensino")
     ano_serie = models.CharField(max_length=50, blank=True, null=True, verbose_name="Ano/Série/Módulo/Etapa")
     turno = models.CharField(max_length=15, choices=TURNO_CHOICES, default='TODOS', verbose_name="Turno")
@@ -108,7 +108,7 @@ class CalendarioEscolar(models.Model):
     ]
     
     # Campos obrigatórios (RF704)
-    periodo_letivo = models.CharField(max_length=4, default=str(date.today().year), verbose_name="Período Letivo")
+    periodo_letivo = models.CharField(max_length=4, default=ano_atual, verbose_name="Período Letivo")
     tipo_ensino = models.CharField(max_length=20, choices=TIPO_ENSINO_CHOICES, verbose_name="Tipo de Ensino")
     serie = models.CharField(max_length=15, choices=SERIE_CHOICES, verbose_name="Série")
     turno = models.CharField(max_length=15, choices=TURNO_CHOICES, verbose_name="Turno")

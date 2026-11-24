@@ -1,0 +1,8 @@
+{% with atual=request.resolver_match.url_name %}
+<nav class="flex flex-wrap gap-2 mb-6 no-print">
+    <a href="{% url 'programa:programa_home' %}" class="btn btn-sm {% if atual == 'programa_home' %}bg-orange-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-book-open"></i> Início</a>
+    <a href="{% url 'programa:programa_list' %}" class="btn btn-sm {% if 'programa_' in atual and atual != 'programa_home' or 'participante' in atual %}bg-orange-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-list"></i> Programas</a>
+    <a href="{% url 'programa:modulo_list' %}" class="btn btn-sm {% if 'modulo' in atual %}bg-orange-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-layer-group"></i> Módulos</a>
+    <a href="{% url 'programa:aula_list' %}" class="btn btn-sm {% if 'aula' in atual %}bg-orange-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-chalkboard"></i> Aulas</a>
+</nav>
+{% endwith %}
