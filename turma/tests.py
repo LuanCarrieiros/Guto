@@ -34,7 +34,7 @@ class TurmaModelTest(TestCase):
 
     def test_str_representation(self):
         """Teste 2: Verifica a representação em string da turma"""
-        expected_str = "3º Ano A - 2025"
+        expected_str = "3º Ano A · 3º Ano · Matutino (2025)"
         self.assertEqual(str(self.turma), expected_str)
 
     def test_get_total_alunos_vazia(self):

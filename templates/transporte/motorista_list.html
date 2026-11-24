@@ -23,13 +23,12 @@
             <table class="table">
                 <thead><tr><th>Nome</th><th>CPF</th><th>CNH</th><th>Validade CNH</th><th>Contato</th><th>Situação</th><th></th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
-                    {% now "Y-m-d" as hoje %}
                     {% for m in page_obj %}
                     <tr>
                         <td class="font-medium"><a href="{% url 'transporte:motorista_detail' m.pk %}" class="hover:text-indigo-600">{{ m.nome }}</a></td>
                         <td>{{ m.cpf }}</td>
                         <td>{{ m.cnh_numero }} <span class="badge badge-gray">{{ m.cnh_categoria }}</span></td>
-                        <td>{% if m.cnh_validade|date:"Y-m-d" < hoje %}<span class="text-red-600 font-semibold">{{ m.cnh_validade|date:"d/m/Y" }} (vencida)</span>{% else %}{{ m.cnh_validade|date:"d/m/Y" }}{% endif %}</td>
+                        <td>{% if m.cnh_vencida %}<span class="text-red-600 font-semibold">{{ m.cnh_validade|date:"d/m/Y" }} (vencida)</span>{% else %}{{ m.cnh_validade|date:"d/m/Y" }}{% endif %}</td>
                         <td>{{ m.celular|default:m.telefone|default:"—" }}</td>
                         <td>{% if m.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</td>
                         <td class="text-right space-x-3">

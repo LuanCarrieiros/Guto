@@ -24,14 +24,13 @@
             <table class="table">
                 <thead><tr><th>Placa</th><th>Veículo</th><th>Tipo</th><th>Capacidade</th><th>Próxima vistoria</th><th>Situação</th><th></th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
-                    {% now "Y-m-d" as hoje %}
                     {% for v in page_obj %}
                     <tr>
                         <td class="font-mono font-semibold"><a href="{% url 'transporte:veiculo_detail' v.pk %}" class="hover:text-indigo-600">{{ v.placa }}</a></td>
                         <td>{{ v.marca }} {{ v.modelo }} <span class="text-xs text-gray-500">{{ v.ano_fabricacao }}</span></td>
                         <td>{{ v.get_tipo_veiculo_display }}</td>
                         <td>{{ v.capacidade_passageiros }} lugares</td>
-                        <td>{% if v.proxima_vistoria %}{% if v.proxima_vistoria|date:"Y-m-d" < hoje %}<span class="text-red-600 font-semibold">{{ v.proxima_vistoria|date:"d/m/Y" }}</span>{% else %}{{ v.proxima_vistoria|date:"d/m/Y" }}{% endif %}{% else %}—{% endif %}</td>
+                        <td>{% if v.proxima_vistoria %}{% if v.vistoria_vencida %}<span class="text-red-600 font-semibold">{{ v.proxima_vistoria|date:"d/m/Y" }}</span>{% else %}{{ v.proxima_vistoria|date:"d/m/Y" }}{% endif %}{% else %}—{% endif %}</td>
                         <td><span class="badge {% if v.status == 'ATIVO' %}badge-green{% elif v.status == 'MANUTENCAO' %}badge-yellow{% else %}badge-gray{% endif %}">{{ v.get_status_display }}</span></td>
                         <td class="text-right space-x-3">
                             <a href="{% url 'transporte:veiculo_detail' v.pk %}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-eye"></i></a>

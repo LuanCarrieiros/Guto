@@ -25,6 +25,11 @@ MODULOS_SISTEMA = [
 
 class UsuarioForm(forms.ModelForm):
     """Dados básicos do usuário. A senha é opcional na edição."""
+    funcionario = forms.ModelChoiceField(
+        queryset=None, required=False, label='Funcionário vinculado',
+        help_text='Vincule o login a um funcionário. Professores (função Docente) sem acesso administrativo '
+                  'passam a ver apenas os diários das turmas e disciplinas em que estão associados.',
+    )
     grupos = forms.ModelMultipleChoiceField(
         queryset=GrupoAcesso.objects.filter(ativo=True),
         required=False,
@@ -52,6 +57,12 @@ class UsuarioForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        from funcionarios.models import Funcionario
+        livres = Funcionario.objects.filter(usuario__isnull=True)
+        if self.instance.pk:
+            livres = livres | Funcionario.objects.filter(usuario=self.instance)
+            self.initial.setdefault('funcionario', Funcionario.objects.filter(usuario=self.instance).first())
+        self.fields['funcionario'].queryset = livres.distinct().order_by('nome')
         if not self.instance.pk:
             self.fields['nova_senha'].required = True
             self.fields['nova_senha'].help_text = ''
@@ -73,7 +84,17 @@ class UsuarioForm(forms.ModelForm):
         if commit:
             usuario.save()
             sincronizar_grupos_usuario(usuario, self.cleaned_data.get('grupos', []))
+            vincular_funcionario(usuario, self.cleaned_data.get('funcionario'))
         return usuario
+
+
+def vincular_funcionario(usuario, funcionario):
+    """Define qual funcionário corresponde ao login (no máximo um)."""
+    from funcionarios.models import Funcionario
+    Funcionario.objects.filter(usuario=usuario).exclude(pk=getattr(funcionario, 'pk', None)).update(usuario=None)
+    if funcionario is not None and funcionario.usuario_id != usuario.pk:
+        funcionario.usuario = usuario
+        funcionario.save(update_fields=['usuario'])
 
 
 def sincronizar_grupos_usuario(usuario, grupos_acesso):

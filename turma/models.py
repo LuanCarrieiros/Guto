@@ -1,4 +1,7 @@
+from datetime import date
+
 from django.db import models
+from django.db.models.functions import Lower
 from guto_system.utils import ano_atual
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
@@ -88,7 +91,7 @@ class Turma(models.Model):
         ordering = ['periodo_letivo', 'ano_serie', 'nome']
     
     def __str__(self):
-        return f"{self.nome} - {self.periodo_letivo}"
+        return f"{self.nome} · {self.get_ano_serie_display()} · {self.get_turno_display()} ({self.periodo_letivo})"
     
     def get_total_alunos(self):
         """Retorna total de alunos enturmados"""
@@ -150,6 +153,10 @@ class Disciplina(models.Model):
         verbose_name = "Disciplina"
         verbose_name_plural = "Disciplinas"
         ordering = ['nome']
+        constraints = [
+            # Sem duplicatas que diferem só em maiúsculas/minúsculas (ex.: "Matemática" e "MATEMÁTICA")
+            models.UniqueConstraint(Lower('nome'), name='disciplina_nome_unico'),
+        ]
 
     def save(self, *args, **kwargs):
         """Gera código automático se não fornecido"""
@@ -328,11 +335,38 @@ class Enturmacao(models.Model):
     class Meta:
         verbose_name = "Enturmação"
         verbose_name_plural = "Enturmações"
-        unique_together = ['aluno', 'ativo']
         ordering = ['turma', 'aluno__nome']
+        constraints = [
+            # RN-ENT001: um aluno só pode estar ativo em uma turma por vez.
+            # As enturmações encerradas ficam como histórico (quantas forem).
+            models.UniqueConstraint(
+                fields=['aluno'], condition=models.Q(ativo=True), name='enturmacao_um_ativo_por_aluno',
+            ),
+        ]
 
     def __str__(self):
         return f"{self.aluno.nome} - {self.turma.nome}"
+
+    def encerrar(self, usuario, motivo=''):
+        """Encerra a enturmação mantendo o registro no histórico do aluno."""
+        self.ativo = False
+        self.data_desenturmacao = date.today()
+        self.motivo_desenturmacao = motivo or None
+        self.usuario_desenturmacao = usuario
+        self.save()
+
+    @classmethod
+    def enturmar(cls, turma, aluno, usuario):
+        """
+        Enturma o aluno na turma. Se ele estiver ativo em outra turma, aquela
+        enturmação é encerrada como transferência (RN-ENT002). Retorna a enturmação ativa.
+        """
+        atual = cls.objects.filter(aluno=aluno, ativo=True).select_related('turma').first()
+        if atual and atual.turma_id == turma.pk:
+            return atual
+        if atual:
+            atual.encerrar(usuario, f'Transferido para {turma}')
+        return cls.objects.create(turma=turma, aluno=aluno, ativo=True, usuario_enturmacao=usuario)
 
 
 class AulaRegistrada(models.Model):

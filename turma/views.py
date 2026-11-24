@@ -1,3 +1,4 @@
+from django.db import transaction
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -12,7 +13,8 @@ from .models import (
     Avaliacao, DivisaoPeriodoLetivo, NotaAvaliacao
 )
 from diario.models import DiarioEletronico
-from .forms import TurmaForm, DisciplinaForm, AvaliacaoForm, DivisaoPeriodoLetivoForm
+from funcionarios.models import AssociacaoProfessor
+from .forms import TurmaForm, DisciplinaForm, AvaliacaoForm, ConceitoForm, DivisaoPeriodoLetivoForm
 from . import relatorios as relatorios_turma
 from alunos.models import Aluno
 from dashboard.models import AtividadeRecente
@@ -173,12 +175,24 @@ def turma_detail(request, pk):
     # Verificar se veio do diário
     from_diary = request.GET.get('from_diary') == 'true'
 
+    # Professor vigente de cada disciplina (ou o regente da turma)
+    vigentes = AssociacaoProfessor.objects.vigentes().filter(turma=turma).select_related('funcionario')
+    regente = vigentes.filter(tipo_associacao='TURMA').first()
+    por_disciplina = {a.disciplina_id: a for a in vigentes.filter(tipo_associacao='DISCIPLINA')}
+    professores = [
+        {'disciplina': d, 'associacao': por_disciplina.get(d.pk) or regente}
+        for d in turma.get_disciplinas()
+    ]
+
     context = {
         'turma': turma,
         'alunos_enturmados': alunos_enturmados,
         'avaliacoes': avaliacoes,
         'total_alunos': alunos_enturmados.count(),
         'from_diary': from_diary,
+        'professores': professores,
+        'regente': regente,
+        'historico_enturmacoes': turma.enturmacoes.filter(ativo=False).select_related('aluno').order_by('-data_desenturmacao')[:10],
     }
     return render(request, 'turma/turma_detail.html', context)
 
@@ -397,11 +411,21 @@ def avaliacao_create(request):
 
 @login_required
 def conceitos_list(request):
-    """Lista os conceitos disponíveis"""
-    conceitos = Conceito.objects.all()
-    
+    """Conceitos usados nas disciplinas que avaliam por conceito (cadastro e edição na mesma tela)"""
+    instancia = get_object_or_404(Conceito, pk=request.GET['editar']) if request.GET.get('editar') else None
+    form = ConceitoForm(request.POST or None, instance=instancia)
+    if request.method == 'POST' and form.is_valid():
+        conceito = form.save(commit=False)
+        if not conceito.pk:
+            conceito.usuario_criacao = request.user
+        conceito.save()
+        messages.success(request, f'Conceito "{conceito.nome}" salvo com sucesso!')
+        return redirect('turma:conceitos_list')
     context = {
-        'conceitos': conceitos
+        'conceitos': Conceito.objects.all(),
+        'form': form,
+        'editando': instancia,
+        'disciplinas_por_conceito': Disciplina.objects.filter(avalia_por_conceito=True, ativo=True),
     }
     return render(request, 'turma/conceitos_list.html', context)
 
@@ -536,45 +560,17 @@ def enturmar_alunos(request, pk):
             }
             return render(request, 'turma/enturmar_alunos.html', context)
         
-        # Processar enturmações (normal ou com confirmação)
-        for aluno_id in alunos_ids:
-            aluno = get_object_or_404(Aluno, codigo=aluno_id)
-            
-            # Verificar se o aluno já está enturmado em QUALQUER turma ativa
-            if not Enturmacao.objects.filter(aluno=aluno, ativo=True).exists():
-                Enturmacao.objects.create(
-                    turma=turma,
-                    aluno=aluno,
-                    data_enturmacao=date.today(),
-                    ativo=True,
-                    usuario_enturmacao=request.user
-                )
-            else:
-                # Se aluno já está em outra turma, desenturmar da anterior
-                enturmacao_anterior = Enturmacao.objects.get(aluno=aluno, ativo=True)
-                
-                # Verificar se já existe enturmação inativa para este aluno
-                if Enturmacao.objects.filter(aluno=aluno, ativo=False).exists():
-                    # Se já existe, deletar a enturmação anterior em vez de desativar
-                    enturmacao_anterior.delete()
-                else:
-                    # Se não existe, pode desativar normalmente
-                    enturmacao_anterior.ativo = False
-                    enturmacao_anterior.data_desenturmacao = date.today()
-                    enturmacao_anterior.motivo_desenturmacao = f"Transferido para {turma.nome}"
-                    enturmacao_anterior.usuario_desenturmacao = request.user
-                    enturmacao_anterior.save()
-                
-                # Criar nova enturmação
-                Enturmacao.objects.create(
-                    turma=turma,
-                    aluno=aluno,
-                    data_enturmacao=date.today(),
-                    ativo=True,
-                    usuario_enturmacao=request.user
-                )
-        
-        messages.success(request, f'{len(alunos_ids)} aluno(s) enturmado(s) com sucesso!')
+        # Processar enturmações (transferências já confirmadas acima)
+        alunos = list(Aluno.objects.filter(codigo__in=alunos_ids))
+        novos = [a for a in alunos if not Enturmacao.objects.filter(turma=turma, aluno=a, ativo=True).exists()]
+        if len(novos) > turma.get_vagas_disponiveis():
+            messages.error(request, f'A turma tem apenas {turma.get_vagas_disponiveis()} vaga(s) disponível(is).')
+            return redirect('turma:enturmar_alunos', pk=pk)
+        with transaction.atomic():
+            for aluno in novos:
+                Enturmacao.enturmar(turma, aluno, request.user)
+
+        messages.success(request, f'{len(novos)} aluno(s) enturmado(s) com sucesso!')
         return redirect('turma:turma_detail', pk=pk)
     
     # Alunos já enturmados nesta turma
@@ -617,17 +613,8 @@ def desenturmar_aluno(request, pk, aluno_id):
             ativo=True
         )
         
-        # Verificar se já existe enturmação inativa para este aluno
-        if Enturmacao.objects.filter(aluno=aluno, ativo=False).exists():
-            # Se já existe, deletar esta enturmação em vez de desativar
-            enturmacao.delete()
-        else:
-            # Se não existe, pode desativar normalmente
-            enturmacao.ativo = False
-            enturmacao.data_desenturmacao = date.today()
-            enturmacao.usuario_desenturmacao = request.user
-            enturmacao.save()
-        
+        enturmacao.encerrar(request.user, request.POST.get('motivo', '').strip())
+
         messages.success(request, f'Aluno {aluno.nome} desenturmado da turma {turma.nome}!')
         return redirect('turma:turma_detail', pk=turma.pk)
     
@@ -653,7 +640,7 @@ def gerenciar_disciplinas_turma(request, turma_id):
             DiarioEletronico.objects.update_or_create(
                 turma=turma,
                 disciplina=disciplina,
-                defaults={'periodo_letivo': turma.periodo_letivo, 'ativo': True},
+                defaults={'ativo': True},
             )
         
         messages.success(request, f'{len(disciplinas_ids)} disciplina(s) vinculada(s) à turma com sucesso!')

@@ -14,7 +14,7 @@
     </div>
 
     <form method="get" class="card card-body guto-form flex flex-wrap gap-3 items-end">
-        <div><label class="form-label">Turma</label><select name="turma" class="!w-56"><option value="">Todas</option>{% for t in turmas %}<option value="{{ t }}" {% if filtros.turma == t %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+        <div><label class="form-label">Turma</label><select name="turma" class="!w-80"><option value="">Todas</option>{% for t in turmas %}<option value="{{ t.pk }}" {% if filtros.turma == t.pk|stringformat:"s" %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
         <div><label class="form-label">Tipo</label><select name="tipo_associacao" class="!w-64"><option value="">Todos</option>{% for c, n in tipos %}<option value="{{ c }}" {% if filtros.tipo_associacao == c %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
         <div><label class="form-label">Período</label><select name="vigentes" class="!w-44"><option value="1" {% if filtros.vigentes == '1' %}selected{% endif %}>Somente vigentes</option><option value="0" {% if filtros.vigentes == '0' %}selected{% endif %}>Incluir histórico</option></select></div>
         <button type="submit" class="btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
@@ -25,15 +25,15 @@
         {% if associacoes %}
         <div class="table-responsive">
             <table class="table">
-                <thead><tr><th>Turma</th><th>Disciplina</th><th>Professor</th><th>Tipo</th><th>Período</th><th></th></tr></thead>
+                <thead><tr><th>Turma</th><th>Disciplina</th><th>Professor</th><th>Período</th><th>Situação</th><th></th></tr></thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for a in associacoes %}
                     <tr>
-                        <td class="font-medium">{{ a.turma }}</td>
-                        <td>{{ a.disciplina }}{% if a.sem_docente %} <span class="badge badge-yellow">Sem docente</span>{% endif %}</td>
-                        <td><a href="{% url 'funcionarios:funcionario_detail' a.funcionario.pk %}" class="hover:text-indigo-600">{{ a.funcionario.nome }}</a></td>
-                        <td>{{ a.get_tipo_associacao_display }}</td>
+                        <td class="font-medium"><a href="{% url 'turma:turma_detail' a.turma.pk %}" class="hover:text-indigo-600">{{ a.turma.nome }}</a><p class="text-xs text-gray-500">{{ a.turma.get_ano_serie_display }} · {{ a.turma.get_turno_display }} · {{ a.turma.periodo_letivo }}</p></td>
+                        <td>{% if a.disciplina %}{{ a.disciplina.nome }}{% else %}<span class="badge badge-purple">Regente (todas)</span>{% endif %}</td>
+                        <td>{% if a.funcionario %}<a href="{% url 'funcionarios:funcionario_detail' a.funcionario.pk %}" class="hover:text-indigo-600">{{ a.funcionario.nome }}</a>{% else %}<span class="badge badge-yellow">Sem docente</span>{% endif %}</td>
                         <td>{{ a.data_inicio|date:"d/m/Y" }} – {{ a.data_termino|date:"d/m/Y"|default:"atual" }}</td>
+                        <td>{% if a.vigente %}<span class="badge badge-green">Vigente</span>{% else %}<span class="badge badge-gray">Encerrada</span>{% endif %}</td>
                         <td class="text-right"><a href="{% url 'funcionarios:associacao_professor_edit' a.pk %}" class="text-gray-500 hover:text-indigo-600" title="Editar / registrar substituição"><i class="fas fa-edit"></i></a></td>
                     </tr>
                     {% endfor %}
@@ -55,7 +55,7 @@
                 <tbody class="divide-y divide-gray-100">
                     {% for o in outros %}
                     <tr>
-                        <td class="font-medium">{{ o.turma }}</td>
+                        <td class="font-medium">{{ o.turma.nome }} <span class="text-xs text-gray-500">({{ o.turma.periodo_letivo }})</span></td>
                         <td><a href="{% url 'funcionarios:funcionario_detail' o.funcionario.pk %}" class="hover:text-indigo-600">{{ o.funcionario.nome }}</a></td>
                         <td>{{ o.get_tipo_profissional_display }}</td>
                         <td>{{ o.data_inicio|date:"d/m/Y" }} – {{ o.data_termino|date:"d/m/Y"|default:"atual" }}</td>

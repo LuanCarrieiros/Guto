@@ -79,9 +79,6 @@ class PerfilUsuario(models.Model):
     def __str__(self):
         return f"{self.user.get_full_name()} ({self.cpf})"
     
-    def tem_acoes_no_sistema(self):
-        """Verifica se o usuário já realizou ações no sistema (RNF1801)"""
-        return RegistroAuditoria.objects.filter(usuario=self.user).exists()
 
 class ConfiguracaoSistema(models.Model):
     """Model para Configurações Gerais do Sistema (RF1907)"""

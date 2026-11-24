@@ -82,7 +82,7 @@ Todos os módulos do menu lateral estão implementados e acessíveis:
 |--------|-----------------|
 | **🏠 Dashboard** | Estatísticas gerais, alunos por turma, atividades recentes |
 | **📚 Alunos** | CRUD, cadastro completo em abas (identificação, documentação, responsáveis, transporte e dados adicionais personalizados), matrículas, arquivo permanente, impressão |
-| **👨‍🏫 Funcionários** | CRUD, cadastro completo em abas (habilitações, disciplinas e deficiências incluídas), busca antes do cadastro, arquivo permanente, impressão de lista e de folha de frequência, associação de professores e outros profissionais às turmas |
+| **👨‍🏫 Funcionários** | CRUD, cadastro completo em abas (habilitações, formação superior, duplo vínculo, disciplinas e deficiências), busca antes do cadastro, arquivo permanente, impressão de lista e de folha de frequência, associação de professores e outros profissionais às turmas |
 | **🎓 Turmas** | Turmas, disciplinas, enturmação, avaliações, conceitos, bimestres/períodos e relatórios (boletim por aluno, frequência e desempenho da turma) |
 | **📖 Diário Eletrônico** | Fluxo Turma → Disciplina → Período, chamada, lançamento de notas, avaliações, parecer descritivo, recuperação especial e fechamento do diário (diário fechado não aceita alterações) |
 | **🛣️ Itinerários (Escola)** | Itinerários formativos, unidades curriculares, grade do itinerário e enturmação com controle de vagas |
@@ -92,6 +92,14 @@ Todos os módulos do menu lateral estão implementados e acessíveis:
 | **📊 Censo** | Censo escolar por ano, relatórios de matrículas/funcionários/estatísticas e exportação em CSV ou JSON |
 | **🔧 Opções** | Calendário escolar com eventos (visualização e impressão) e emissão de relatórios de turmas com filtros |
 | **⚙️ Utilitários** | Usuários, grupos de acesso e permissões por módulo, instituições, transferências, tipos de avaliação, dados adicionais, configurações, bloqueios de funcionalidade e auditoria |
+
+### 🧩 Alunos, turmas, disciplinas e professores
+- **Tudo é ligado por identificador, nunca por nome.** Dois alunos chamados "João da Silva" em turmas diferentes têm notas, chamadas e boletins independentes.
+- **Enturmação**: um aluno fica ativo em uma turma por vez; ao enturmá-lo em outra, a anterior é encerrada como transferência. Todas as passagens ficam no histórico (página do aluno e da turma).
+- **Disciplina** (ex.: Matemática) é cadastrada **uma única vez**; o sistema impede duplicatas que diferem só em maiúsculas/minúsculas. Ela é vinculada às turmas em *Turmas › Disciplinas da turma*.
+- **Professor por turma**: em *Funcionários › Associação às Turmas* (ou na página da turma), cada disciplina de cada turma recebe seu professor — a Matemática do 1º A e a do 1º B podem ter professores diferentes. Não pode haver dois professores vigentes na mesma disciplina da mesma turma; para substituir, encerre a associação atual (fica no histórico). O professor **regente** (tipo "Turma") responde por todas as disciplinas da turma.
+- **Login do professor**: em *Utilitários › Usuários*, vincule o usuário ao funcionário. Professores (função Docente) sem acesso administrativo veem e lançam apenas nos diários das suas turmas/disciplinas; coordenação e administradores veem todos.
+- **Avaliação por conceito**: disciplinas marcadas como "Avalia por conceito" usam a escala de *Turmas › Conceitos* no lançamento de notas; a nota equivalente entra nas médias.
 
 ### 🔐 Controle de acesso
 - **Utilitários** é restrito a administradores (superusuário ou acesso à área administrativa).

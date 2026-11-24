@@ -586,14 +586,15 @@ class DisponibilidadeForm(forms.ModelForm):
         }
 
 class DisciplinaFuncionarioForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        from turma.models import Disciplina
+        self.fields['disciplina'].queryset = Disciplina.objects.filter(ativo=True).order_by('nome')
+
     class Meta:
         model = DisciplinaFuncionario
         fields = ['disciplina', 'habilitado']
         widgets = {
-            'disciplina': forms.TextInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500',
-                'placeholder': 'Nome da disciplina'
-            }),
             'habilitado': forms.CheckboxInput(attrs={
                 'class': 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
             })
@@ -615,133 +616,112 @@ class DeficienciaFuncionarioForm(forms.ModelForm):
             })
         }
 
-def opcoes_turmas(atual=None):
-    """Turmas cadastradas (o valor salvo é o nome da turma)."""
-    from turma.models import Turma
-    nomes = list(Turma.objects.order_by('-periodo_letivo', 'nome').values_list('nome', flat=True).distinct())
-    if atual and atual not in nomes:
-        nomes.insert(0, atual)
-    return [('', 'Selecione a turma...')] + [(n, n) for n in nomes]
-
-
-def opcoes_disciplinas(atual=None):
-    """Disciplinas ativas (o valor salvo é o nome da disciplina)."""
-    from turma.models import Disciplina
-    nomes = list(Disciplina.objects.filter(ativo=True).order_by('nome').values_list('nome', flat=True))
-    if atual and atual not in nomes:
-        nomes.insert(0, atual)
-    return [('', 'Selecione a disciplina...')] + [(n, n) for n in nomes]
-
-
 def validar_periodo(form, dados):
     inicio, termino = dados.get('data_inicio'), dados.get('data_termino')
     if inicio and termino and termino < inicio:
         form.add_error('data_termino', 'A data de término deve ser posterior ao início.')
 
 
+def periodos_sobrepostos(queryset, inicio, termino):
+    """Associações do queryset cujo período cruza [inicio, termino] (termino vazio = em aberto)."""
+    from django.db.models import Q
+    qs = queryset.filter(Q(data_termino__isnull=True) | Q(data_termino__gte=inicio))
+    if termino:
+        qs = qs.filter(data_inicio__lte=termino)
+    return qs
+
+
 class AssociacaoProfessorForm(forms.ModelForm):
+    """
+    Professor de uma disciplina em uma turma. Cada turma tem o seu: a Matemática do 1º A e a
+    do 1º B podem ter professores diferentes. Não pode haver dois professores vigentes ao mesmo
+    tempo para a mesma disciplina da mesma turma; para substituir, informe a data de término
+    da associação atual e cadastre a nova.
+    """
+
     class Meta:
         model = AssociacaoProfessor
-        fields = [
-            'funcionario', 'turma', 'disciplina', 'tipo_associacao',
-            'data_inicio', 'data_termino', 'sem_docente'
-        ]
+        fields = ['turma', 'tipo_associacao', 'disciplina', 'funcionario', 'sem_docente', 'data_inicio', 'data_termino']
         widgets = {
-            'funcionario': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
-            }),
-            'turma': forms.TextInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
-                'placeholder': 'Nome da turma'
-            }),
-            'disciplina': forms.TextInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
-                'placeholder': 'Nome da disciplina'
-            }),
-            'tipo_associacao': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-            }),
-            'data_inicio': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
-            }),
-            'data_termino': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-            }),
-            'sem_docente': forms.CheckboxInput(attrs={
-                'class': 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
-            })
+            'data_inicio': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'data_termino': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
         }
-    
+        help_texts = {
+            'disciplina': 'Obrigatória para o tipo "Disciplina". O professor regente (tipo "Turma") responde por todas.',
+            'funcionario': 'Somente funcionários com função Docente no arquivo corrente.',
+        }
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # RNF501: Apenas docentes na lista
-        self.fields['funcionario'].queryset = Funcionario.objects.filter(
-            dados_funcionais__funcao='DOCENTE',
-            tipo_arquivo='CORRENTE'
-        ).order_by('nome')
-        self.fields['turma'] = forms.ChoiceField(label='Turma', choices=opcoes_turmas(self.instance.turma))
-        self.fields['disciplina'] = forms.ChoiceField(label='Disciplina', choices=opcoes_disciplinas(self.instance.disciplina))
+        from turma.models import Disciplina, Turma
+        # RNF501: apenas docentes
+        docentes = Funcionario.objects.filter(dados_funcionais__funcao='DOCENTE', tipo_arquivo='CORRENTE')
+        if self.instance.pk and self.instance.funcionario_id:
+            docentes = docentes | Funcionario.objects.filter(pk=self.instance.funcionario_id)
+        self.fields['funcionario'].queryset = docentes.distinct().order_by('nome')
+        self.fields['turma'].queryset = Turma.objects.order_by('-periodo_letivo', 'nome')
+        self.fields['disciplina'].queryset = Disciplina.objects.filter(ativo=True).order_by('nome')
 
     def clean(self):
         dados = super().clean()
         validar_periodo(self, dados)
+        tipo, disciplina = dados.get('tipo_associacao'), dados.get('disciplina')
+        if tipo == 'DISCIPLINA' and not disciplina:
+            self.add_error('disciplina', 'Informe a disciplina.')
+        if tipo == 'TURMA':
+            dados['disciplina'] = None
+        if not dados.get('sem_docente') and not dados.get('funcionario'):
+            self.add_error('funcionario', 'Informe o professor ou marque "Disciplina não possui docente".')
+        if dados.get('sem_docente'):
+            dados['funcionario'] = None
+
+        turma, inicio = dados.get('turma'), dados.get('data_inicio')
+        if turma and inicio and not self.errors:
+            existentes = AssociacaoProfessor.objects.filter(turma=turma, tipo_associacao=tipo).exclude(pk=self.instance.pk)
+            if tipo == 'DISCIPLINA':
+                existentes = existentes.filter(disciplina=disciplina)
+            conflito = periodos_sobrepostos(existentes, inicio, dados.get('data_termino')).first()
+            if conflito:
+                quem = conflito.funcionario.nome if conflito.funcionario else 'sem docente'
+                raise ValidationError(
+                    f'Já existe associação neste período ({quem}, desde {conflito.data_inicio:%d/%m/%Y}). '
+                    'Para substituir o professor, informe a data de término da associação atual primeiro.'
+                )
         return dados
 
+
 class AssociacaoOutrosProfissionaisForm(forms.ModelForm):
+    FUNCAO_POR_TIPO = {
+        'AUXILIAR_EDUCACIONAL': 'AUXILIAR_EDUCACIONAL',
+        'MONITOR_ATIVIDADE': 'PROFISSIONAL_MONITOR',
+        'TRADUTOR_LIBRAS': 'TRADUTOR_LIBRAS',
+    }
+
     class Meta:
         model = AssociacaoOutrosProfissionais
-        fields = [
-            'funcionario', 'turma', 'tipo_profissional', 
-            'data_inicio', 'data_termino'
-        ]
+        fields = ['turma', 'tipo_profissional', 'funcionario', 'data_inicio', 'data_termino']
         widgets = {
-            'funcionario': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
-            }),
-            'turma': forms.TextInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50',
-                'placeholder': 'Nome da turma'
-            }),
-            'tipo_profissional': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
-            }),
-            'data_inicio': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-green-50'
-            }),
-            'data_termino': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500'
-            })
+            'data_inicio': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
+            'data_termino': forms.DateInput(attrs={'type': 'date'}, format='%Y-%m-%d'),
         }
-    
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        # RNF502: Filtrar funcionários por função correspondente
-        if self.data and 'tipo_profissional' in self.data:
-            tipo = self.data['tipo_profissional']
-            if tipo == 'AUXILIAR_EDUCACIONAL':
-                self.fields['funcionario'].queryset = Funcionario.objects.filter(
-                    dados_funcionais__funcao='AUXILIAR_EDUCACIONAL',
-                    tipo_arquivo='CORRENTE'
-                )
-            elif tipo == 'MONITOR_ATIVIDADE':
-                self.fields['funcionario'].queryset = Funcionario.objects.filter(
-                    dados_funcionais__funcao='PROFISSIONAL_MONITOR',
-                    tipo_arquivo='CORRENTE'
-                )
-            elif tipo == 'TRADUTOR_LIBRAS':
-                self.fields['funcionario'].queryset = Funcionario.objects.filter(
-                    dados_funcionais__funcao='TRADUTOR_LIBRAS',
-                    tipo_arquivo='CORRENTE'
-                )
-        self.fields['turma'] = forms.ChoiceField(label='Turma', choices=opcoes_turmas(self.instance.turma))
+        from turma.models import Turma
+        self.fields['turma'].queryset = Turma.objects.order_by('-periodo_letivo', 'nome')
+        self.fields['funcionario'].queryset = Funcionario.objects.filter(
+            tipo_arquivo='CORRENTE', dados_funcionais__funcao__in=self.FUNCAO_POR_TIPO.values()
+        ).order_by('nome')
 
     def clean(self):
         dados = super().clean()
         validar_periodo(self, dados)
+        # RNF502: a função do funcionário deve corresponder ao tipo de profissional
+        funcionario, tipo = dados.get('funcionario'), dados.get('tipo_profissional')
+        if funcionario and tipo:
+            funcao = getattr(getattr(funcionario, 'dados_funcionais', None), 'funcao', None)
+            if funcao != self.FUNCAO_POR_TIPO[tipo]:
+                self.add_error('funcionario', 'A função deste funcionário não corresponde ao tipo de profissional.')
         return dados
 
 class BuscaRedeForm(forms.Form):

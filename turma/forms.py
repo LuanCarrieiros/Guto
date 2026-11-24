@@ -1,11 +1,28 @@
 from django import forms
 from .models import (
-    Turma, Disciplina, DivisaoPeriodoLetivo, AulaRegistrada, 
-    TipoAvaliacao, Avaliacao
+    Conceito,
+    Turma, Disciplina, DivisaoPeriodoLetivo, TipoAvaliacao, 
+    Avaliacao
 )
 
 
+def mesmo_nome(nome, queryset, campo='nome'):
+    """Verifica nomes iguais ignorando maiúsculas, acentuação de caixa e espaços extras.
+    (Feito em Python porque o SQLite só compara maiúsculas/minúsculas de letras sem acento.)"""
+    alvo = ' '.join(nome.split()).casefold()
+    return any(' '.join(valor.split()).casefold() == alvo for valor in queryset.values_list(campo, flat=True))
+
+
 class TurmaForm(forms.ModelForm):
+    def clean(self):
+        dados = super().clean()
+        nome, periodo = dados.get('nome'), dados.get('periodo_letivo')
+        if nome and periodo and mesmo_nome(nome, Turma.objects.filter(periodo_letivo=periodo).exclude(pk=self.instance.pk)):
+            self.add_error('nome', f'Já existe uma turma com este nome em {periodo}.')
+        if nome:
+            dados['nome'] = ' '.join(nome.split())
+        return dados
+
     """Formulário para criação e edição de turmas"""
     
     class Meta:
@@ -82,6 +99,15 @@ class TurmaForm(forms.ModelForm):
 
 class DisciplinaForm(forms.ModelForm):
     """Formulário para criação e edição de disciplinas"""
+
+    def clean_nome(self):
+        nome = ' '.join(self.cleaned_data['nome'].split())
+        if mesmo_nome(nome, Disciplina.objects.exclude(pk=self.instance.pk)):
+            raise forms.ValidationError(
+                'Já existe uma disciplina com este nome. Uma disciplina (ex.: Matemática) é cadastrada '
+                'uma única vez e vinculada a várias turmas, cada uma com seu professor.'
+            )
+        return nome
     
     class Meta:
         model = Disciplina
@@ -233,14 +259,25 @@ class AvaliacaoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
+        self.user = user
         super().__init__(*args, **kwargs)
         
-        if user and user.groups.filter(name='Professor').exists():
-            # Filtrar apenas turmas do professor
-            turmas_ids = AulaRegistrada.objects.filter(
-                professor=user
-            ).values_list('turma', flat=True).distinct()
-            self.fields['turma'].queryset = Turma.objects.filter(id__in=turmas_ids)
+        if user is not None:
+            # Professores veem apenas as turmas em que estão associados
+            from diario.acesso import filtrar_turmas
+            self.fields['turma'].queryset = filtrar_turmas(user, Turma.objects.order_by('-periodo_letivo', 'nome'))
+        self.fields['disciplina'].queryset = Disciplina.objects.filter(ativo=True).order_by('nome')
+
+    def clean(self):
+        dados = super().clean()
+        turma, divisao, user = dados.get('turma'), dados.get('divisao_periodo'), self.user
+        if turma and divisao and divisao.periodo_letivo != turma.periodo_letivo:
+            self.add_error('divisao_periodo', f'O período deve ser do ano letivo da turma ({turma.periodo_letivo}).')
+        if turma and dados.get('disciplina') and user is not None:
+            from diario.acesso import pode_acessar
+            if not pode_acessar(user, turma, dados['disciplina']):
+                self.add_error('disciplina', 'Você não é o professor desta disciplina nesta turma.')
+        return dados
 
 
 class AvaliacaoDiarioForm(forms.ModelForm):
@@ -255,3 +292,17 @@ class AvaliacaoDiarioForm(forms.ModelForm):
         if peso is None or peso <= 0:
             raise forms.ValidationError('O peso deve ser maior que zero.')
         return peso
+
+
+class ConceitoForm(forms.ModelForm):
+    class Meta:
+        model = Conceito
+        fields = ['nome', 'descricao', 'valor_numerico', 'cor_display', 'ativo']
+        widgets = {'cor_display': forms.TextInput(attrs={'type': 'color'})}
+        help_texts = {'valor_numerico': 'Nota equivalente (0 a 10) usada no cálculo das médias.'}
+
+    def clean_nome(self):
+        nome = self.cleaned_data['nome'].strip().upper()
+        if mesmo_nome(nome, Conceito.objects.exclude(pk=self.instance.pk)):
+            raise forms.ValidationError('Já existe um conceito com este nome.')
+        return nome

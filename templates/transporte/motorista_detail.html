@@ -23,7 +23,7 @@
             <div><p class="detail-label">RG</p><p class="detail-value">{{ motorista.rg|default:"—" }}</p></div>
             <div><p class="detail-label">Nascimento</p><p class="detail-value">{{ motorista.data_nascimento|date:"d/m/Y" }}</p></div>
             <div><p class="detail-label">CNH</p><p class="detail-value">{{ motorista.cnh_numero }} · {{ motorista.get_cnh_categoria_display }}</p></div>
-            <div><p class="detail-label">Validade da CNH</p><p class="detail-value">{{ motorista.cnh_validade|date:"d/m/Y" }}</p></div>
+            <div><p class="detail-label">Validade da CNH</p><p class="detail-value {% if motorista.cnh_vencida %}text-red-600 font-semibold{% endif %}">{{ motorista.cnh_validade|date:"d/m/Y" }}{% if motorista.cnh_vencida %} (vencida){% endif %}</p></div>
             <div><p class="detail-label">Situação</p><p class="detail-value">{% if motorista.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</p></div>
             <div><p class="detail-label">Telefone / celular</p><p class="detail-value">{{ motorista.telefone|default:"—" }} / {{ motorista.celular|default:"—" }}</p></div>
             <div><p class="detail-label">Contrato</p><p class="detail-value">{{ motorista.data_inicio_contrato|date:"d/m/Y" }}{% if motorista.data_fim_contrato %} a {{ motorista.data_fim_contrato|date:"d/m/Y" }}{% endif %}</p></div>

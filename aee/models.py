@@ -160,7 +160,12 @@ class EnturmacaoAEE(models.Model):
         verbose_name = "Enturmação AEE/AC"
         verbose_name_plural = "Enturmações AEE/AC"
         ordering = ['turma', 'aluno__nome']
-        unique_together = ['turma', 'aluno', 'ativo']  # Um aluno só pode estar ativo em uma turma por vez
+        constraints = [
+            # Um aluno não pode estar ativo duas vezes na mesma turma; saídas ficam no histórico
+            models.UniqueConstraint(
+                fields=['turma', 'aluno'], condition=models.Q(ativo=True), name='enturmacao_aee_unica_ativa',
+            ),
+        ]
     
     def __str__(self):
         return f"{self.aluno.nome} - {self.turma.nome}"

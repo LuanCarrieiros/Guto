@@ -97,6 +97,11 @@
             <!-- Botões de Ação -->
             <form method="post" id="formDesenturmar">
                 {% csrf_token %}
+                <div class="guto-form mb-4">
+                    <label for="motivo" class="form-label">Motivo (opcional)</label>
+                    <input type="text" id="motivo" name="motivo" maxlength="255" placeholder="Ex.: transferência para outra escola">
+                    <p class="form-help">A enturmação fica registrada no histórico do aluno.</p>
+                </div>
                 <div class="flex items-center justify-center gap-4">
                     <a href="{% url 'turma:turmas_list' %}" 
                        class="px-6 py-3 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition-colors font-medium">

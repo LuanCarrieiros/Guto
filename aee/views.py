@@ -263,8 +263,6 @@ def enturmacao_remover(request, pk):
     """
     enturmacao = get_object_or_404(EnturmacaoAEE, pk=pk, ativo=True)
     with transaction.atomic():
-        # Garante a unicidade (turma, aluno, ativo) ao inativar
-        EnturmacaoAEE.objects.filter(turma=enturmacao.turma, aluno=enturmacao.aluno, ativo=False).delete()
         enturmacao.ativo = False
         enturmacao.data_saida = timezone.now()
         enturmacao.save()

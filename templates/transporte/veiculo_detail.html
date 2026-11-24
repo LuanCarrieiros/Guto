@@ -27,9 +27,9 @@
             <div><p class="detail-label">Capacidade</p><p class="detail-value">{{ veiculo.capacidade_passageiros }} passageiros</p></div>
             <div><p class="detail-label">RENAVAM</p><p class="detail-value">{{ veiculo.renavam|default:"—" }}</p></div>
             <div><p class="detail-label">Chassi</p><p class="detail-value">{{ veiculo.chassi|default:"—" }}</p></div>
-            <div><p class="detail-label">Vistoria</p><p class="detail-value">Última: {{ veiculo.data_ultima_vistoria|date:"d/m/Y"|default:"—" }} · Próxima: {{ veiculo.proxima_vistoria|date:"d/m/Y"|default:"—" }}</p></div>
+            <div><p class="detail-label">Vistoria</p><p class="detail-value">Última: {{ veiculo.data_ultima_vistoria|date:"d/m/Y"|default:"—" }} · Próxima: {{ veiculo.proxima_vistoria|date:"d/m/Y"|default:"—" }}{% if veiculo.vistoria_vencida %} <span class="text-red-600 font-semibold">(vencida)</span>{% endif %}</p></div>
             <div><p class="detail-label">Seguro</p><p class="detail-value">{{ veiculo.seguradora|default:"—" }} {% if veiculo.numero_apolice %}· apólice {{ veiculo.numero_apolice }}{% endif %}</p></div>
-            <div><p class="detail-label">Validade do seguro</p><p class="detail-value">{{ veiculo.validade_seguro|date:"d/m/Y"|default:"—" }}</p></div>
+            <div><p class="detail-label">Validade do seguro</p><p class="detail-value {% if veiculo.seguro_vencido %}text-red-600 font-semibold{% endif %}">{{ veiculo.validade_seguro|date:"d/m/Y"|default:"—" }}{% if veiculo.seguro_vencido %} (vencido){% endif %}</p></div>
         </div>
     </div>
     <div class="grid lg:grid-cols-2 gap-6">

@@ -3,11 +3,13 @@ from django.contrib.auth.models import User
 
 
 class DiarioEletronico(models.Model):
-    """Model para Diário Eletrônico - criado automaticamente para cada turma/disciplina"""
+    """
+    Diário de uma disciplina em uma turma (ex.: Matemática do 1º A).
+    Há um único diário por turma e disciplina; o professor responsável vem da
+    associação de professores (Funcionários › Associação às Turmas).
+    """
     turma = models.ForeignKey('turma.Turma', on_delete=models.CASCADE, related_name='diarios', verbose_name="Turma")
     disciplina = models.ForeignKey('turma.Disciplina', on_delete=models.CASCADE, verbose_name="Disciplina")
-    periodo_letivo = models.CharField(max_length=4, verbose_name="Período Letivo", blank=True, null=True)
-    professor = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Professor Responsável", null=True, blank=True)
     ativo = models.BooleanField(default=True, verbose_name="Diário Ativo")
 
     # Controle de fechamento
@@ -24,12 +26,21 @@ class DiarioEletronico(models.Model):
     class Meta:
         verbose_name = "Diário Eletrônico"
         verbose_name_plural = "Diários Eletrônicos"
-        unique_together = ['turma', 'disciplina', 'periodo_letivo']
+        unique_together = ['turma', 'disciplina']
         ordering = ['turma__nome', 'disciplina__nome']
 
     def __str__(self):
-        return f"{self.turma.nome} - {self.disciplina.nome} ({self.periodo_letivo})"
+        return f"{self.turma.nome} - {self.disciplina.nome} ({self.turma.periodo_letivo})"
 
-    def get_alunos(self):
-        """Retorna alunos do diário (alunos enturmados)"""
-        return self.turma.get_alunos_enturmados()
+    @property
+    def associacao_vigente(self):
+        """Associação de professor em vigor para esta disciplina na turma (ou o regente da turma)."""
+        from funcionarios.models import AssociacaoProfessor
+        vigentes = AssociacaoProfessor.objects.vigentes().filter(turma=self.turma).select_related('funcionario')
+        return (vigentes.filter(disciplina=self.disciplina).first()
+                or vigentes.filter(tipo_associacao='TURMA').first())
+
+    @property
+    def professor(self):
+        associacao = self.associacao_vigente
+        return associacao.funcionario if associacao else None

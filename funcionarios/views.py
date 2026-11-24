@@ -8,13 +8,14 @@ from django.contrib import messages
 from django.db.models import Q, Count
 from django.core.paginator import Paginator
 from dashboard.models import AtividadeRecente
+from turma.models import Turma
 from .models import (
     Funcionario, DocumentacaoFuncionario, DadosFuncionais, Escolaridade,
     Disponibilidade, DeficienciaFuncionario, AssociacaoProfessor, AssociacaoOutrosProfissionais
 )
 from .forms import (
     FuncionarioForm, DocumentacaoFuncionarioForm, DadosFuncionaisForm,
-    EscolaridadeForm, HabilitacaoForm, DisciplinaFuncionarioForm, DeficienciaFuncionarioForm, DisponibilidadeForm, AssociacaoProfessorForm, AssociacaoOutrosProfissionaisForm,
+    EscolaridadeForm, HabilitacaoForm, FormacaoSuperiorForm, DuploVinculoForm, DisciplinaFuncionarioForm, DeficienciaFuncionarioForm, DisponibilidadeForm, AssociacaoProfessorForm, AssociacaoOutrosProfissionaisForm,
     BuscaRedeForm
 )
 
@@ -269,6 +270,8 @@ def funcionario_edit_extended(request, pk):
         'habilitacao': (HabilitacaoForm, funcionario.habilitacoes, 'Habilitação'),
         'disciplinas': (DisciplinaFuncionarioForm, funcionario.disciplinas, 'Disciplina'),
         'deficiencias': (DeficienciaFuncionarioForm, funcionario.deficiencias, 'Deficiência'),
+        'formacao': (FormacaoSuperiorForm, funcionario.formacoes_superiores, 'Formação superior'),
+        'vinculos': (DuploVinculoForm, funcionario.duplos_vinculos, 'Vínculo'),
     }
     if request.method == 'POST' and request.POST.get('aba_ativa') in listas:
         aba = request.POST['aba_ativa']
@@ -279,6 +282,9 @@ def funcionario_edit_extended(request, pk):
             messages.success(request, f'{rotulo} removida.')
         else:
             form = form_class(request.POST, prefix=aba)
+            if aba == 'disciplinas' and form.is_valid() and \
+                    funcionario.disciplinas.filter(disciplina=form.cleaned_data['disciplina']).exists():
+                form.add_error('disciplina', 'Esta disciplina já está cadastrada para o funcionário.')
             if form.is_valid():
                 item = form.save(commit=False)
                 item.funcionario = funcionario
@@ -386,9 +392,11 @@ def funcionario_edit_extended(request, pk):
         'habilitacao_form': HabilitacaoForm(prefix='habilitacao'),
         'disciplina_form': DisciplinaFuncionarioForm(prefix='disciplinas'),
         'deficiencia_form': DeficienciaFuncionarioForm(prefix='deficiencias'),
+        'formacao_form': FormacaoSuperiorForm(prefix='formacao'),
+        'vinculo_form': DuploVinculoForm(prefix='vinculos'),
         'aba_inicial': request.GET.get('aba') if request.GET.get('aba') in (
             'pessoais', 'documentacao', 'funcionais', 'habilitacao', 'escolaridade',
-            'disponibilidade', 'disciplinas', 'deficiencias') else 'pessoais',
+            'disponibilidade', 'disciplinas', 'deficiencias', 'formacao', 'vinculos') else 'pessoais',
     }
 
     return render(request, 'funcionarios/funcionario_edit_extended.html', context)
@@ -519,23 +527,21 @@ def associacao_professor_list(request):
     tipo_associacao = request.GET.get('tipo_associacao', '')
     vigentes = request.GET.get('vigentes', '1')
 
-    associacoes = AssociacaoProfessor.objects.select_related('funcionario').order_by('turma', 'disciplina')
-    outros = AssociacaoOutrosProfissionais.objects.select_related('funcionario').order_by('turma')
+    associacoes = AssociacaoProfessor.objects.select_related('funcionario', 'turma', 'disciplina')
+    outros = AssociacaoOutrosProfissionais.objects.select_related('funcionario', 'turma')
     if turma:
-        associacoes = associacoes.filter(turma=turma)
-        outros = outros.filter(turma=turma)
+        associacoes = associacoes.filter(turma_id=turma)
+        outros = outros.filter(turma_id=turma)
     if tipo_associacao:
         associacoes = associacoes.filter(tipo_associacao=tipo_associacao)
     if vigentes == '1':
-        hoje = date.today()
-        associacoes = associacoes.filter(Q(data_termino__isnull=True) | Q(data_termino__gte=hoje))
-        outros = outros.filter(Q(data_termino__isnull=True) | Q(data_termino__gte=hoje))
+        associacoes = associacoes.vigentes()
+        outros = outros.vigentes()
 
     context = {
         'associacoes': associacoes,
         'outros': outros,
-        'turmas': sorted(set(AssociacaoProfessor.objects.values_list('turma', flat=True))
-                         | set(AssociacaoOutrosProfissionais.objects.values_list('turma', flat=True))),
+        'turmas': Turma.objects.order_by('-periodo_letivo', 'nome'),
         'tipos': AssociacaoProfessor.TIPO_ASSOCIACAO_CHOICES,
         'filtros': {'turma': turma, 'tipo_associacao': tipo_associacao, 'vigentes': vigentes},
     }
@@ -543,10 +549,18 @@ def associacao_professor_list(request):
 
 
 def _form_associacao(request, form, title, icon):
+    voltar = request.GET.get('next')
+    if not (voltar and voltar.startswith('/')):
+        voltar = reverse('funcionarios:associacao_professor_list')
     return render(request, 'generic/form.html', {
-        'form': form, 'title': title, 'icon': icon,
-        'cancel_url': reverse('funcionarios:associacao_professor_list'),
+        'form': form, 'title': title, 'icon': icon, 'cancel_url': voltar,
+        'subtitle': 'Cada turma tem seu professor por disciplina; para substituir, encerre a associação atual.',
     })
+
+
+def _destino_associacao(request):
+    voltar = request.GET.get('next')
+    return voltar if voltar and voltar.startswith('/') else reverse('funcionarios:associacao_professor_list')
 
 
 @login_required
@@ -554,13 +568,18 @@ def associacao_professor_create(request):
     """
     RF505: Associar professor à disciplina/turma
     """
-    form = AssociacaoProfessorForm(request.POST or None, initial={'data_inicio': date.today()})
+    form = AssociacaoProfessorForm(request.POST or None, initial={
+        'data_inicio': date.today(),
+        'turma': request.GET.get('turma'),
+        'disciplina': request.GET.get('disciplina'),
+        'tipo_associacao': 'TURMA' if request.GET.get('regente') else 'DISCIPLINA',
+    })
     if request.method == 'POST' and form.is_valid():
         associacao = form.save(commit=False)
         associacao.usuario_cadastro = request.user
         associacao.save()
         messages.success(request, 'Professor associado com sucesso.')
-        return redirect('funcionarios:associacao_professor_list')
+        return redirect(_destino_associacao(request))
     return _form_associacao(request, form, 'Associar Professor', 'fa-chalkboard-teacher')
 
 
@@ -574,7 +593,7 @@ def associacao_professor_edit(request, pk):
     if request.method == 'POST' and form.is_valid():
         form.save()
         messages.success(request, 'Associação atualizada com sucesso.')
-        return redirect('funcionarios:associacao_professor_list')
+        return redirect(_destino_associacao(request))
     return _form_associacao(request, form, 'Editar Associação de Professor', 'fa-chalkboard-teacher')
 
 
@@ -583,11 +602,13 @@ def associacao_outros_profissionais_create(request):
     """
     RF509: Associar outros profissionais (Auxiliar, Monitor, Tradutor)
     """
-    form = AssociacaoOutrosProfissionaisForm(request.POST or None, initial={'data_inicio': date.today()})
+    form = AssociacaoOutrosProfissionaisForm(request.POST or None, initial={
+        'data_inicio': date.today(), 'turma': request.GET.get('turma'),
+    })
     if request.method == 'POST' and form.is_valid():
         associacao = form.save(commit=False)
         associacao.usuario_cadastro = request.user
         associacao.save()
         messages.success(request, 'Profissional associado com sucesso.')
-        return redirect('funcionarios:associacao_professor_list')
+        return redirect(_destino_associacao(request))
     return _form_associacao(request, form, 'Associar Outro Profissional', 'fa-user-friends')

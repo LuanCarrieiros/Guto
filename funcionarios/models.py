@@ -70,6 +70,12 @@ class Funcionario(models.Model):
     data_cadastro = models.DateTimeField(auto_now_add=True, verbose_name="Data de Cadastro")
     data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
     usuario_cadastro = models.ForeignKey(User, on_delete=models.PROTECT, related_name='funcionarios_cadastrados', verbose_name="Usuário que Cadastrou")
+
+    # Login do funcionário no sistema (usado para mostrar ao professor apenas os seus diários)
+    usuario = models.OneToOneField(
+        User, on_delete=models.SET_NULL, blank=True, null=True,
+        related_name='funcionario', verbose_name="Usuário de acesso ao sistema",
+    )
     
     class Meta:
         verbose_name = "Funcionário"
@@ -276,12 +282,16 @@ class Disponibilidade(models.Model):
 
 class DisciplinaFuncionario(models.Model):
     funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name='disciplinas')
-    disciplina = models.CharField(max_length=255, verbose_name="Disciplina")
+    disciplina = models.ForeignKey('turma.Disciplina', on_delete=models.CASCADE, verbose_name="Disciplina")
     habilitado = models.BooleanField(default=True, verbose_name="Habilitado")
-    
+
     class Meta:
         verbose_name = "Disciplina do Funcionário"
         verbose_name_plural = "Disciplinas dos Funcionários"
+        unique_together = ['funcionario', 'disciplina']
+
+    def __str__(self):
+        return f"{self.funcionario.nome} - {self.disciplina.nome}"
 
 class DeficienciaFuncionario(models.Model):
     TIPO_DEFICIENCIA_CHOICES = [
@@ -303,33 +313,64 @@ class DeficienciaFuncionario(models.Model):
         verbose_name_plural = "Deficiências dos Funcionários"
 
 # Models para Associação de Professor (RF501-RF511)
+class AssociacaoQuerySet(models.QuerySet):
+    def vigentes(self, dia=None):
+        """Associações em vigor na data (hoje, por padrão)."""
+        dia = dia or date.today()
+        return self.filter(data_inicio__lte=dia).filter(models.Q(data_termino__isnull=True) | models.Q(data_termino__gte=dia))
+
+
 class AssociacaoProfessor(models.Model):
+    """
+    Professor responsável por uma disciplina em uma turma (ex.: Matemática do 1º A).
+    Cada turma tem seu próprio professor por disciplina; substituições ficam no
+    histórico encerrando a associação anterior (data de término) e criando outra.
+    O tipo "Turma" representa o professor regente, responsável por todas as disciplinas.
+    """
     TIPO_ASSOCIACAO_CHOICES = [
-        ('DISCIPLINA', 'Disciplina (frequência individual)'),
-        ('TURMA', 'Turma (frequência em grupo)'),
-        ('TURMA_AEE', 'Turma AEE/Atividade Complementar'),
+        ('DISCIPLINA', 'Disciplina (professor da disciplina na turma)'),
+        ('TURMA', 'Turma (professor regente de todas as disciplinas)'),
     ]
-    
-    funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name='associacoes')
-    turma = models.CharField(max_length=100, verbose_name="Turma")  # Seria FK para model Turma quando implementado
-    disciplina = models.CharField(max_length=255, verbose_name="Disciplina")
-    tipo_associacao = models.CharField(max_length=20, choices=TIPO_ASSOCIACAO_CHOICES, verbose_name="Tipo de Associação")
-    
+
+    funcionario = models.ForeignKey(
+        Funcionario, on_delete=models.CASCADE, related_name='associacoes', blank=True, null=True,
+        verbose_name="Professor",
+    )
+    turma = models.ForeignKey('turma.Turma', on_delete=models.CASCADE, related_name='associacoes_professores', verbose_name="Turma")
+    disciplina = models.ForeignKey(
+        'turma.Disciplina', on_delete=models.CASCADE, blank=True, null=True,
+        related_name='associacoes_professores', verbose_name="Disciplina",
+    )
+    tipo_associacao = models.CharField(max_length=20, choices=TIPO_ASSOCIACAO_CHOICES, default='DISCIPLINA', verbose_name="Tipo de Associação")
+
     # RF506: Histórico com datas
     data_inicio = models.DateField(verbose_name="Data de Início")
     data_termino = models.DateField(blank=True, null=True, verbose_name="Data de Término")
-    
+
     # RF510: Disciplina sem docente
     sem_docente = models.BooleanField(default=False, verbose_name="Disciplina não possui docente")
-    
+
     # Auditoria
     data_cadastro = models.DateTimeField(auto_now_add=True)
     usuario_cadastro = models.ForeignKey(User, on_delete=models.PROTECT, related_name='associacoes_cadastradas')
-    
+
+    objects = AssociacaoQuerySet.as_manager()
+
     class Meta:
         verbose_name = "Associação de Professor"
         verbose_name_plural = "Associações de Professores"
-        unique_together = ['funcionario', 'turma', 'disciplina', 'data_inicio']
+        ordering = ['turma__nome', 'disciplina__nome', '-data_inicio']
+
+    def __str__(self):
+        alvo = self.disciplina.nome if self.disciplina else 'Regente'
+        quem = self.funcionario.nome if self.funcionario else 'Sem docente'
+        return f"{self.turma.nome} · {alvo} · {quem}"
+
+    @property
+    def vigente(self):
+        hoje = date.today()
+        return self.data_inicio <= hoje and (self.data_termino is None or self.data_termino >= hoje)
+
 
 class AssociacaoOutrosProfissionais(models.Model):
     TIPO_PROFISSIONAL_CHOICES = [
@@ -339,7 +380,7 @@ class AssociacaoOutrosProfissionais(models.Model):
     ]
     
     funcionario = models.ForeignKey(Funcionario, on_delete=models.CASCADE, related_name='associacoes_outros')
-    turma = models.CharField(max_length=100, verbose_name="Turma")
+    turma = models.ForeignKey('turma.Turma', on_delete=models.CASCADE, related_name='associacoes_outros', verbose_name="Turma")
     tipo_profissional = models.CharField(max_length=30, choices=TIPO_PROFISSIONAL_CHOICES, verbose_name="Tipo de Profissional")
     
     data_inicio = models.DateField(verbose_name="Data de Início")
@@ -349,6 +390,12 @@ class AssociacaoOutrosProfissionais(models.Model):
     data_cadastro = models.DateTimeField(auto_now_add=True)
     usuario_cadastro = models.ForeignKey(User, on_delete=models.PROTECT, related_name='associacoes_outros_cadastradas')
     
+    objects = AssociacaoQuerySet.as_manager()
+
     class Meta:
         verbose_name = "Associação de Outros Profissionais"
         verbose_name_plural = "Associações de Outros Profissionais"
+        ordering = ['turma__nome', '-data_inicio']
+
+    def __str__(self):
+        return f"{self.turma.nome} · {self.get_tipo_profissional_display()} · {self.funcionario.nome}"

@@ -22,26 +22,29 @@ from django.views.decorators.http import require_POST
 from turma import relatorios
 from turma.forms import AvaliacaoDiarioForm
 from turma.models import (
-    AulaRegistrada, Avaliacao, AvaliacaoDescritiva, Disciplina, DivisaoPeriodoLetivo, NotaAvaliacao,
+    AulaRegistrada, Avaliacao, AvaliacaoDescritiva, Conceito, Disciplina, DivisaoPeriodoLetivo, NotaAvaliacao,
     RecuperacaoEspecial, RegistroFrequencia, TipoAvaliacao, Turma,
 )
+from .acesso import exigir_acesso, filtrar_disciplinas, filtrar_turmas
 from .models import DiarioEletronico
 
 
 # ============================== AUXILIARES ==============================
 
 def obter_diario(turma, disciplina, usuario=None):
-    diario, _ = DiarioEletronico.objects.get_or_create(
-        turma=turma, disciplina=disciplina,
-        defaults={'professor': usuario, 'periodo_letivo': turma.periodo_letivo},
-    )
+    """Diário da disciplina na turma (criado na primeira vez que é aberto)."""
+    diario, _ = DiarioEletronico.objects.get_or_create(turma=turma, disciplina=disciplina)
     return diario
 
 
-def carregar_contexto(turma_id, disciplina_id, divisao_id=None):
+def carregar_contexto(request, turma_id, disciplina_id, divisao_id=None):
+    """Busca turma/disciplina/período e garante que o usuário pode abrir este diário."""
     turma = get_object_or_404(Turma, pk=turma_id)
     disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-    divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id) if divisao_id else None
+    exigir_acesso(request.user, turma, disciplina)
+    divisao = get_object_or_404(
+        DivisaoPeriodoLetivo, pk=divisao_id, periodo_letivo=turma.periodo_letivo
+    ) if divisao_id else None
     return turma, disciplina, divisao
 
 
@@ -66,9 +69,9 @@ def diario_fechado(request, diario, destino):
 @login_required
 def diario_home(request):
     """Página inicial do diário eletrônico"""
-    turmas = Turma.objects.annotate(
+    turmas = filtrar_turmas(request.user, Turma.objects.annotate(
         total_alunos_ativos=Count('enturmacoes', filter=Q(enturmacoes__ativo=True))
-    ).order_by('-periodo_letivo', 'nome')
+    ).order_by('-periodo_letivo', 'nome'))
     total_registros = RegistroFrequencia.objects.count()
     presencas = RegistroFrequencia.objects.exclude(situacao='AUSENTE').count()
     media_geral = NotaAvaliacao.objects.filter(nota__isnull=False).aggregate(media=Avg('nota'))['media'] or 0
@@ -86,10 +89,21 @@ def diario_home(request):
 def diario_turma(request, turma_id):
     """Etapa 1: disciplinas da turma"""
     turma = get_object_or_404(Turma, pk=turma_id)
+    exigir_acesso(request.user, turma)
     alunos = turma.get_alunos_enturmados()
+    divisoes = list(DivisaoPeriodoLetivo.objects.filter(ativo=True, periodo_letivo=turma.periodo_letivo))
+    avaliacoes = Avaliacao.objects.filter(turma=turma, ativo=True)
+    disciplinas = list(filtrar_disciplinas(request.user, turma, turma.get_disciplinas()))
+    for disciplina in disciplinas:
+        da_disciplina = avaliacoes.filter(disciplina=disciplina)
+        com_avaliacao = da_disciplina.values('divisao_periodo').distinct().count()
+        disciplina.divisoes_count = len(divisoes)
+        disciplina.avaliacoes_count = da_disciplina.count()
+        disciplina.progresso = f'{round(com_avaliacao * 100 / len(divisoes))}%' if divisoes else '0%'
+        disciplina.professor = obter_diario(turma, disciplina).professor
     context = {
         'turma': turma,
-        'disciplinas': turma.get_disciplinas(),
+        'disciplinas': disciplinas,
         'alunos': alunos,
         'total_alunos': alunos.count(),
     }
@@ -99,7 +113,7 @@ def diario_turma(request, turma_id):
 @login_required
 def diario_disciplina(request, turma_id, disciplina_id):
     """Etapa 2: escolha do período (bimestre)"""
-    turma, disciplina, _ = carregar_contexto(turma_id, disciplina_id)
+    turma, disciplina, _ = carregar_contexto(request, turma_id, disciplina_id)
     alunos_turma = turma.get_alunos_enturmados()
     context = {
         'turma': turma,
@@ -111,26 +125,30 @@ def diario_disciplina(request, turma_id, disciplina_id):
         'diario_eletronico': obter_diario(turma, disciplina, request.user),
         'total_alunos': alunos_turma.count(),
     }
+    context['professor'] = context['diario_eletronico'].professor
     return render(request, 'diario/diario_disciplina.html', context)
 
 
 @login_required
 def diario_divisao(request, turma_id, disciplina_id, divisao_id):
     """Etapa 3: painel do período com notas, médias e chamadas"""
-    turma, disciplina, divisao = carregar_contexto(turma_id, disciplina_id, divisao_id)
+    turma, disciplina, divisao = carregar_contexto(request, turma_id, disciplina_id, divisao_id)
     alunos_turma = list(turma.get_alunos_enturmados())
     avaliacoes = list(Avaliacao.objects.filter(
         turma=turma, disciplina=disciplina, divisao_periodo=divisao
     ).order_by('data_aplicacao'))
 
-    notas = NotaAvaliacao.objects.filter(avaliacao__in=avaliacoes).select_related('avaliacao')
-    notas_por_aluno = {aluno.pk: {a.pk: None for a in avaliacoes} for aluno in alunos_turma}
-    notas_lista = {aluno.pk: [] for aluno in alunos_turma}
-    for nota in notas:
-        if nota.aluno_id in notas_por_aluno:
-            notas_por_aluno[nota.aluno_id][nota.avaliacao_id] = nota
-            notas_lista[nota.aluno_id].append(nota)
-    medias_alunos = {pk: relatorios.media_ponderada(lista) for pk, lista in notas_lista.items()}
+    # Espelho: uma linha por aluno, uma coluna por avaliação (sempre pelo ID do aluno)
+    notas = {(n.aluno_id, n.avaliacao_id): n for n in
+             NotaAvaliacao.objects.filter(avaliacao__in=avaliacoes).select_related('avaliacao')}
+    espelho = []
+    for aluno in alunos_turma:
+        do_aluno = [notas.get((aluno.pk, a.pk)) for a in avaliacoes]
+        espelho.append({
+            'aluno': aluno,
+            'notas': do_aluno,
+            'media': relatorios.media_ponderada([n for n in do_aluno if n is not None]),
+        })
 
     aulas = AulaRegistrada.objects.filter(
         turma=turma, disciplina=disciplina,
@@ -145,10 +163,11 @@ def diario_divisao(request, turma_id, disciplina_id, divisao_id):
         'disciplina': disciplina,
         'divisao': divisao,
         'diario_eletronico': obter_diario(turma, disciplina, request.user),
+        'professor': obter_diario(turma, disciplina).professor,
         'alunos_turma': alunos_turma,
         'avaliacoes': avaliacoes,
-        'notas_por_aluno': notas_por_aluno,
-        'medias_alunos': medias_alunos,
+        'espelho': espelho,
+        'media_aprovacao': relatorios.criterios_aprovacao()['media'],
         'chamadas': aulas[:10],
         'total_alunos': len(alunos_turma),
     }
@@ -160,7 +179,7 @@ def diario_divisao(request, turma_id, disciplina_id, divisao_id):
 @login_required
 def fazer_chamada(request, turma_id, disciplina_id, divisao_id):
     """Registro de presença dos alunos em uma data"""
-    turma, disciplina, divisao = carregar_contexto(turma_id, disciplina_id, divisao_id)
+    turma, disciplina, divisao = carregar_contexto(request, turma_id, disciplina_id, divisao_id)
     diario = obter_diario(turma, disciplina, request.user)
     voltar = url_divisao(turma, disciplina, divisao)
     alunos = list(turma.get_alunos_enturmados())
@@ -232,6 +251,14 @@ def _salvar_nota_json(request, turma, disciplina, divisao, alunos_ids):
     except Avaliacao.DoesNotExist:
         return JsonResponse({'success': False, 'message': 'Avaliação não encontrada neste período.'}, status=404)
 
+    conceito = None
+    if dados.get('conceito_id'):
+        conceito = Conceito.objects.filter(pk=dados['conceito_id'], ativo=True).first()
+        if conceito is None:
+            return JsonResponse({'success': False, 'message': 'Conceito inválido.'}, status=400)
+        # A nota equivalente ao conceito (escala 0–10) entra no cálculo das médias
+        nota = (conceito.valor_numerico * avaliacao.valor_maximo / Decimal('10')).quantize(Decimal('0.01'))
+
     if aluno_id not in alunos_ids:
         return JsonResponse({'success': False, 'message': 'O aluno não pertence a esta turma.'}, status=400)
     if nota < 0 or nota > avaliacao.valor_maximo:
@@ -243,6 +270,7 @@ def _salvar_nota_json(request, turma, disciplina, divisao, alunos_ids):
         avaliacao=avaliacao, aluno_id=aluno_id,
         defaults={
             'nota': nota,
+            'conceito': conceito,
             'ausente': False,
             'observacoes': (dados.get('observacao') or '').strip() or None,
             'usuario_lancamento': request.user,
@@ -259,7 +287,7 @@ def _salvar_nota_json(request, turma, disciplina, divisao, alunos_ids):
 @login_required
 def lancar_notas(request, turma_id, disciplina_id, divisao_id):
     """Lançamento das notas das avaliações do período"""
-    turma, disciplina, divisao = carregar_contexto(turma_id, disciplina_id, divisao_id)
+    turma, disciplina, divisao = carregar_contexto(request, turma_id, disciplina_id, divisao_id)
     diario = obter_diario(turma, disciplina, request.user)
     alunos = list(turma.get_alunos_enturmados())
 
@@ -290,6 +318,7 @@ def lancar_notas(request, turma_id, disciplina_id, divisao_id):
         'avaliacoes': avaliacoes,
         'notas_dict': notas_dict,
         'tipos_avaliacao': TipoAvaliacao.objects.filter(ativo=True).order_by('nome'),
+        'conceitos': Conceito.objects.filter(ativo=True) if disciplina.avalia_por_conceito else None,
         'page_title': f'Lançar Notas - {turma.nome}',
     }
     return render(request, 'diario/lancar_notas_diario.html', context)
@@ -306,7 +335,7 @@ def _contexto_avaliacoes(turma, disciplina, divisao):
 @login_required
 def gerenciar_avaliacoes(request, turma_id, disciplina_id, divisao_id):
     """Cadastro das avaliações do período"""
-    turma, disciplina, divisao = carregar_contexto(turma_id, disciplina_id, divisao_id)
+    turma, disciplina, divisao = carregar_contexto(request, turma_id, disciplina_id, divisao_id)
     diario = obter_diario(turma, disciplina, request.user)
     form_data = {}
 
@@ -347,7 +376,7 @@ def gerenciar_avaliacoes(request, turma_id, disciplina_id, divisao_id):
 @login_required
 def visualizar_avaliacoes(request, turma_id, disciplina_id, divisao_id):
     """Espelho do diário: avaliações do período e seu andamento"""
-    turma, disciplina, divisao = carregar_contexto(turma_id, disciplina_id, divisao_id)
+    turma, disciplina, divisao = carregar_contexto(request, turma_id, disciplina_id, divisao_id)
     context = {
         'turma': turma,
         'disciplina': disciplina,
@@ -362,6 +391,7 @@ def visualizar_avaliacoes(request, turma_id, disciplina_id, divisao_id):
 def editar_avaliacao(request, avaliacao_id):
     """Edição de uma avaliação"""
     avaliacao = get_object_or_404(Avaliacao.objects.select_related('turma', 'disciplina', 'divisao_periodo'), pk=avaliacao_id)
+    exigir_acesso(request.user, avaliacao.turma, avaliacao.disciplina)
     voltar = url_divisao(avaliacao.turma, avaliacao.disciplina, avaliacao.divisao_periodo, 'gerenciar_avaliacoes')
     diario = obter_diario(avaliacao.turma, avaliacao.disciplina, request.user)
     form_data = {}
@@ -399,6 +429,7 @@ def editar_avaliacao(request, avaliacao_id):
 def excluir_avaliacao(request, avaliacao_id):
     """Exclusão de uma avaliação (somente via POST)"""
     avaliacao = get_object_or_404(Avaliacao.objects.select_related('turma', 'disciplina', 'divisao_periodo'), pk=avaliacao_id)
+    exigir_acesso(request.user, avaliacao.turma, avaliacao.disciplina)
     destino = url_divisao(avaliacao.turma, avaliacao.disciplina, avaliacao.divisao_periodo, 'gerenciar_avaliacoes')
     bloqueio = diario_fechado(request, obter_diario(avaliacao.turma, avaliacao.disciplina), destino)
     if bloqueio:
@@ -417,7 +448,7 @@ def excluir_avaliacao(request, avaliacao_id):
 @login_required
 def pareceres(request, turma_id, disciplina_id, divisao_id):
     """Parecer descritivo de cada aluno no período (exibido no boletim)"""
-    turma, disciplina, divisao = carregar_contexto(turma_id, disciplina_id, divisao_id)
+    turma, disciplina, divisao = carregar_contexto(request, turma_id, disciplina_id, divisao_id)
     diario = obter_diario(turma, disciplina, request.user)
     alunos = list(turma.get_alunos_enturmados())
     existentes = {
@@ -455,7 +486,7 @@ def pareceres(request, turma_id, disciplina_id, divisao_id):
 @login_required
 def recuperacao(request, turma_id, disciplina_id):
     """Recuperação especial: nota final para alunos abaixo da média na disciplina"""
-    turma, disciplina, _ = carregar_contexto(turma_id, disciplina_id)
+    turma, disciplina, _ = carregar_contexto(request, turma_id, disciplina_id)
     diario = obter_diario(turma, disciplina, request.user)
     criterios = relatorios.criterios_aprovacao()
     existentes = {r.aluno_id: r for r in RecuperacaoEspecial.objects.filter(turma=turma, disciplina=disciplina)}
@@ -518,7 +549,7 @@ def recuperacao(request, turma_id, disciplina_id):
 @require_POST
 def fechar_diario(request, turma_id, disciplina_id):
     """Fecha o diário da disciplina, desde que todas as notas estejam lançadas"""
-    turma, disciplina, _ = carregar_contexto(turma_id, disciplina_id)
+    turma, disciplina, _ = carregar_contexto(request, turma_id, disciplina_id)
     diario = obter_diario(turma, disciplina, request.user)
     alunos = list(turma.get_alunos_enturmados())
     pendencias = []
@@ -554,7 +585,7 @@ def fechar_diario(request, turma_id, disciplina_id):
 @require_POST
 def abrir_diario(request, turma_id, disciplina_id):
     """Reabre o diário da disciplina"""
-    turma, disciplina, _ = carregar_contexto(turma_id, disciplina_id)
+    turma, disciplina, _ = carregar_contexto(request, turma_id, disciplina_id)
     diario = obter_diario(turma, disciplina, request.user)
     diario.diario_fechado = False
     diario.data_reabertura = timezone.now()

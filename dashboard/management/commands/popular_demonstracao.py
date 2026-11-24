@@ -34,6 +34,7 @@ class Command(BaseCommand):
             self.programas(usuario, alunos)
             self.calendario(usuario)
             self.utilitarios(usuario)
+            self.professores(usuario)
         self.stdout.write(self.style.SUCCESS('Dados de demonstração criados/atualizados com sucesso.'))
 
     # ------------------------------------------------------------------
@@ -203,3 +204,22 @@ class Command(BaseCommand):
         ]:
             ConfiguracaoSistema.objects.get_or_create(chave=chave, defaults={
                 'valor': valor, 'descricao': descricao, 'tipo_valor': tipo, 'usuario_atualizacao': usuario})
+
+    def professores(self, usuario):
+        """Associa os docentes às disciplinas das turmas (um professor por disciplina em cada turma)."""
+        from funcionarios.models import AssociacaoProfessor
+        from turma.models import Turma
+        docentes = list(Funcionario.objects.filter(dados_funcionais__funcao='DOCENTE', tipo_arquivo='CORRENTE').order_by('nome'))
+        if not docentes:
+            return
+        indice = 0
+        for turma in Turma.objects.order_by('nome'):
+            for disciplina in turma.get_disciplinas()[:4]:
+                if AssociacaoProfessor.objects.vigentes().filter(turma=turma, disciplina=disciplina).exists():
+                    continue
+                AssociacaoProfessor.objects.create(
+                    funcionario=docentes[indice % len(docentes)], turma=turma, disciplina=disciplina,
+                    tipo_associacao='DISCIPLINA', data_inicio=date(int(turma.periodo_letivo), 2, 1),
+                    usuario_cadastro=usuario,
+                )
+                indice += 1

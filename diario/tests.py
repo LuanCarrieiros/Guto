@@ -13,7 +13,7 @@ from turma.relatorios import calcular_boletim
 from .models import DiarioEletronico
 
 
-class DiarioFluxoTest(TestCase):
+class DiarioBase(TestCase):
     def setUp(self):
         self.user = criar_admin()
         self.client.force_login(self.user)
@@ -44,6 +44,7 @@ class DiarioFluxoTest(TestCase):
             content_type='application/json',
         )
 
+class DiarioFluxoTest(DiarioBase):
     def test_paginas_do_diario(self):
         self.criar_avaliacao()
         urls = [
@@ -117,3 +118,19 @@ class DiarioFluxoTest(TestCase):
         self.assertEqual(boletim['pareceres'].count(), 1)
         resposta = self.client.get(reverse('turma:boletim_aluno', args=[self.turma.pk, self.alunos[0].pk]))
         self.assertContains(resposta, 'Evoluiu bastante')
+
+
+class AvaliacaoPorConceitoTest(DiarioBase):
+    def test_lancamento_por_conceito_usa_nota_equivalente(self):
+        from turma.models import Conceito
+        self.disciplina.avalia_por_conceito = True
+        self.disciplina.save()
+        conceito_b = Conceito.objects.create(nome='B', descricao='Bom', valor_numerico=8, usuario_criacao=self.user)
+        avaliacao = self.criar_avaliacao()
+        resposta = self.client.get(reverse('diario:lancar_notas', args=self.args))
+        self.assertContains(resposta, 'Selecione o conceito')
+        self.client.post(reverse('diario:lancar_notas', args=self.args), content_type='application/json',
+                         data=json.dumps({'aluno_id': self.alunos[0].pk, 'avaliacao_id': avaliacao.pk,
+                                          'nota': '8', 'conceito_id': conceito_b.pk}))
+        nota = NotaAvaliacao.objects.get()
+        self.assertEqual((nota.conceito, float(nota.nota)), (conceito_b, 8.0))

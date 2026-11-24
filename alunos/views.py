@@ -192,6 +192,7 @@ def aluno_detail(request, pk):
         'responsaveis': aluno.responsaveis.all(),
         'transporte': getattr(aluno, 'transporte', None),
         'matriculas': aluno.matriculas.all().order_by('-ano_administrativo'),
+        'enturmacoes': aluno.enturmacoes.select_related('turma').order_by('-ativo', '-data_enturmacao'),
         'dados_adicionais': aluno.dados_adicionais.filter(dado_adicional__ativo=True).select_related(
             'dado_adicional').order_by('dado_adicional__ordem', 'dado_adicional__rotulo'),
     }
