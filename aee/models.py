@@ -189,20 +189,3 @@ class HistoricoEnturmacao(models.Model):
         if self.aluno:
             return f"{self.get_acao_display()} - {self.aluno.nome} em {self.turma.nome}"
         return f"{self.get_acao_display()} - {self.turma.nome}"
-
-class AssociacaoEscola(models.Model):
-    """Model para associar alunos de outras escolas à escola atual (RF1005)"""
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
-    escola_atual = models.CharField(max_length=255, verbose_name="Escola Atual")
-    escola_origem = models.CharField(max_length=255, verbose_name="Escola de Origem")
-    data_associacao = models.DateTimeField(auto_now_add=True, verbose_name="Data da Associação")
-    usuario_associacao = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Usuário que Associou")
-    ativo = models.BooleanField(default=True, verbose_name="Associação Ativa")
-    
-    class Meta:
-        verbose_name = "Associação de Escola"
-        verbose_name_plural = "Associações de Escolas"
-        unique_together = ['aluno', 'escola_atual']
-    
-    def __str__(self):
-        return f"{self.aluno.nome} - {self.escola_origem} → {self.escola_atual}"

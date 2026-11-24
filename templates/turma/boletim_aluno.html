@@ -33,13 +33,14 @@
         <div class="table-responsive">
             <table class="table">
                 <thead>
-                    <tr><th>Disciplina</th>{% for d in divisoes %}<th class="text-center">{{ d.nome }}</th>{% endfor %}<th class="text-center">Média</th><th class="text-center">Faltas</th><th class="text-center">Frequência</th><th class="text-center">Situação</th></tr>
+                    <tr><th>Disciplina</th>{% for d in divisoes %}<th class="text-center">{{ d.nome }}</th>{% endfor %}{% if tem_recuperacao %}<th class="text-center">Recuperação</th>{% endif %}<th class="text-center">Média</th><th class="text-center">Faltas</th><th class="text-center">Frequência</th><th class="text-center">Situação</th></tr>
                 </thead>
                 <tbody class="divide-y divide-gray-100">
                     {% for l in linhas %}
                     <tr>
                         <td class="font-medium">{{ l.disciplina.nome }}</td>
                         {% for n in l.notas %}<td class="text-center">{% include 'turma/_nota.html' %}</td>{% endfor %}
+                        {% if tem_recuperacao %}<td class="text-center">{% include 'turma/_nota.html' with n=l.recuperacao %}</td>{% endif %}
                         <td class="text-center">{% include 'turma/_nota.html' with n=l.media %}</td>
                         <td class="text-center">{{ l.faltas }}</td>
                         <td class="text-center">{% if l.frequencia is None %}—{% else %}<span class="{% if l.frequencia < criterios.frequencia %}text-red-600 font-semibold{% endif %}">{{ l.frequencia|floatformat:0 }}%</span>{% endif %}</td>
@@ -60,6 +61,17 @@
         <div class="card card-body text-center"><p class="detail-label">Disciplinas aprovadas</p><p class="text-2xl font-bold">{{ resumo.aprovadas }}</p></div>
         <div class="card card-body text-center"><p class="detail-label">Recuperação / reprovação</p><p class="text-2xl font-bold text-red-600">{{ resumo.recuperacao }} / {{ resumo.reprovadas }}</p></div>
     </div>
-    <p class="text-xs text-gray-500">Critérios: média mínima {{ criterios.media|floatformat:1 }} e frequência mínima {{ criterios.frequencia|floatformat:0 }}%. Médias na escala 0–10, ponderadas pelo peso das avaliações; ausências em avaliações contam como nota zero.</p>
+    {% if pareceres %}
+    <div class="card">
+        <div class="card-header"><h2 class="card-title">Pareceres descritivos</h2></div>
+        <ul class="divide-y divide-gray-100">
+            {% for p in pareceres %}
+            <li class="px-6 py-3 text-sm"><p class="font-semibold text-gray-700">{{ p.divisao_periodo.nome }}{% if p.disciplina %} · {{ p.disciplina.nome }}{% endif %}</p><p class="text-gray-700 whitespace-pre-line mt-1">{{ p.observacoes_descricao_global }}</p></li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
+
+    <p class="text-xs text-gray-500">Critérios: média mínima {{ criterios.media|floatformat:1 }} e frequência mínima {{ criterios.frequencia|floatformat:0 }}%. Médias na escala 0–10, ponderadas pelo peso das avaliações; ausências em avaliações contam como nota zero. A nota da recuperação especial substitui a média quando for maior.</p>
 </div>
 {% endblock %}

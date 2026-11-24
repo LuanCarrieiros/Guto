@@ -14,7 +14,7 @@
             </div>
         </div>
         <div class="flex flex-wrap gap-3">
-            <a href="{% url 'turma:lancar_notas_diario' avaliacao.turma.pk %}?disciplina={{ avaliacao.disciplina.pk }}&divisao={{ avaliacao.divisao_periodo.pk }}" class="btn-success"><i class="fas fa-star"></i> Lançar notas</a>
+            <a href="{% url 'diario:lancar_notas' avaliacao.turma.pk avaliacao.disciplina.pk avaliacao.divisao_periodo.pk %}" class="btn-success"><i class="fas fa-star"></i> Lançar notas</a>
             <a href="{% url 'turma:avaliacao_edit' avaliacao.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
             <a href="{% url 'turma:avaliacao_delete' avaliacao.pk %}" class="btn-danger"><i class="fas fa-trash-alt"></i> Excluir</a>
         </div>

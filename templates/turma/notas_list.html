@@ -70,7 +70,7 @@
     <div class="bg-white rounded-xl shadow-lg overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
             <h2 class="text-lg font-semibold text-gray-800">Lançamentos de Notas</h2>
-            <span class="text-sm text-gray-500">{{ lancamentos.count }} lançamento{{ lancamentos.count|pluralize:"s" }}</span>
+            <span class="text-sm text-gray-500">{{ page_obj.paginator.count }} nota{{ page_obj.paginator.count|pluralize }} lançada{{ page_obj.paginator.count|pluralize }}</span>
         </div>
 
         {% if lancamentos %}
@@ -121,7 +121,7 @@
                                     {% else %}
                                         bg-red-100 text-red-800
                                     {% endif %}">
-                                    {{ lancamento.conceito.letra }} ({{ lancamento.conceito.valor_numerico }})
+                                    {{ lancamento.conceito.nome }} ({{ lancamento.conceito.valor_numerico }})
                                 </span>
                             {% else %}
                                 <span class="text-gray-400 text-sm">Não informado</span>
@@ -145,6 +145,7 @@
                 </tbody>
             </table>
         </div>
+        {% include 'partials/pagination.html' %}
         {% else %}
         <div class="px-6 py-12 text-center">
             <div class="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
@@ -152,14 +153,14 @@
             </div>
             <h3 class="text-lg font-medium text-gray-900 mb-2">Nenhum lançamento encontrado</h3>
             <p class="text-gray-500 mb-6">
-                {% if turma_selecionada or disciplina_selecionada %}
+                {% if current_filters.turma or current_filters.disciplina %}
                     Não há lançamentos de notas para os filtros selecionados.
                 {% else %}
                     Ainda não há lançamentos de notas no sistema.
                 {% endif %}
             </p>
             <div class="space-x-4">
-                {% if turma_selecionada or disciplina_selecionada %}
+                {% if current_filters.turma or current_filters.disciplina %}
                     <a href="{% url 'turma:notas_list' %}" class="bg-gray-500 text-white px-6 py-3 rounded-lg hover:bg-gray-600 transition-all duration-200">
                         <i class="fas fa-times mr-2"></i>Limpar Filtros
                     </a>
@@ -181,7 +182,7 @@
                     <i class="fas fa-users text-2xl opacity-80"></i>
                 </div>
                 <div class="ml-4">
-                    <div class="text-lg font-semibold">{{ lancamentos.count }}</div>
+                    <div class="text-lg font-semibold">{{ page_obj.paginator.count }}</div>
                     <div class="text-sm opacity-80">Total de Lançamentos</div>
                 </div>
             </div>
@@ -193,7 +194,7 @@
                     <i class="fas fa-check-circle text-2xl opacity-80"></i>
                 </div>
                 <div class="ml-4">
-                    <div class="text-lg font-semibold">{{ turmas.count }}</div>
+                    <div class="text-lg font-semibold">{{ turmas|length }}</div>
                     <div class="text-sm opacity-80">Turmas com Notas</div>
                 </div>
             </div>
@@ -205,7 +206,7 @@
                     <i class="fas fa-book text-2xl opacity-80"></i>
                 </div>
                 <div class="ml-4">
-                    <div class="text-lg font-semibold">{{ disciplinas.count }}</div>
+                    <div class="text-lg font-semibold">{{ disciplinas|length }}</div>
                     <div class="text-sm opacity-80">Disciplinas Ativas</div>
                 </div>
             </div>
@@ -217,7 +218,7 @@
                     <i class="fas fa-calendar text-2xl opacity-80"></i>
                 </div>
                 <div class="ml-4">
-                    <div class="text-lg font-semibold">{% if lancamentos.first.data_lancamento %}{{ lancamentos.first.data_lancamento|date:"M" }}{% else %}--{% endif %}</div>
+                    <div class="text-lg font-semibold">{% with ultimo=lancamentos.0 %}{% if ultimo %}{{ ultimo.data_lancamento|date:"d/m" }}{% else %}--{% endif %}{% endwith %}</div>
                     <div class="text-sm opacity-80">Último Lançamento</div>
                 </div>
             </div>

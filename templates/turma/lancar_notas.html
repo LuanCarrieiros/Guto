@@ -122,7 +122,7 @@
                             {% endif %}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                            <a href="{% url 'turma:lancar_notas_diario' avaliacao.turma_id %}?disciplina={{ avaliacao.disciplina_id }}&divisao={{ avaliacao.divisao_periodo_id }}" 
+                            <a href="{% url 'diario:lancar_notas' avaliacao.turma_id avaliacao.disciplina_id avaliacao.divisao_periodo_id %}" 
                                class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-yellow-500 to-orange-500 text-white rounded-lg hover:from-yellow-600 hover:to-orange-600 transition-all duration-200">
                                 {% if avaliacao.notas_lancadas %}
                                     <i class="fas fa-edit mr-2"></i>Editar Notas

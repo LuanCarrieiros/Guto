@@ -6,6 +6,7 @@ from django.core.paginator import Paginator
 from django.db.models import Count
 from dashboard.models import AtividadeRecente
 from .models import Aluno, DocumentacaoAluno, Responsavel, TransporteAluno, Matricula
+from utilitarios.forms import DadosAdicionaisAlunoForm
 from .forms import AlunoForm, DocumentacaoAlunoForm, ResponsavelForm, TransporteAlunoForm, MatriculaForm
 
 @login_required
@@ -191,8 +192,10 @@ def aluno_detail(request, pk):
         'responsaveis': aluno.responsaveis.all(),
         'transporte': getattr(aluno, 'transporte', None),
         'matriculas': aluno.matriculas.all().order_by('-ano_administrativo'),
+        'dados_adicionais': aluno.dados_adicionais.filter(dado_adicional__ativo=True).select_related(
+            'dado_adicional').order_by('dado_adicional__ordem', 'dado_adicional__rotulo'),
     }
-    
+
     return render(request, 'alunos/aluno_detail.html', context)
 
 @login_required
@@ -207,13 +210,14 @@ def aluno_edit_extended(request, pk):
     documentacao, _ = DocumentacaoAluno.objects.get_or_create(aluno=aluno)
     transporte, _ = TransporteAluno.objects.get_or_create(aluno=aluno)
 
-    abas_validas = ('identificacao', 'documentacao', 'responsaveis', 'transporte')
+    abas_validas = ('identificacao', 'documentacao', 'responsaveis', 'transporte', 'dados_adicionais')
     aba_ativa = request.GET.get('aba', 'identificacao')
 
     aluno_form = AlunoForm(instance=aluno, prefix='aluno')
     doc_form = DocumentacaoAlunoForm(instance=documentacao, prefix='doc')
     trans_form = TransporteAlunoForm(instance=transporte, prefix='trans')
     resp_form = ResponsavelForm(prefix='resp')
+    adicionais_form = DadosAdicionaisAlunoForm(aluno=aluno, prefix='adic')
 
     if request.method == 'POST':
         aba_ativa = request.POST.get('aba_ativa', 'identificacao')
@@ -234,6 +238,12 @@ def aluno_edit_extended(request, pk):
             if trans_form.is_valid():
                 form_salvo = trans_form.save()
                 mensagem = 'Dados de transporte atualizados com sucesso.'
+        elif aba_ativa == 'dados_adicionais':
+            adicionais_form = DadosAdicionaisAlunoForm(request.POST, aluno=aluno, prefix='adic')
+            if adicionais_form.is_valid():
+                adicionais_form.save(request.user)
+                form_salvo = True
+                mensagem = 'Dados adicionais atualizados com sucesso.'
         elif aba_ativa == 'responsaveis':
             remover_id = request.POST.get('remover_responsavel')
             if remover_id:
@@ -271,6 +281,7 @@ def aluno_edit_extended(request, pk):
         'doc_form': doc_form,
         'trans_form': trans_form,
         'resp_form': resp_form,
+        'adicionais_form': adicionais_form,
         'responsaveis': aluno.responsaveis.all(),
         'aba_ativa': aba_ativa,
     }

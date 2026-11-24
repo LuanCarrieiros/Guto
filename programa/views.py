@@ -1,4 +1,5 @@
 from datetime import date
+from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -9,8 +10,13 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 
 from dashboard.models import AtividadeRecente
-from .forms import AulaProgramaForm, ModuloProgramaForm, ParticipanteProgramaForm, ProgramaPedagogicoForm
-from .models import AulaPrograma, FrequenciaPrograma, ModuloPrograma, ParticipantePrograma, ProgramaPedagogico
+from .forms import (
+    AulaProgramaForm, AvaliacaoProgramaForm, ModuloProgramaForm, ParticipanteProgramaForm, ProgramaPedagogicoForm,
+)
+from .models import (
+    AulaPrograma, AvaliacaoPrograma, FrequenciaPrograma, ModuloPrograma, NotaPrograma, ParticipantePrograma,
+    ProgramaPedagogico,
+)
 
 
 def registrar(request, acao, objeto, descricao):
@@ -183,6 +189,8 @@ def modulo_detail(request, pk):
     context = {
         'modulo': modulo,
         'aulas': modulo.aulas.select_related('professor').order_by('numero_aula'),
+        'avaliacoes': modulo.avaliacoes.annotate(total_notas=Count('notas')).order_by('data_aplicacao'),
+        'total_participantes': modulo.programa.total_participantes,
     }
     return render(request, 'programa/modulo_detail.html', context)
 
@@ -359,3 +367,74 @@ def frequencia_aula(request, pk):
         'ja_registrada': bool(registros),
     }
     return render(request, 'programa/frequencia_aula.html', context)
+
+
+# ============================== AVALIAÇÕES ==============================
+
+def recalcular_nota_final(participante):
+    """Nota final (0–10): média das notas do participante ponderada pelo peso das avaliações."""
+    soma, pesos = Decimal('0'), Decimal('0')
+    for nota in participante.notas.select_related('avaliacao'):
+        avaliacao = nota.avaliacao
+        soma += nota.nota / avaliacao.nota_maxima * Decimal('10') * avaliacao.peso
+        pesos += avaliacao.peso
+    participante.nota_final = round(soma / pesos, 2) if pesos else None
+    participante.save(update_fields=['nota_final'])
+
+
+@login_required
+def avaliacao_create(request, modulo_pk):
+    """Cadastrar avaliação em um módulo"""
+    modulo = get_object_or_404(ModuloPrograma.objects.select_related('programa'), pk=modulo_pk)
+    form = AvaliacaoProgramaForm(request.POST or None, initial={
+        'data_aplicacao': date.today(), 'professor_elaborador': modulo.professor_responsavel_id,
+    })
+    if request.method == 'POST' and form.is_valid():
+        avaliacao = form.save(commit=False)
+        avaliacao.modulo = modulo
+        avaliacao.usuario_cadastro = request.user
+        avaliacao.save()
+        messages.success(request, f'Avaliação "{avaliacao.nome}" cadastrada. Lance agora as notas.')
+        return redirect('programa:avaliacao_notas', pk=avaliacao.pk)
+    return form_page(request, form, 'Nova Avaliação', reverse('programa:modulo_detail', args=[modulo.pk]),
+                     icon='fa-clipboard-check', subtitle=str(modulo), submit_label='Cadastrar avaliação')
+
+
+@login_required
+def avaliacao_notas(request, pk):
+    """Lançar as notas dos participantes ativos em uma avaliação"""
+    avaliacao = get_object_or_404(AvaliacaoPrograma.objects.select_related('modulo', 'modulo__programa'), pk=pk)
+    participantes = list(avaliacao.modulo.programa.participantes.filter(ativo=True).select_related('aluno').order_by('aluno__nome'))
+    notas = {n.participante_id: n for n in avaliacao.notas.all()}
+
+    if request.method == 'POST':
+        erros = []
+        with transaction.atomic():
+            for participante in participantes:
+                valor = request.POST.get(f'nota_{participante.pk}', '').strip().replace(',', '.')
+                if not valor:
+                    if participante.pk in notas:
+                        notas[participante.pk].delete()
+                        recalcular_nota_final(participante)
+                    continue
+                try:
+                    nota = Decimal(valor)
+                except InvalidOperation:
+                    erros.append(participante.aluno.nome)
+                    continue
+                if not 0 <= nota <= avaliacao.nota_maxima:
+                    erros.append(participante.aluno.nome)
+                    continue
+                NotaPrograma.objects.update_or_create(
+                    participante=participante, avaliacao=avaliacao,
+                    defaults={'nota': nota, 'data_aplicacao': avaliacao.data_aplicacao, 'usuario_cadastro': request.user},
+                )
+                recalcular_nota_final(participante)
+        if erros:
+            messages.error(request, f'Notas inválidas (0 a {avaliacao.nota_maxima}) para: {", ".join(erros)}.')
+            return redirect('programa:avaliacao_notas', pk=avaliacao.pk)
+        messages.success(request, 'Notas salvas e notas finais recalculadas.')
+        return redirect('programa:modulo_detail', pk=avaliacao.modulo_id)
+
+    linhas = [{'participante': p, 'nota': notas[p.pk].nota if p.pk in notas else ''} for p in participantes]
+    return render(request, 'programa/avaliacao_notas.html', {'avaliacao': avaliacao, 'linhas': linhas})

@@ -28,19 +28,6 @@ class Conceito(models.Model):
     def __str__(self):
         return f"{self.nome} - {self.descricao}"
 
-class GrupoConceito(models.Model):
-    """Model para Grupos de Conceitos"""
-    nome = models.CharField(max_length=100, unique=True, verbose_name="Nome do Grupo")
-    conceitos = models.ManyToManyField(Conceito, verbose_name="Conceitos do Grupo")
-    ativo = models.BooleanField(default=True, verbose_name="Grupo Ativo")
-    
-    class Meta:
-        verbose_name = "Grupo de Conceito"
-        verbose_name_plural = "Grupos de Conceitos"
-    
-    def __str__(self):
-        return self.nome
-
 class Turma(models.Model):
     """Model para Turmas"""
     TIPO_ENSINO_CHOICES = [
@@ -126,8 +113,12 @@ class Turma(models.Model):
         return round((self.get_total_alunos() * 100) / self.vagas_total)
 
     def get_disciplinas(self):
-        """Retorna todas as disciplinas ativas disponíveis para uso no diário"""
-        return Disciplina.objects.filter(ativo=True).order_by('nome')
+        """Disciplinas da turma no diário (vinculadas em "Gerenciar disciplinas").
+        Se a turma ainda não tiver disciplinas vinculadas, retorna todas as ativas."""
+        vinculadas = Disciplina.objects.filter(
+            ativo=True, diarioeletronico__turma=self, diarioeletronico__ativo=True
+        ).distinct().order_by('nome')
+        return vinculadas if vinculadas.exists() else Disciplina.objects.filter(ativo=True).order_by('nome')
     
     @classmethod
     def get_anos_series_por_tipo(cls, tipo_ensino):
@@ -145,37 +136,7 @@ class Turma(models.Model):
             return [('1_ANO_EM', '1º Ano'), ('2_ANO_EM', '2º Ano'), ('3_ANO_EM', '3º Ano')]
         else:
             return []  # Retorna lista vazia para tipos inválidos
-    
-    def criar_diario_automatico(self):
-        """Cria diário automático para a turma com todas as disciplinas ativas"""
-        from django.db import transaction
-        
-        with transaction.atomic():
-            # Buscar ou criar divisão período padrão
-            divisao_periodo, created = DivisaoPeriodoLetivo.objects.get_or_create(
-                nome="1º Bimestre",
-                periodo_letivo=self.periodo_letivo,
-                defaults={
-                    'tipo_divisao': 'BIMESTRE',
-                    'ordem': 1,
-                    'data_inicio': f'{self.periodo_letivo}-01-01',
-                    'data_fim': f'{self.periodo_letivo}-03-31',
-                    'ativo': True
-                }
-            )
-            
-            # Criar diários para todas as disciplinas ativas
-            from diario.models import DiarioEletronico
-            disciplinas = Disciplina.objects.filter(ativo=True)
-            for disciplina in disciplinas:
-                DiarioEletronico.objects.get_or_create(
-                    turma=self,
-                    disciplina=disciplina,
-                    periodo_letivo=self.periodo_letivo,
-                    defaults={
-                        'ativo': True
-                    }
-                )
+
 
 class Disciplina(models.Model):
     """Model para Disciplinas"""
@@ -292,103 +253,6 @@ class DivisaoPeriodoLetivo(models.Model):
     def __str__(self):
         return f"{self.nome} - {self.periodo_letivo}"
 
-class LancamentoNota(models.Model):
-    """Model para Lançamento de Notas e Conceitos (RF1103-RF1108)"""
-    TIPO_LANCAMENTO_CHOICES = [
-        ('AVALIACAO_FREQUENCIA', 'Avaliação/Frequência'),
-        ('AVALIACAO', 'Avaliação'),
-        ('FREQUENCIA', 'Frequência'),
-    ]
-    
-    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, verbose_name="Turma")
-    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, verbose_name="Disciplina")
-    divisao_periodo = models.ForeignKey(DivisaoPeriodoLetivo, on_delete=models.CASCADE, verbose_name="Divisão do Período")
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
-    
-    # Campos de avaliação
-    nota = models.DecimalField(
-        max_digits=4, decimal_places=2, blank=True, null=True,
-        validators=[MinValueValidator(0), MaxValueValidator(10)],
-        verbose_name="Nota"
-    )
-    conceito = models.ForeignKey(Conceito, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Conceito")
-    
-    # Campos de frequência (RF1107)
-    aulas_previstas = models.IntegerField(default=0, verbose_name="Quantidade de Aulas Previstas")
-    aulas_lecionadas = models.IntegerField(default=0, verbose_name="Quantidade de Aulas Lecionadas")
-    faltas = models.IntegerField(default=0, verbose_name="Número de Faltas")
-    faltas_justificadas = models.IntegerField(default=0, verbose_name="Faltas Justificadas")
-    
-    # Controle
-    tipo_lancamento = models.CharField(max_length=25, choices=TIPO_LANCAMENTO_CHOICES, verbose_name="Tipo de Lançamento")
-    data_lancamento = models.DateTimeField(auto_now_add=True, verbose_name="Data do Lançamento")
-    usuario_lancamento = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Usuário que Lançou")
-    
-    class Meta:
-        verbose_name = "Lançamento de Nota/Frequência"
-        verbose_name_plural = "Lançamentos de Notas/Frequência"
-        unique_together = ['turma', 'disciplina', 'divisao_periodo', 'aluno']
-    
-    def __str__(self):
-        return f"{self.aluno.nome} - {self.disciplina.nome} - {self.divisao_periodo.nome}"
-    
-    def get_frequencia_percentual(self):
-        """Calcula percentual de frequência"""
-        if self.aulas_lecionadas > 0:
-            presencas = self.aulas_lecionadas - self.faltas
-            return round((presencas / self.aulas_lecionadas) * 100, 2)
-        return 0
-
-class AtestadoMedico(models.Model):
-    """Model para Atestados Médicos (RF1108)"""
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
-    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, verbose_name="Turma")
-    
-    # Dados do atestado (RF1108.1)
-    data_atestado = models.DateField(verbose_name="Data do Atestado")
-    numero_dias = models.IntegerField(verbose_name="Número de Dias")
-    faltas_justificadas = models.IntegerField(verbose_name="Número de Faltas Justificadas")
-    motivo = models.CharField(max_length=255, verbose_name="Motivo")
-    descricao = models.TextField(verbose_name="Descrição")
-    
-    # Controle
-    data_cadastro = models.DateTimeField(auto_now_add=True, verbose_name="Data do Cadastro")
-    usuario_cadastro = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Usuário que Cadastrou")
-    
-    class Meta:
-        verbose_name = "Atestado Médico"
-        verbose_name_plural = "Atestados Médicos"
-        ordering = ['-data_atestado']
-    
-    def __str__(self):
-        return f"Atestado - {self.aluno.nome} - {self.data_atestado.strftime('%d/%m/%Y')}"
-
-class MediaGlobalConceito(models.Model):
-    """Model para Lançamento de Média Global por Conceito (RF1201-RF1204)"""
-    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, verbose_name="Turma")
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
-    conceito_global = models.ForeignKey(Conceito, on_delete=models.PROTECT, verbose_name="Conceito Global")
-    
-    # Dados calculados
-    frequencia_percentual = models.DecimalField(
-        max_digits=5, decimal_places=2, 
-        validators=[MinValueValidator(0), MaxValueValidator(100)],
-        verbose_name="Frequência %"
-    )
-    total_faltas = models.IntegerField(default=0, verbose_name="Total de Faltas")
-    
-    # Controle
-    data_lancamento = models.DateTimeField(auto_now_add=True, verbose_name="Data do Lançamento")
-    usuario_lancamento = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Usuário que Lançou")
-    
-    class Meta:
-        verbose_name = "Média Global por Conceito"
-        verbose_name_plural = "Médias Globais por Conceito"
-        unique_together = ['turma', 'aluno']
-    
-    def __str__(self):
-        return f"{self.aluno.nome} - {self.conceito_global.nome}"
-
 class RecuperacaoEspecial(models.Model):
     """Model para Recuperação Especial (RF1301-RF1305)"""
     turma = models.ForeignKey(Turma, on_delete=models.CASCADE, verbose_name="Turma")
@@ -420,45 +284,6 @@ class RecuperacaoEspecial(models.Model):
     def __str__(self):
         return f"{self.aluno.nome} - {self.disciplina.nome} - Rec. Especial"
 
-class HabilidadeCompetencia(models.Model):
-    """Model para Habilidades e Competências (RF1401-RF1406)"""
-    nome = models.CharField(max_length=255, verbose_name="Nome da Habilidade/Competência")
-    descricao = models.TextField(verbose_name="Descrição")
-    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, verbose_name="Disciplina")
-    ativo = models.BooleanField(default=True, verbose_name="Ativo")
-    
-    class Meta:
-        verbose_name = "Habilidade/Competência"
-        verbose_name_plural = "Habilidades/Competências"
-        ordering = ['disciplina', 'nome']
-    
-    def __str__(self):
-        return f"{self.nome} ({self.disciplina.nome})"
-
-class ParecerDescritivo(models.Model):
-    """Model para Parecer Descritivo (RF1401-RF1406)"""
-    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, verbose_name="Turma")
-    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, verbose_name="Disciplina")
-    divisao_periodo = models.ForeignKey(DivisaoPeriodoLetivo, on_delete=models.CASCADE, verbose_name="Divisão do Período")
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
-    habilidade = models.ForeignKey(HabilidadeCompetencia, on_delete=models.CASCADE, verbose_name="Habilidade/Competência")
-    
-    # Avaliação da habilidade
-    conceito = models.ForeignKey(Conceito, on_delete=models.PROTECT, verbose_name="Conceito")
-    observacao = models.TextField(blank=True, null=True, verbose_name="Observação")
-    
-    # Controle
-    data_lancamento = models.DateTimeField(auto_now_add=True, verbose_name="Data do Lançamento")
-    usuario_lancamento = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Usuário que Lançou")
-    
-    class Meta:
-        verbose_name = "Parecer Descritivo"
-        verbose_name_plural = "Pareceres Descritivos"
-        unique_together = ['turma', 'disciplina', 'divisao_periodo', 'aluno', 'habilidade']
-    
-    def __str__(self):
-        return f"{self.aluno.nome} - {self.habilidade.nome}"
-
 class AvaliacaoDescritiva(models.Model):
     """Model para Avaliação Descritiva (RF1501-RF1503)"""
     turma = models.ForeignKey(Turma, on_delete=models.CASCADE, verbose_name="Turma")
@@ -483,37 +308,6 @@ class AvaliacaoDescritiva(models.Model):
     def __str__(self):
         disciplina_str = f" - {self.disciplina.nome}" if self.disciplina else ""
         return f"{self.aluno.nome} - {self.divisao_periodo.nome}{disciplina_str}"
-
-class PendenciaAvaliacao(models.Model):
-    """Model para Pendências de Avaliação (RF1601-RF1604)"""
-    TIPO_PENDENCIA_CHOICES = [
-        ('NOTA_NAO_INFORMADA', 'Nota não informada'),
-        ('FREQUENCIA_NAO_INFORMADA', 'Frequência não informada'),
-        ('CONCEITO_NAO_INFORMADO', 'Conceito não informado'),
-        ('PARECER_NAO_INFORMADO', 'Parecer não informado'),
-    ]
-    
-    turma = models.ForeignKey(Turma, on_delete=models.CASCADE, verbose_name="Turma")
-    disciplina = models.ForeignKey(Disciplina, on_delete=models.CASCADE, verbose_name="Disciplina")
-    divisao_periodo = models.ForeignKey(DivisaoPeriodoLetivo, on_delete=models.CASCADE, verbose_name="Divisão do Período")
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
-    
-    tipo_pendencia = models.CharField(max_length=30, choices=TIPO_PENDENCIA_CHOICES, verbose_name="Tipo de Pendência")
-    resolvida = models.BooleanField(default=False, verbose_name="Pendência Resolvida")
-    
-    # Controle
-    data_identificacao = models.DateTimeField(auto_now_add=True, verbose_name="Data de Identificação")
-    data_resolucao = models.DateTimeField(blank=True, null=True, verbose_name="Data de Resolução")
-    usuario_resolucao = models.ForeignKey(User, on_delete=models.PROTECT, blank=True, null=True, verbose_name="Usuário que Resolveu")
-    
-    class Meta:
-        verbose_name = "Pendência de Avaliação"
-        verbose_name_plural = "Pendências de Avaliação"
-        unique_together = ['turma', 'disciplina', 'divisao_periodo', 'aluno', 'tipo_pendencia']
-    
-    def __str__(self):
-        return f"{self.aluno.nome} - {self.get_tipo_pendencia_display()}"
-
 
 class Enturmacao(models.Model):
     """Model para Enturmação de Alunos"""
@@ -671,6 +465,13 @@ class NotaAvaliacao(models.Model):
         unique_together = ['avaliacao', 'aluno']
         ordering = ['aluno__nome']
 
+    @property
+    def turma(self):
+        return self.avaliacao.turma
+
+    @property
+    def disciplina(self):
+        return self.avaliacao.disciplina
+
     def __str__(self):
         return f"{self.aluno.nome} - {self.avaliacao.nome}: {self.nota or self.conceito or 'N/A'}"
-

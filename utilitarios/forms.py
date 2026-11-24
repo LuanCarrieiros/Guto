@@ -209,3 +209,48 @@ class BloqueioFuncionalidadeForm(forms.ModelForm):
         if inicio and fim and fim <= inicio:
             self.add_error('data_fim', 'A data de fim deve ser posterior ao início.')
         return dados
+
+
+class DadosAdicionaisAlunoForm(forms.Form):
+    """Formulário dinâmico com os campos adicionais ativos (RF1901) para um aluno."""
+
+    def __init__(self, *args, aluno, **kwargs):
+        from .models import ValorDadoAdicional
+        super().__init__(*args, **kwargs)
+        self.aluno = aluno
+        self.campos = list(DadoAdicional.objects.filter(ativo=True).order_by('ordem', 'rotulo'))
+        valores = dict(ValorDadoAdicional.objects.filter(aluno=aluno).values_list('dado_adicional_id', 'valor'))
+        for campo in self.campos:
+            nome = f'campo_{campo.pk}'
+            comuns = {'label': campo.rotulo, 'required': campo.obrigatorio and campo.tipo_campo != 'CHECKBOX'}
+            if campo.tipo_campo == 'TEXTAREA':
+                field = forms.CharField(widget=forms.Textarea(attrs={'rows': 3}), **comuns)
+            elif campo.tipo_campo == 'NUMERO':
+                field = forms.DecimalField(**comuns)
+            elif campo.tipo_campo == 'DATA':
+                field = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}), **comuns)
+            elif campo.tipo_campo == 'CHECKBOX':
+                field = forms.BooleanField(**comuns)
+            elif campo.tipo_campo == 'SELECT':
+                opcoes = [o.strip() for o in (campo.opcoes or '').split(',') if o.strip()]
+                field = forms.ChoiceField(choices=[('', 'Selecione...')] + [(o, o) for o in opcoes], **comuns)
+            else:
+                field = forms.CharField(max_length=500, **comuns)
+            self.fields[nome] = field
+            if campo.pk in valores and not self.is_bound:
+                valor = valores[campo.pk]
+                self.initial[nome] = (valor == 'Sim') if campo.tipo_campo == 'CHECKBOX' else valor
+
+    def save(self, usuario):
+        from .models import ValorDadoAdicional
+        for campo in self.campos:
+            valor = self.cleaned_data.get(f'campo_{campo.pk}')
+            if campo.tipo_campo == 'CHECKBOX':
+                valor = 'Sim' if valor else 'Não'
+            elif valor in (None, ''):
+                ValorDadoAdicional.objects.filter(aluno=self.aluno, dado_adicional=campo).delete()
+                continue
+            ValorDadoAdicional.objects.update_or_create(
+                aluno=self.aluno, dado_adicional=campo,
+                defaults={'valor': str(valor), 'usuario_atualizacao': usuario},
+            )

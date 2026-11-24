@@ -1,5 +1,4 @@
 from django.db import models
-from guto_system.utils import ano_atual
 from django.contrib.auth.models import User
 from django.core.validators import RegexValidator
 from alunos.models import Aluno
@@ -83,30 +82,6 @@ class PerfilUsuario(models.Model):
     def tem_acoes_no_sistema(self):
         """Verifica se o usuário já realizou ações no sistema (RNF1801)"""
         return RegistroAuditoria.objects.filter(usuario=self.user).exists()
-
-class AssociacaoUsuarioInstituicao(models.Model):
-    """Model para associar usuários a instituições e grupos (RF1806, RF1807)"""
-    usuario = models.ForeignKey(User, on_delete=models.CASCADE, verbose_name="Usuário")
-    instituicao = models.ForeignKey(Instituicao, on_delete=models.CASCADE, verbose_name="Instituição")
-    grupo_acesso = models.ForeignKey(GrupoAcesso, on_delete=models.CASCADE, verbose_name="Grupo de Acesso")
-    ativo = models.BooleanField(default=True, verbose_name="Associação Ativa")
-    
-    # Controle
-    data_associacao = models.DateTimeField(auto_now_add=True, verbose_name="Data da Associação")
-    data_inativacao = models.DateTimeField(blank=True, null=True, verbose_name="Data de Inativação")
-    usuario_associacao = models.ForeignKey(User, on_delete=models.PROTECT, related_name='associacoes_criadas', verbose_name="Usuário que Associou")
-    
-    class Meta:
-        verbose_name = "Associação Usuário-Instituição"
-        verbose_name_plural = "Associações Usuário-Instituição"
-        unique_together = ['usuario', 'instituicao', 'grupo_acesso']
-    
-    def __str__(self):
-        return f"{self.usuario.get_full_name()} - {self.instituicao.nome} ({self.grupo_acesso.nome})"
-
-# ============================================
-# MÓDULO CONFIGURAÇÕES E DADOS (RF1901-RF1907)
-# ============================================
 
 class ConfiguracaoSistema(models.Model):
     """Model para Configurações Gerais do Sistema (RF1907)"""
@@ -192,72 +167,6 @@ class ValorDadoAdicional(models.Model):
     
     def __str__(self):
         return f"{self.aluno.nome} - {self.dado_adicional.rotulo}: {self.valor}"
-
-class MatriculaRapida(models.Model):
-    """Model para configuração de Matrícula Rápida (RF1902)"""
-    nome = models.CharField(max_length=100, verbose_name="Nome da Configuração")
-    ano_administrativo = models.CharField(max_length=4, default=ano_atual, verbose_name="Ano Administrativo")
-    tipo_ensino = models.CharField(max_length=50, verbose_name="Tipo de Ensino")
-    serie = models.CharField(max_length=50, verbose_name="Série")
-    turno = models.CharField(max_length=20, blank=True, null=True, verbose_name="Turno")
-    ativo = models.BooleanField(default=True, verbose_name="Configuração Ativa")
-    
-    # Controle
-    data_criacao = models.DateTimeField(auto_now_add=True, verbose_name="Data de Criação")
-    usuario_criacao = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Criado por")
-    
-    class Meta:
-        verbose_name = "Configuração de Matrícula Rápida"
-        verbose_name_plural = "Configurações de Matrícula Rápida"
-        ordering = ['nome']
-    
-    def __str__(self):
-        return f"{self.nome} - {self.tipo_ensino} {self.serie}"
-
-class CabecalhoRelatorio(models.Model):
-    """Model para Cabeçalho de Relatórios (RF1906)"""
-    linha = models.IntegerField(verbose_name="Número da Linha")
-    tipo_conteudo = models.CharField(
-        max_length=20,
-        choices=[
-            ('BRASAO', 'Brasão'),
-            ('TEXTO_PADRAO', 'Texto Padrão'),
-            ('TEXTO_LIVRE', 'Texto Livre'),
-            ('VAZIO', 'Linha Vazia'),
-        ],
-        verbose_name="Tipo de Conteúdo"
-    )
-    conteudo = models.TextField(blank=True, null=True, verbose_name="Conteúdo")
-    alinhamento = models.CharField(
-        max_length=10,
-        choices=[
-            ('ESQUERDA', 'Esquerda'),
-            ('CENTRO', 'Centro'),
-            ('DIREITA', 'Direita'),
-        ],
-        default='CENTRO',
-        verbose_name="Alinhamento"
-    )
-    tamanho_fonte = models.IntegerField(default=12, verbose_name="Tamanho da Fonte")
-    negrito = models.BooleanField(default=False, verbose_name="Negrito")
-    ativo = models.BooleanField(default=True, verbose_name="Linha Ativa")
-    
-    # Controle
-    data_atualizacao = models.DateTimeField(auto_now=True, verbose_name="Última Atualização")
-    usuario_atualizacao = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Usuário que Atualizou")
-    
-    class Meta:
-        verbose_name = "Linha do Cabeçalho"
-        verbose_name_plural = "Linhas do Cabeçalho"
-        ordering = ['linha']
-        unique_together = ['linha']
-    
-    def __str__(self):
-        return f"Linha {self.linha}: {self.get_tipo_conteudo_display()}"
-
-# ============================================
-# MÓDULO AUDITORIA E CONSULTAS (RF2001-RF2003)
-# ============================================
 
 class RegistroAuditoria(models.Model):
     """Model para Registro de Auditoria (RF2002)"""

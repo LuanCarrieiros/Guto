@@ -49,15 +49,6 @@ urlpatterns = [
     # Gerenciar disciplinas de uma turma específica
     path('turmas/<int:turma_id>/disciplinas/', views.gerenciar_disciplinas_turma, name='gerenciar_disciplinas_turma'),
     
-    # Diário Eletrônico
-    path('turma/<int:turma_id>/fazer-chamada/', views.fazer_chamada, name='fazer_chamada'),
-    path('turma/<int:turma_id>/lancar-notas/', views.lancar_notas_diario, name='lancar_notas_diario'),
-    path('turma/<int:turma_id>/gerenciar-avaliacoes/', views.gerenciar_avaliacoes_diario, name='gerenciar_avaliacoes_diario'),
-    path('turma/<int:turma_id>/visualizar-avaliacoes/', views.visualizar_avaliacoes_diario, name='visualizar_avaliacoes_diario'),
-    path('avaliacoes/<int:avaliacao_id>/editar/', views.editar_avaliacao_diario, name='editar_avaliacao_diario'),
-    path('avaliacoes/<int:avaliacao_id>/excluir/', views.excluir_avaliacao_diario, name='excluir_avaliacao_diario'),
-
-    
     # AJAX Endpoints
     path('ajax/anos-series/', views.get_anos_series_por_tipo, name='get_anos_series_por_tipo'),
 ]

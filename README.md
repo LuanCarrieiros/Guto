@@ -48,10 +48,29 @@ python manage.py runserver
    ```
 3. A administração do Django fica em **/admin** (todos os cadastros dos módulos estão registrados lá).
 
+### 🎲 **Dados de demonstração**
+O banco incluído já vem populado. Para recriar os dados de exemplo dos módulos complementares
+(transporte, AEE, itinerários, programas, calendário, grupos e instituições) em outro banco:
+```bash
+python manage.py popular_demonstracao
+```
+O comando pode ser executado várias vezes sem duplicar registros.
+
 ### 🧪 **Testes**
 ```bash
 python manage.py test
 ```
+Inclui um teste de navegação (`dashboard/tests_navegacao.py`) que entra como administrador,
+percorre todas as páginas alcançáveis pelos links e falha se alguma responder com erro.
+
+### ⚙️ **Configuração para produção**
+As configurações sensíveis vêm de variáveis de ambiente (com valores de desenvolvimento como padrão):
+
+| Variável | Padrão | Uso |
+|----------|--------|-----|
+| `DJANGO_SECRET_KEY` | chave de desenvolvimento | **Obrigatório** definir em produção |
+| `DJANGO_DEBUG` | `True` | Use `False` em produção |
+| `DJANGO_ALLOWED_HOSTS` | `localhost,127.0.0.1` | Domínios separados por vírgula |
 
 ---
 
@@ -62,13 +81,13 @@ Todos os módulos do menu lateral estão implementados e acessíveis:
 | Módulo | Funcionalidades |
 |--------|-----------------|
 | **🏠 Dashboard** | Estatísticas gerais, alunos por turma, atividades recentes |
-| **📚 Alunos** | CRUD, cadastro completo em abas (identificação, documentação, responsáveis, transporte), matrículas, arquivo permanente, impressão |
+| **📚 Alunos** | CRUD, cadastro completo em abas (identificação, documentação, responsáveis, transporte e dados adicionais personalizados), matrículas, arquivo permanente, impressão |
 | **👨‍🏫 Funcionários** | CRUD, cadastro completo em abas (habilitações, disciplinas e deficiências incluídas), busca antes do cadastro, arquivo permanente, impressão de lista e de folha de frequência, associação de professores e outros profissionais às turmas |
 | **🎓 Turmas** | Turmas, disciplinas, enturmação, avaliações, conceitos, bimestres/períodos e relatórios (boletim por aluno, frequência e desempenho da turma) |
-| **📖 Diário Eletrônico** | Fluxo Turma → Disciplina → Período, chamada, lançamento de notas, avaliações, abertura/fechamento do diário |
+| **📖 Diário Eletrônico** | Fluxo Turma → Disciplina → Período, chamada, lançamento de notas, avaliações, parecer descritivo, recuperação especial e fechamento do diário (diário fechado não aceita alterações) |
 | **🛣️ Itinerários (Escola)** | Itinerários formativos, unidades curriculares, grade do itinerário e enturmação com controle de vagas |
 | **🎯 AEE** | Projetos pedagógicos, turmas de AEE/Atividade Complementar, enturmação com controle de vagas e histórico |
-| **📘 Programas** | Programas pedagógicos, módulos, inscrição de participantes, aulas e registro de frequência |
+| **📘 Programas** | Programas pedagógicos, módulos, inscrição de participantes, aulas, frequência, avaliações e cálculo da nota final |
 | **🚌 Transporte** | Rotas, pontos de parada, veículos, manutenções, motoristas, alunos transportados, registro de viagens e relatório mensal |
 | **📊 Censo** | Censo escolar por ano, relatórios de matrículas/funcionários/estatísticas e exportação em CSV ou JSON |
 | **🔧 Opções** | Calendário escolar com eventos (visualização e impressão) e emissão de relatórios de turmas com filtros |
@@ -82,6 +101,7 @@ Todos os módulos do menu lateral estão implementados e acessíveis:
 
 ### 🧮 Critérios de aprovação
 Boletins e relatórios usam média mínima **6,0** e frequência mínima **75%**. Os valores podem ser alterados em *Utilitários › Configurações* com as chaves `media_aprovacao` e `frequencia_minima`.
+Alunos abaixo da média podem fazer a **recuperação especial** (no diário da disciplina): a nota substitui a média quando for maior. Os **pareceres descritivos** lançados por período aparecem no boletim.
 
 ---
 

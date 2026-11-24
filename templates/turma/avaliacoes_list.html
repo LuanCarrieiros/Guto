@@ -274,7 +274,7 @@
                                         <a href="{% url 'turma:avaliacao_edit' avaliacao.pk %}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
                                             <i class="fas fa-edit mr-1"></i>Editar
                                         </a>
-                                        <a href="{% url 'turma:lancar_notas_diario' avaliacao.turma.pk %}?disciplina={{ avaliacao.disciplina.pk }}&divisao={{ avaliacao.divisao_periodo.pk }}" class="text-green-600 hover:text-green-800 text-sm font-medium">
+                                        <a href="{% url 'diario:lancar_notas' avaliacao.turma.pk avaliacao.disciplina.pk avaliacao.divisao_periodo.pk %}" class="text-green-600 hover:text-green-800 text-sm font-medium">
                                             <i class="fas fa-star mr-1"></i>Notas
                                         </a>
                                     </div>

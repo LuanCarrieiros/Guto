@@ -2,7 +2,7 @@ from django import forms
 from django.core.exceptions import ValidationError
 
 from alunos.models import Aluno
-from .models import AulaPrograma, ModuloPrograma, ParticipantePrograma, ProgramaPedagogico
+from .models import AulaPrograma, AvaliacaoPrograma, ModuloPrograma, ParticipantePrograma, ProgramaPedagogico
 
 DATA = {'type': 'date'}
 HORA = {'type': 'time'}
@@ -129,4 +129,29 @@ class AulaProgramaForm(forms.ModelForm):
         inicio, fim = dados.get('horario_inicio'), dados.get('horario_fim')
         if inicio and fim and fim <= inicio:
             self.add_error('horario_fim', 'O horário de término deve ser posterior ao início.')
+        return dados
+
+
+class AvaliacaoProgramaForm(forms.ModelForm):
+    class Meta:
+        model = AvaliacaoPrograma
+        fields = ['nome', 'tipo_avaliacao', 'data_aplicacao', 'data_limite_entrega', 'nota_maxima', 'peso',
+                  'professor_elaborador', 'descricao', 'criterios_avaliacao', 'observacoes']
+        widgets = {
+            'data_aplicacao': forms.DateInput(attrs=DATA, format='%Y-%m-%d'),
+            'data_limite_entrega': forms.DateInput(attrs=DATA, format='%Y-%m-%d'),
+            'descricao': forms.Textarea(attrs={'rows': 2}),
+            'criterios_avaliacao': forms.Textarea(attrs={'rows': 2}),
+            'observacoes': forms.Textarea(attrs={'rows': 2}),
+        }
+
+    def clean(self):
+        dados = super().clean()
+        if dados.get('nota_maxima') is not None and dados['nota_maxima'] <= 0:
+            self.add_error('nota_maxima', 'A nota máxima deve ser maior que zero.')
+        if dados.get('peso') is not None and dados['peso'] <= 0:
+            self.add_error('peso', 'O peso deve ser maior que zero.')
+        aplicacao, limite = dados.get('data_aplicacao'), dados.get('data_limite_entrega')
+        if aplicacao and limite and limite < aplicacao:
+            self.add_error('data_limite_entrega', 'A data limite deve ser posterior à aplicação.')
         return dados

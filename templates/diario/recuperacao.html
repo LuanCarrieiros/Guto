@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+
+{% block title %}Recuperação Especial - {{ disciplina.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    {% url 'diario:disciplina' turma.pk disciplina.pk as voltar_url %}
+    {% include 'partials/page_header.html' with title='Recuperação Especial' subtitle=turma.nome|add:" · "|add:disciplina.nome icon='fa-redo' back_url=voltar_url %}
+
+    {% if diario_eletronico.diario_fechado %}
+    <div class="mb-4 p-4 rounded-lg bg-red-50 text-red-800 text-sm"><i class="fas fa-lock mr-2"></i>O diário está fechado: a recuperação não pode ser alterada.</div>
+    {% endif %}
+
+    <form method="post" class="card">
+        {% csrf_token %}
+        <div class="card-header">
+            <p class="text-sm text-gray-600">Alunos com média anual abaixo de {{ criterios.media|floatformat:1 }}. A nota da recuperação (0 a 10) substitui a média quando for maior; abaixo da média, o aluno fica reprovado na disciplina.</p>
+        </div>
+        {% if linhas %}
+        <div class="table-responsive">
+            <table class="table guto-form">
+                <thead><tr><th>Aluno</th><th class="text-center">Média anual</th><th class="text-center">Nota da recuperação</th><th class="text-center">Não optou</th><th class="text-center">Resultado</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for l in linhas %}
+                    <tr x-data="{ naoOptou: {{ l.registro.nao_optou|yesno:'true,false' }} }">
+                        <td class="font-medium">{{ l.aluno.nome }}</td>
+                        <td class="text-center">{{ l.media|floatformat:1|default:"—" }}</td>
+                        <td class="text-center"><input type="number" name="nota_{{ l.aluno.pk }}" min="0" max="10" step="0.1" value="{{ l.registro.nota_recuperacao|default_if_none:''|stringformat:'s' }}" class="!w-28 mx-auto" :disabled="naoOptou" {% if diario_eletronico.diario_fechado %}disabled{% endif %}></td>
+                        <td class="text-center"><input type="checkbox" name="nao_optou_{{ l.aluno.pk }}" x-model="naoOptou" {% if l.registro.nao_optou %}checked{% endif %} {% if diario_eletronico.diario_fechado %}disabled{% endif %}></td>
+                        <td class="text-center">
+                            {% if l.registro.nao_optou %}<span class="badge badge-red">Reprovado</span>
+                            {% elif l.registro.nota_recuperacao is not None %}
+                                {% if l.registro.nota_recuperacao >= criterios.media %}<span class="badge badge-green">Aprovado</span>{% else %}<span class="badge badge-red">Reprovado</span>{% endif %}
+                            {% else %}<span class="badge badge-yellow">Pendente</span>{% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% if not diario_eletronico.diario_fechado %}
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl flex justify-end gap-3">
+            <a href="{{ voltar_url }}" class="btn-secondary">Voltar</a>
+            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar recuperação</button>
+        </div>
+        {% endif %}
+        {% else %}
+            {% include 'partials/empty_state.html' with icon='fa-check-circle' message='Nenhum aluno abaixo da média nesta disciplina.' %}
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

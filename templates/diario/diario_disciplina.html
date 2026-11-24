@@ -154,10 +154,16 @@
                 <p class="text-gray-600 mb-2">Diário aberto para lançamentos</p>
                 <p class="text-sm text-gray-500">Você pode lançar notas e fazer chamada em todas as divisões</p>
             </div>
-            <button onclick="fecharDiario()"
-                    class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
-                🔒 Fechar Diário
-            </button>
+            <div class="flex flex-wrap gap-3">
+                <a href="{% url 'diario:recuperacao' turma.pk disciplina.pk %}"
+                   class="bg-amber-500 hover:bg-amber-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    📚 Recuperação Especial
+                </a>
+                <button onclick="fecharDiario()"
+                        class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-colors duration-200">
+                    🔒 Fechar Diário
+                </button>
+            </div>
         </div>
     </div>
     {% else %}

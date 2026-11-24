@@ -9,6 +9,7 @@
         {% include 'partials/page_header.html' with title=modulo.nome subtitle=modulo.programa.nome icon='fa-layer-group' back_url=programa_url no_margin=True %}
         <div class="flex gap-3 shrink-0">
             <a href="{% url 'programa:modulo_edit' modulo.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            <a href="{% url 'programa:avaliacao_create' modulo.pk %}" class="btn-secondary"><i class="fas fa-clipboard-check"></i> Nova avaliação</a>
             <a href="{% url 'programa:aula_create' %}?modulo={{ modulo.pk }}" class="btn-primary"><i class="fas fa-plus"></i> Nova aula</a>
         </div>
     </div>
@@ -50,6 +51,31 @@
         </div>
         {% else %}
             {% include 'partials/empty_state.html' with icon='fa-chalkboard' message='Nenhuma aula cadastrada neste módulo.' %}
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h2 class="card-title">Avaliações ({{ avaliacoes|length }})</h2></div>
+        {% if avaliacoes %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Avaliação</th><th>Tipo</th><th>Data</th><th>Nota máx. / peso</th><th>Notas lançadas</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for av in avaliacoes %}
+                    <tr>
+                        <td class="font-medium">{{ av.nome }}</td>
+                        <td>{{ av.get_tipo_avaliacao_display }}</td>
+                        <td>{{ av.data_aplicacao|date:"d/m/Y" }}</td>
+                        <td>{{ av.nota_maxima }} / {{ av.peso }}</td>
+                        <td>{{ av.total_notas }} / {{ total_participantes }}</td>
+                        <td class="text-right"><a href="{% url 'programa:avaliacao_notas' av.pk %}" class="btn-sm btn-secondary"><i class="fas fa-star"></i> Notas</a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="px-6 py-4 text-sm text-gray-500">Nenhuma avaliação cadastrada neste módulo.</p>
         {% endif %}
     </div>
 </div>

@@ -6,13 +6,10 @@ from django.db.models import Count, Avg, Q
 from django.db import models
 from django.core.paginator import Paginator
 from django.http import JsonResponse
-from django.views.decorators.http import require_POST
-from datetime import date, datetime
+from datetime import date
 from .models import (
-    Conceito, Turma, Disciplina, LancamentoNota, PendenciaAvaliacao,
-    Enturmacao, AulaRegistrada, RegistroFrequencia,
-    TipoAvaliacao, Avaliacao,
-    NotaAvaliacao, DivisaoPeriodoLetivo
+    Conceito, Turma, Disciplina, Enturmacao, TipoAvaliacao,
+    Avaliacao, DivisaoPeriodoLetivo, NotaAvaliacao
 )
 from diario.models import DiarioEletronico
 from .forms import TurmaForm, DisciplinaForm, AvaliacaoForm, DivisaoPeriodoLetivoForm
@@ -27,14 +24,17 @@ def avaliacao_home(request):
     # Estatísticas gerais
     total_turmas = Turma.objects.count()
     total_disciplinas = Disciplina.objects.count()
-    total_lancamentos = LancamentoNota.objects.count()
-    pendencias = PendenciaAvaliacao.objects.filter(resolvida=False).count()
+    total_lancamentos = NotaAvaliacao.objects.count()
+    # Avaliações já aplicadas que ainda não têm todas as notas lançadas
+    pendencias = Avaliacao.objects.filter(ativo=True, notas_lancadas=False, data_aplicacao__lte=date.today()).count()
     
     # Turmas recentes
     turmas_recentes = Turma.objects.order_by('-id')[:5]
     
     # Lançamentos recentes
-    lancamentos_recentes = LancamentoNota.objects.order_by('-data_lancamento')[:5]
+    lancamentos_recentes = NotaAvaliacao.objects.select_related(
+        'aluno', 'avaliacao__disciplina'
+    ).order_by('-data_atualizacao')[:5]
     
     context = {
         'total_turmas': total_turmas,
@@ -301,17 +301,19 @@ def disciplina_delete(request, pk):
 
 @login_required
 def notas_list(request):
-    """Lista os lançamentos de notas"""
-    lancamentos = LancamentoNota.objects.all().order_by('-data_lancamento')
-    
+    """Lista as notas lançadas no diário"""
+    lancamentos = NotaAvaliacao.objects.select_related(
+        'aluno', 'conceito', 'usuario_lancamento', 'avaliacao__turma', 'avaliacao__disciplina'
+    ).order_by('-data_atualizacao')
+
     # Filtros
     turma_id = request.GET.get('turma')
     disciplina_id = request.GET.get('disciplina')
-    
+
     if turma_id:
-        lancamentos = lancamentos.filter(turma_id=turma_id)
+        lancamentos = lancamentos.filter(avaliacao__turma_id=turma_id)
     if disciplina_id:
-        lancamentos = lancamentos.filter(disciplina_id=disciplina_id)
+        lancamentos = lancamentos.filter(avaliacao__disciplina_id=disciplina_id)
     
     paginator = Paginator(lancamentos, 20)
     page_number = request.GET.get('page')
@@ -747,7 +749,7 @@ def avaliacao_detail(request, pk):
 @login_required
 def avaliacao_edit(request, pk):
     """A edição de avaliações é feita pelo diário eletrônico"""
-    return redirect('turma:editar_avaliacao_diario', avaliacao_id=pk)
+    return redirect('diario:editar_avaliacao', avaliacao_id=pk)
 
 
 @login_required
@@ -793,473 +795,3 @@ def get_anos_series_por_tipo(request):
     anos_series = turma_temp.get_anos_series_por_tipo(tipo_ensino)
     
     return JsonResponse({'anos_series': anos_series})
-
-
-# ==========================================
-# DIÁRIO ELETRÔNICO - NOVAS FUNCIONALIDADES
-# ==========================================
-
-@login_required
-def fazer_chamada(request, turma_id):
-    """Interface para fazer chamada de presença"""
-    turma = get_object_or_404(Turma, pk=turma_id)
-    
-    # Obter disciplina da URL
-    disciplina_id = request.GET.get('disciplina')
-    if not disciplina_id:
-        # Redirecionar para seleção de disciplina
-        messages.error(request, 'Selecione uma disciplina para fazer a chamada.')
-        return redirect('diario:turma', turma_id=turma_id)
-
-    disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-
-    # Obter divisão (bimestre/período) da URL
-    divisao_id = request.GET.get('divisao')
-    if not divisao_id:
-        messages.info(request, 'Selecione o período (bimestre/trimestre) para continuar.')
-        return redirect('diario:disciplina', turma_id=turma.pk, disciplina_id=disciplina.pk)
-    divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
-
-    # Buscar alunos da turma
-    alunos = Aluno.objects.filter(
-        enturmacoes__turma=turma,
-        enturmacoes__ativo=True
-    ).order_by('nome')
-    
-    # Obter data da chamada (URL param ou hoje)
-    data_param = request.GET.get('data')
-    if data_param:
-        try:
-            data_chamada = datetime.strptime(data_param, '%Y-%m-%d').date()
-        except ValueError:
-            data_chamada = date.today()
-    else:
-        data_chamada = date.today()
-    
-    # Buscar aula da data específica para carregar status da chamada
-    aula_data = AulaRegistrada.objects.filter(
-        turma=turma,
-        disciplina=disciplina,
-        data_aula=data_chamada
-    ).first()
-    
-    # Carregar registros de frequência existentes
-    registros_freq = {}
-    if aula_data:
-        registros = RegistroFrequencia.objects.filter(aula=aula_data)
-        for registro in registros:
-            registros_freq[registro.aluno.codigo] = registro.situacao
-    
-    # Adicionar status atual aos alunos
-    alunos_list = list(alunos)
-    for aluno in alunos_list:
-        aluno.status_atual = registros_freq.get(aluno.codigo, 'PRESENTE')
-    
-    if request.method == 'POST':
-        # Processar dados da chamada
-        data_aula = request.POST.get('data_aula', date.today().strftime('%Y-%m-%d'))
-        
-        # Debug: verificar dados recebidos
-        print(f"POST data: {request.POST}")
-        for key, value in request.POST.items():
-            if key.startswith('toggle_'):
-                print(f"{key}: {value}")
-        
-        # Primeiro, criar ou buscar uma aula para hoje
-        try:
-            aula, aula_created = AulaRegistrada.objects.get_or_create(
-                turma=turma,
-                disciplina=disciplina,
-                data_aula=data_aula,
-                professor=request.user,
-                defaults={
-                    'horario_inicio': '08:00',
-                    'horario_fim': '12:00', 
-                    'conteudo_programatico': f'Registro de frequência - {date.today().strftime("%d/%m/%Y")}',
-                    'observacoes': 'Aula criada automaticamente pelo sistema de chamada eletrônica',
-                    'chamada_realizada': True
-                }
-            )
-        except Exception as e:
-            messages.error(request, f'Erro ao criar aula: {str(e)}')
-            return redirect('diario:divisao', turma_id=turma.pk, disciplina_id=disciplina.pk, divisao_id=divisao.pk)
-        
-        for aluno in alunos:
-            # Novo sistema de toggle - o JavaScript envia o status do toggle
-            status_toggle = request.POST.get(f'toggle_{aluno.codigo}', 'presente')
-            presente = status_toggle == 'presente'
-            
-            # Registrar ou atualizar presença
-            registro, created = RegistroFrequencia.objects.get_or_create(
-                aula=aula,  # Agora incluindo a aula obrigatória
-                aluno=aluno,
-                defaults={
-                    'situacao': 'PRESENTE' if presente else 'AUSENTE',
-                    'usuario_registro': request.user
-                }
-            )
-            
-            if not created:
-                registro.situacao = 'PRESENTE' if presente else 'AUSENTE'
-                registro.save()
-        
-        messages.success(request, f'Chamada do dia {date.today().strftime("%d/%m/%Y")} registrada com sucesso!')
-        return redirect('diario:disciplina', turma_id=turma_id, disciplina_id=disciplina.pk)
-    
-    context = {
-        'turma': turma,
-        'disciplina': disciplina,
-        'divisao': divisao,
-        'alunos': alunos_list,  # Usar lista com status
-        'data_hoje': date.today(),
-        'data_atual': data_chamada.strftime('%Y-%m-%d'),  # Data para o input
-        'page_title': f'Chamada - {disciplina.nome} - {turma.nome}'
-    }
-    
-    return render(request, 'diario/fazer_chamada_diario.html', context)
-
-
-@login_required
-def lancar_notas_diario(request, turma_id):
-    """Interface para lançar notas no diário"""
-    turma = get_object_or_404(Turma, pk=turma_id)
-    
-    # Obter disciplina da URL
-    disciplina_id = request.GET.get('disciplina')
-    if not disciplina_id:
-        messages.error(request, 'Selecione uma disciplina para lançar notas.')
-        return redirect('diario:turma', turma_id=turma_id)
-
-    disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-
-    # Obter divisão (bimestre/período) da URL
-    divisao_id = request.GET.get('divisao')
-    if not divisao_id:
-        messages.info(request, 'Selecione o período (bimestre/trimestre) para continuar.')
-        return redirect('diario:disciplina', turma_id=turma.pk, disciplina_id=disciplina.pk)
-    divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
-
-    # Buscar alunos da turma
-    alunos = Aluno.objects.filter(
-        enturmacoes__turma=turma,
-        enturmacoes__ativo=True
-    ).order_by('nome')
-
-    # Buscar avaliações da turma e disciplina
-    avaliacoes = Avaliacao.objects.filter(
-        turma=turma,
-        disciplina=disciplina
-    ).order_by('nome')
-    
-    # Buscar notas existentes da disciplina
-    notas_existentes = NotaAvaliacao.objects.filter(
-        avaliacao__turma=turma,
-        avaliacao__disciplina=disciplina,
-        aluno__in=alunos
-    ).select_related('avaliacao', 'aluno')
-    
-    # Adicionar notas aos alunos
-    alunos_list = list(alunos)
-    notas_dict = {}
-    for nota in notas_existentes:
-        if nota.aluno.codigo not in notas_dict:
-            notas_dict[nota.aluno.codigo] = []
-        notas_dict[nota.aluno.codigo].append(nota)
-    
-    # Adicionar as notas como atributo aos alunos
-    for aluno in alunos_list:
-        aluno.notas_existentes = notas_dict.get(aluno.codigo, [])
-    
-    # Handle AJAX request for saving grades
-    if request.method == 'POST' and request.headers.get('Content-Type') == 'application/json':
-        import json
-        try:
-            data = json.loads(request.body)
-            aluno_id = data.get('aluno_id')
-            avaliacao_id = data.get('avaliacao_id')
-            nota_valor = data.get('nota')
-            
-            aluno = get_object_or_404(Aluno, codigo=aluno_id)  # Aluno usa 'codigo' como PK
-            avaliacao = get_object_or_404(Avaliacao, id=avaliacao_id)
-            
-            # Criar ou atualizar a nota
-            nota_obj, created = NotaAvaliacao.objects.get_or_create(
-                aluno=aluno,
-                avaliacao=avaliacao,
-                defaults={
-                    'nota': nota_valor,
-                    'usuario_lancamento': request.user
-                }
-            )
-            
-            if not created:
-                nota_obj.nota = nota_valor
-                nota_obj.save()
-            
-            return JsonResponse({
-                'success': True,
-                'message': f'Nota {nota_valor} salva com sucesso!',
-                'nota': float(nota_valor) if nota_valor else None
-            })
-        except Exception as e:
-            import traceback
-            error_detail = traceback.format_exc()
-            print(f"Erro ao salvar nota: {error_detail}")
-            return JsonResponse({
-                'success': False,
-                'message': f'Erro ao salvar nota: {str(e)}',
-                'error_detail': error_detail,
-                'debug_info': {
-                    'aluno_id': data.get('aluno_id'),
-                    'avaliacao_id': data.get('avaliacao_id'),
-                    'nota_valor': data.get('nota'),
-                    'turma_id': turma.id,
-                    'disciplina_id': disciplina.id
-                }
-            })
-    
-    # Adicionar contagem real de notas para cada avaliação
-    for avaliacao in avaliacoes:
-        avaliacao.notas_existentes_count = NotaAvaliacao.objects.filter(
-            avaliacao=avaliacao,
-            nota__isnull=False
-        ).count()
-    
-    # Buscar tipos de avaliação para o formulário
-    tipos_avaliacao = TipoAvaliacao.objects.all().order_by('nome')
-    
-    context = {
-        'turma': turma,
-        'disciplina': disciplina,
-        'divisao': divisao,
-        'alunos': alunos_list,
-        'avaliacoes': avaliacoes,
-        'notas_dict': notas_dict,
-        'tipos_avaliacao': tipos_avaliacao,
-        'page_title': f'Lançar Notas - {turma.nome}'
-    }
-    
-    return render(request, 'diario/lancar_notas_diario.html', context)
-
-
-@login_required
-def gerenciar_avaliacoes_diario(request, turma_id):
-    """Gerencia avaliações no contexto do diário"""
-    turma = get_object_or_404(Turma, pk=turma_id)
-    
-    # Obter disciplina da URL
-    disciplina_id = request.GET.get('disciplina')
-    if not disciplina_id:
-        messages.error(request, 'Selecione uma disciplina para gerenciar avaliações.')
-        return redirect('diario:turma', turma_id=turma_id)
-    
-    disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-
-    # Obter divisão (opcional) da URL
-    divisao_id = request.GET.get('divisao')
-    if not divisao_id:
-        messages.info(request, 'Selecione o período (bimestre/trimestre) para continuar.')
-        return redirect('diario:disciplina', turma_id=turma.pk, disciplina_id=disciplina.pk)
-    divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
-
-    # Processar formulário de criação
-    if request.method == 'POST':
-        nome = request.POST.get('nome')
-        tipo_avaliacao_id = request.POST.get('tipo_avaliacao')
-        peso = request.POST.get('peso')
-        data_aplicacao = request.POST.get('data_aplicacao')
-        descricao = request.POST.get('descricao', '')
-        
-        if nome and tipo_avaliacao_id and peso and data_aplicacao:
-            try:
-                tipo_avaliacao = get_object_or_404(TipoAvaliacao, pk=tipo_avaliacao_id)
-                
-                avaliacao = Avaliacao.objects.create(
-                    nome=nome,
-                    descricao=descricao,
-                    tipo_avaliacao=tipo_avaliacao,
-                    turma=turma,
-                    disciplina=disciplina,
-                    divisao_periodo=divisao,
-                    peso=float(peso),
-                    data_aplicacao=data_aplicacao,
-                    professor=request.user
-                )
-                
-                messages.success(request, f'Avaliação "{nome}" criada com sucesso!')
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'success': True, 'message': f'Avaliação "{nome}" criada com sucesso!'})
-
-                return redirect(
-                    f"{reverse('turma:gerenciar_avaliacoes_diario', args=[turma_id])}"
-                    f"?disciplina={disciplina.pk}&divisao={divisao.pk}"
-                )
-                
-            except Exception as e:
-                error_msg = f'Erro ao criar avaliação: {str(e)}'
-                messages.error(request, error_msg)
-                if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                    return JsonResponse({'success': False, 'error': error_msg})
-        else:
-            error_msg = 'Preencha todos os campos obrigatórios.'
-            messages.error(request, error_msg)
-            if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-                return JsonResponse({'success': False, 'error': error_msg})
-    
-    # Buscar avaliações da turma e disciplina
-    avaliacoes = Avaliacao.objects.filter(
-        turma=turma,
-        disciplina=disciplina
-    ).order_by('nome')
-    
-    # Adicionar contagem de notas para cada avaliação
-    for avaliacao in avaliacoes:
-        avaliacao.total_notas_lancadas = NotaAvaliacao.objects.filter(avaliacao=avaliacao).count()
-    
-    # Buscar tipos de avaliação
-    tipos_avaliacao = TipoAvaliacao.objects.all().order_by('nome')
-    
-    context = {
-        'turma': turma,
-        'disciplina': disciplina,
-        'divisao': divisao,
-        'avaliacoes': avaliacoes,
-        'tipos_avaliacao': tipos_avaliacao,
-        'page_title': f'Avaliações - {disciplina.nome} - {turma.nome}'
-    }
-    
-    return render(request, 'diario/gerenciar_avaliacoes_diario.html', context)
-
-
-@login_required
-def visualizar_avaliacoes_diario(request, turma_id):
-    """Visualiza avaliações no contexto do diário (Espelho do Diário)"""
-    turma = get_object_or_404(Turma, pk=turma_id)
-
-    # Obter disciplina da URL
-    disciplina_id = request.GET.get('disciplina')
-    if not disciplina_id:
-        messages.error(request, 'Selecione uma disciplina para visualizar avaliações.')
-        return redirect('diario:turma', turma_id=turma_id)
-
-    disciplina = get_object_or_404(Disciplina, pk=disciplina_id)
-
-    # Obter divisão da URL
-    divisao_id = request.GET.get('divisao')
-    if not divisao_id:
-        messages.info(request, 'Selecione o período (bimestre/trimestre) para continuar.')
-        return redirect('diario:disciplina', turma_id=turma.pk, disciplina_id=disciplina.pk)
-    divisao = get_object_or_404(DivisaoPeriodoLetivo, pk=divisao_id)
-
-    # Buscar avaliações da turma e disciplina
-    avaliacoes = Avaliacao.objects.filter(
-        turma=turma,
-        disciplina=disciplina
-    ).order_by('nome')
-
-    # Adicionar contagem de notas para cada avaliação
-    for avaliacao in avaliacoes:
-        avaliacao.total_notas_lancadas = NotaAvaliacao.objects.filter(avaliacao=avaliacao).count()
-
-    context = {
-        'turma': turma,
-        'disciplina': disciplina,
-        'divisao': divisao,
-        'avaliacoes': avaliacoes,
-        'page_title': f'Espelho do Diário - {disciplina.nome} - {turma.nome}'
-    }
-
-    return render(request, 'diario/visualizar_avaliacoes_diario.html', context)
-
-
-@login_required
-def editar_avaliacao_diario(request, avaliacao_id):
-    """Edita avaliação no contexto do diário"""
-    avaliacao = get_object_or_404(Avaliacao, pk=avaliacao_id)
-    
-    # Dados para preservar valores em caso de erro
-    form_data = {
-        'nome': avaliacao.nome,
-        'descricao': avaliacao.descricao,
-        'tipo_avaliacao_id': avaliacao.tipo_avaliacao.pk if avaliacao.tipo_avaliacao else None,
-        'peso': avaliacao.peso,
-        'data_aplicacao': avaliacao.data_aplicacao
-    }
-    
-    if request.method == 'POST':
-        nome = request.POST.get('nome')
-        tipo_avaliacao_id = request.POST.get('tipo_avaliacao')
-        peso = request.POST.get('peso')
-        data_aplicacao = request.POST.get('data_aplicacao')
-        descricao = request.POST.get('descricao', '')
-        
-        # Atualizar form_data com os valores POST para preservar em caso de erro
-        form_data.update({
-            'nome': nome,
-            'descricao': descricao,
-            'tipo_avaliacao_id': tipo_avaliacao_id,
-            'peso': peso if peso else avaliacao.peso,  # Preserva peso original se vazio
-            'data_aplicacao': data_aplicacao
-        })
-        
-        # Validação mais robusta para o campo peso
-        if nome and tipo_avaliacao_id and peso is not None and peso != '' and data_aplicacao:
-            try:
-                # Validar se o peso é um número válido
-                peso_float = float(peso)
-                if peso_float <= 0:
-                    raise ValueError("Peso deve ser maior que zero")
-                    
-                tipo_avaliacao = get_object_or_404(TipoAvaliacao, pk=tipo_avaliacao_id)
-                
-                avaliacao.nome = nome
-                avaliacao.descricao = descricao
-                avaliacao.tipo_avaliacao = tipo_avaliacao
-                avaliacao.peso = peso_float
-                avaliacao.data_aplicacao = data_aplicacao
-                avaliacao.save()
-                
-                messages.success(request, f'Avaliação "{nome}" atualizada com sucesso!')
-                return redirect(
-                    f"{reverse('turma:gerenciar_avaliacoes_diario', args=[avaliacao.turma.pk])}"
-                    f"?disciplina={avaliacao.disciplina.pk}&divisao={avaliacao.divisao_periodo.pk}"
-                )
-                
-            except Exception as e:
-                messages.error(request, f'Erro ao atualizar avaliação: {str(e)}')
-        else:
-            messages.error(request, 'Preencha todos os campos obrigatórios.')
-    
-    # Buscar tipos de avaliação
-    tipos_avaliacao = TipoAvaliacao.objects.all().order_by('nome')
-    
-    context = {
-        'avaliacao': avaliacao,
-        'form_data': form_data,  # Dados para preservar valores no formulário
-        'turma': avaliacao.turma,
-        'disciplina': avaliacao.disciplina,
-        'tipos_avaliacao': tipos_avaliacao,
-        'page_title': f'Editar Avaliação - {avaliacao.nome}'
-    }
-    
-    return render(request, 'diario/editar_avaliacao_diario.html', context)
-
-
-@login_required
-@require_POST
-def excluir_avaliacao_diario(request, avaliacao_id):
-    """Exclui avaliação no contexto do diário (somente via POST)"""
-    avaliacao = get_object_or_404(Avaliacao, pk=avaliacao_id)
-    turma_id = avaliacao.turma.pk
-    destino = (
-        f"{reverse('turma:gerenciar_avaliacoes_diario', args=[turma_id])}"
-        f"?disciplina={avaliacao.disciplina.pk}&divisao={avaliacao.divisao_periodo.pk}"
-    )
-    nome_avaliacao = avaliacao.nome
-    avaliacao.delete()
-
-    success_msg = f'Avaliação "{nome_avaliacao}" excluída com sucesso!'
-    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-        return JsonResponse({'success': True, 'message': success_msg})
-    messages.success(request, success_msg)
-    return redirect(destino)

@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+
+{% block title %}Notas - {{ avaliacao.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    {% url 'programa:modulo_detail' avaliacao.modulo.pk as modulo_url %}
+    {% include 'partials/page_header.html' with title=avaliacao.nome subtitle=avaliacao.modulo|stringformat:"s" icon='fa-clipboard-check' back_url=modulo_url %}
+    <form method="post" class="card">
+        {% csrf_token %}
+        <div class="card-header">
+            <p class="text-sm text-gray-600">{{ avaliacao.get_tipo_avaliacao_display }} · {{ avaliacao.data_aplicacao|date:"d/m/Y" }} · nota máxima {{ avaliacao.nota_maxima }} · peso {{ avaliacao.peso }}</p>
+        </div>
+        {% if linhas %}
+        <ul class="divide-y divide-gray-100 guto-form">
+            {% for l in linhas %}
+            <li class="px-6 py-3 flex items-center justify-between gap-4">
+                <label for="nota_{{ l.participante.pk }}" class="font-medium">{{ l.participante.aluno.nome }}</label>
+                <input type="number" id="nota_{{ l.participante.pk }}" name="nota_{{ l.participante.pk }}" value="{{ l.nota|stringformat:'s' }}" min="0" max="{{ avaliacao.nota_maxima|stringformat:'s' }}" step="0.01" class="!w-32">
+            </li>
+            {% endfor %}
+        </ul>
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl flex justify-end gap-3">
+            <a href="{{ modulo_url }}" class="btn-secondary">Cancelar</a>
+            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar notas</button>
+        </div>
+        {% else %}
+            {% url 'programa:participante_create' avaliacao.modulo.programa.pk as inscrever_url %}
+            {% include 'partials/empty_state.html' with icon='fa-users' message='O programa não possui participantes ativos.' action_url=inscrever_url action_label='Inscrever participante' %}
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

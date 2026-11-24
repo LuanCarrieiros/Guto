@@ -1,11 +1,8 @@
 from django import forms
-from django.core.exceptions import ValidationError
 from .models import (
-    Turma, Disciplina, DivisaoPeriodoLetivo, LancamentoNota, 
-    AulaRegistrada, RegistroFrequencia, TipoAvaliacao, Avaliacao,
-    NotaAvaliacao
+    Turma, Disciplina, DivisaoPeriodoLetivo, AulaRegistrada, 
+    TipoAvaliacao, Avaliacao
 )
-from alunos.models import Aluno
 
 
 class TurmaForm(forms.ModelForm):
@@ -156,154 +153,6 @@ class DivisaoPeriodoLetivoForm(forms.ModelForm):
         return dados
 
 
-class EnturmacaoForm(forms.Form):
-    """Formulário para enturmação de alunos"""
-    
-    turma = forms.ModelChoiceField(
-        queryset=Turma.objects.all(),
-        empty_label="Selecione uma turma",
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-        })
-    )
-    
-    alunos = forms.ModelMultipleChoiceField(
-        queryset=Aluno.objects.filter(tipo_arquivo='CORRENTE'),
-        widget=forms.CheckboxSelectMultiple(attrs={
-            'class': 'form-checkbox text-green-600'
-        }),
-        required=False
-    )
-    
-    def __init__(self, *args, **kwargs):
-        turma_id = kwargs.pop('turma_id', None)
-        super().__init__(*args, **kwargs)
-        
-        if turma_id:
-            # Se uma turma específica foi selecionada, filtrar alunos disponíveis
-            from .models import Enturmacao
-            alunos_ja_enturmados = Enturmacao.objects.filter(
-                turma_id=turma_id
-            ).values_list('aluno_id', flat=True)
-            
-            self.fields['alunos'].queryset = Aluno.objects.filter(
-                tipo_arquivo='CORRENTE'
-            ).exclude(id__in=alunos_ja_enturmados)
-
-
-class LancamentoNotaForm(forms.ModelForm):
-    """Formulário para lançamento de notas"""
-    
-    class Meta:
-        model = LancamentoNota
-        fields = ['turma', 'disciplina', 'divisao_periodo', 'aluno', 'nota', 'conceito', 
-                  'aulas_previstas', 'aulas_lecionadas', 'faltas', 'faltas_justificadas']
-        
-        widgets = {
-            'turma': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'disciplina': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'divisao_periodo': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'aluno': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'nota': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'step': '0.1',
-                'min': '0',
-                'max': '10'
-            }),
-            'conceito': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'aulas_previstas': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'aulas_lecionadas': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'faltas': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'faltas_justificadas': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-        }
-
-
-class AulaRegistradaForm(forms.ModelForm):
-    """Formulário para registro de aulas"""
-    
-    class Meta:
-        model = AulaRegistrada
-        fields = ['turma', 'disciplina', 'data_aula', 'horario_inicio', 'horario_fim', 
-                  'conteudo_programatico', 'observacoes']
-        
-        widgets = {
-            'turma': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'disciplina': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'data_aula': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'horario_inicio': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'horario_fim': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'conteudo_programatico': forms.Textarea(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
-                'rows': 4,
-                'placeholder': 'Descreva o conteúdo que será ministrado na aula...'
-            }),
-            'observacoes': forms.Textarea(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
-                'rows': 2,
-                'placeholder': 'Observações adicionais (opcional)...'
-            }),
-        }
-
-    def clean(self):
-        cleaned_data = super().clean()
-        horario_inicio = cleaned_data.get('horario_inicio')
-        horario_fim = cleaned_data.get('horario_fim')
-        
-        if horario_inicio and horario_fim and horario_fim <= horario_inicio:
-            raise ValidationError('O horário de fim deve ser posterior ao horário de início.')
-        
-        return cleaned_data
-
-
-class RegistroFrequenciaForm(forms.ModelForm):
-    """Formulário para registro de frequência"""
-    
-    class Meta:
-        model = RegistroFrequencia
-        fields = ['situacao', 'observacoes']
-        
-        widgets = {
-            'situacao': forms.Select(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'observacoes': forms.TextInput(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'placeholder': 'Observações...'
-            }),
-        }
-
-
 class TipoAvaliacaoForm(forms.ModelForm):
     """Formulário para tipos de avaliação"""
     
@@ -394,92 +243,15 @@ class AvaliacaoForm(forms.ModelForm):
             self.fields['turma'].queryset = Turma.objects.filter(id__in=turmas_ids)
 
 
-class NotaAvaliacaoForm(forms.ModelForm):
-    """Formulário para lançamento de notas individuais"""
-    
+class AvaliacaoDiarioForm(forms.ModelForm):
+    """Validação das avaliações criadas/editadas pelo diário (turma, disciplina e período vêm da URL)."""
+
     class Meta:
-        model = NotaAvaliacao
-        fields = ['nota', 'conceito', 'observacoes', 'ausente', 'dispensado']
-        
-        widgets = {
-            'nota': forms.NumberInput(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'conceito': forms.Select(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'observacoes': forms.TextInput(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'placeholder': 'Observações...'
-            }),
-            'ausente': forms.CheckboxInput(attrs={
-                'class': 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
-            }),
-            'dispensado': forms.CheckboxInput(attrs={
-                'class': 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
-            }),
-        }
+        model = Avaliacao
+        fields = ['nome', 'tipo_avaliacao', 'peso', 'data_aplicacao', 'descricao']
 
-    def clean(self):
-        cleaned_data = super().clean()
-        nota = cleaned_data.get('nota')
-        conceito = cleaned_data.get('conceito')
-        ausente = cleaned_data.get('ausente')
-        dispensado = cleaned_data.get('dispensado')
-        
-        if not ausente and not dispensado and not nota and not conceito:
-            raise ValidationError('Informe uma nota ou conceito, ou marque como ausente/dispensado.')
-        
-        if nota and conceito:
-            raise ValidationError('Informe apenas nota OU conceito, não ambos.')
-        
-        return cleaned_data
-
-
-class FiltroRelatorioForm(forms.Form):
-    """Formulário para filtros de relatórios"""
-    
-    turma = forms.ModelChoiceField(
-        queryset=Turma.objects.all(),
-        required=False,
-        empty_label="Todas as turmas",
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
-    
-    disciplina = forms.ModelChoiceField(
-        queryset=Disciplina.objects.all(),
-        required=False,
-        empty_label="Todas as disciplinas",
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
-    
-    periodo = forms.ModelChoiceField(
-        queryset=DivisaoPeriodoLetivo.objects.filter(ativo=True),
-        required=False,
-        empty_label="Todos os períodos",
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
-    
-    data_inicio = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
-    
-    data_fim = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
+    def clean_peso(self):
+        peso = self.cleaned_data['peso']
+        if peso is None or peso <= 0:
+            raise forms.ValidationError('O peso deve ser maior que zero.')
+        return peso

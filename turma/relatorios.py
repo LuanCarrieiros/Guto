@@ -9,7 +9,10 @@ from decimal import Decimal
 
 from django.db.models import Q
 
-from .models import Avaliacao, Disciplina, DivisaoPeriodoLetivo, NotaAvaliacao, RegistroFrequencia
+from .models import (
+    Avaliacao, AvaliacaoDescritiva, Disciplina, DivisaoPeriodoLetivo, NotaAvaliacao, RecuperacaoEspecial,
+    RegistroFrequencia,
+)
 
 MEDIA_APROVACAO_PADRAO = 6.0
 MEDIA_RECUPERACAO = 4.0
@@ -67,16 +70,38 @@ def frequencia(registros):
     return (total - faltas) * 100 / total
 
 
-def situacao(media, freq, criterios):
+def situacao(media, freq, criterios, apos_recuperacao=False):
+    """Situação na disciplina. Depois da recuperação especial não há nova recuperação."""
     if media is None:
         return 'CURSANDO'
     if freq is not None and freq < criterios['frequencia']:
         return 'REPROVADO'
     if media >= criterios['media']:
         return 'APROVADO'
-    if media >= MEDIA_RECUPERACAO:
+    if media >= MEDIA_RECUPERACAO and not apos_recuperacao:
         return 'RECUPERACAO'
     return 'REPROVADO'
+
+
+def media_disciplina(turma, aluno, disciplina):
+    """Média anual do aluno na disciplina (média das médias de cada período), antes da recuperação."""
+    notas = list(NotaAvaliacao.objects.filter(
+        aluno=aluno, avaliacao__turma=turma, avaliacao__disciplina=disciplina, avaliacao__ativo=True
+    ).select_related('avaliacao'))
+    medias = []
+    for divisao in divisoes_da_turma(turma):
+        m = media_ponderada([n for n in notas if n.avaliacao.divisao_periodo_id == divisao.pk])
+        if m is not None:
+            medias.append(m)
+    return sum(medias) / len(medias) if medias else None
+
+
+def aplicar_recuperacao(media, recuperacao, criterios):
+    """A nota da recuperação especial substitui a média quando for maior."""
+    if recuperacao is None or recuperacao.nao_optou or recuperacao.nota_recuperacao is None:
+        return media, None
+    nota = float(recuperacao.nota_recuperacao)
+    return (max(media or 0, nota), nota)
 
 
 def calcular_boletim(turma, aluno):
@@ -86,6 +111,7 @@ def calcular_boletim(turma, aluno):
         aluno=aluno, avaliacao__turma=turma, avaliacao__ativo=True
     ).select_related('avaliacao'))
     presencas = list(RegistroFrequencia.objects.filter(aluno=aluno, aula__turma=turma).select_related('aula'))
+    recuperacoes = {r.disciplina_id: r for r in RecuperacaoEspecial.objects.filter(turma=turma, aluno=aluno)}
 
     linhas = []
     for disciplina in disciplinas_da_turma(turma):
@@ -95,14 +121,16 @@ def calcular_boletim(turma, aluno):
             por_divisao.append(media_ponderada([n for n in notas_disc if n.avaliacao.divisao_periodo_id == divisao.pk]))
         medias_validas = [m for m in por_divisao if m is not None]
         media = sum(medias_validas) / len(medias_validas) if medias_validas else None
+        media, nota_recuperacao = aplicar_recuperacao(media, recuperacoes.get(disciplina.pk), criterios)
         freq = frequencia([p for p in presencas if p.aula.disciplina_id == disciplina.pk])
         linhas.append({
             'disciplina': disciplina,
             'notas': por_divisao,
+            'recuperacao': nota_recuperacao,
             'media': media,
             'frequencia': freq,
             'faltas': sum(1 for p in presencas if p.aula.disciplina_id == disciplina.pk and p.situacao == 'AUSENTE'),
-            'situacao': situacao(media, freq, criterios),
+            'situacao': situacao(media, freq, criterios, apos_recuperacao=disciplina.pk in recuperacoes),
         })
 
     medias = [l['media'] for l in linhas if l['media'] is not None]
@@ -127,7 +155,12 @@ def calcular_boletim(turma, aluno):
         'reprovadas': situacoes.count('REPROVADO'),
         'situacao_final': final,
     }
-    return {'divisoes': divisoes, 'linhas': linhas, 'resumo': resumo, 'criterios': criterios}
+    pareceres = AvaliacaoDescritiva.objects.filter(turma=turma, aluno=aluno).select_related(
+        'disciplina', 'divisao_periodo').order_by('divisao_periodo__ordem', 'disciplina__nome')
+    return {
+        'divisoes': divisoes, 'linhas': linhas, 'resumo': resumo, 'criterios': criterios,
+        'pareceres': pareceres, 'tem_recuperacao': any(l['recuperacao'] is not None for l in linhas),
+    }
 
 
 def calcular_frequencia_turma(turma, alunos):

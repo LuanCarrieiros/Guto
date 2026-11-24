@@ -78,3 +78,40 @@ class ProgramaFluxoTest(TestCase):
         )
         resp = self.client.get(reverse('programa:participante_create', args=[programa.pk]))
         self.assertRedirects(resp, reverse('programa:participante_list', args=[programa.pk]))
+
+
+class ProgramaAvaliacaoTest(TestCase):
+    def setUp(self):
+        self.user = criar_admin()
+        self.client.force_login(self.user)
+        self.programa = ProgramaPedagogico.objects.create(
+            nome='P', descricao='d', tipo_programa='REGULAR', data_inicio=date(2026, 1, 1),
+            data_fim=date(2026, 12, 31), carga_horaria_total=10, objetivos_gerais='o', objetivos_especificos='o',
+            competencias='c', habilidades='h', publico_alvo='p', usuario_cadastro=self.user,
+        )
+        self.modulo = ModuloPrograma.objects.create(
+            programa=self.programa, nome='M', descricao='d', data_inicio=date(2026, 2, 1),
+            data_fim=date(2026, 3, 1), carga_horaria=5, conteudo_programatico='c', metodologia='m',
+        )
+        self.participante = ParticipantePrograma.objects.create(
+            programa=self.programa, aluno=criar_aluno(self.user), data_inscricao=date(2026, 1, 10),
+            usuario_cadastro=self.user,
+        )
+
+    def test_notas_calculam_nota_final(self):
+        from .models import AvaliacaoPrograma
+        self.client.post(reverse('programa:avaliacao_create', args=[self.modulo.pk]), {
+            'nome': 'Prova', 'tipo_avaliacao': 'SOMATIVA', 'data_aplicacao': '2026-02-10',
+            'nota_maxima': '20', 'peso': '1', 'descricao': 'd', 'criterios_avaliacao': 'c',
+        })
+        avaliacao = AvaliacaoPrograma.objects.get()
+        url = reverse('programa:avaliacao_notas', args=[avaliacao.pk])
+        self.assertEqual(self.client.get(url).status_code, 200)
+        self.client.post(url, {f'nota_{self.participante.pk}': '15'})
+        self.participante.refresh_from_db()
+        self.assertEqual(float(self.participante.nota_final), 7.5)
+        # Nota acima do máximo é recusada
+        self.client.post(url, {f'nota_{self.participante.pk}': '25'})
+        self.participante.refresh_from_db()
+        self.assertEqual(float(self.participante.nota_final), 7.5)
+        self.assertEqual(self.client.get(reverse('programa:modulo_detail', args=[self.modulo.pk])).status_code, 200)

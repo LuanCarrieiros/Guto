@@ -85,11 +85,11 @@
     </div>
 
     <!-- Ações Rápidas -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6 mb-8">
         <div class="bg-gradient-to-br from-emerald-400 to-teal-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
             <div class="text-3xl mb-3">📋</div>
             <h3 class="font-bold mb-2">Fazer Chamada</h3>
-            <a href="{% url 'turma:fazer_chamada' turma.pk %}?disciplina={{ disciplina.pk }}&divisao={{ divisao.pk }}"
+            <a href="{% url 'diario:chamada' turma.pk disciplina.pk divisao.pk %}"
                class="block w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 mt-3">
                 Registrar Presença
             </a>
@@ -98,7 +98,7 @@
         <div class="bg-gradient-to-br from-orange-400 to-red-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
             <div class="text-3xl mb-3">⭐</div>
             <h3 class="font-bold mb-2">Lançar Notas</h3>
-            <a href="{% url 'turma:lancar_notas_diario' turma.pk %}?disciplina={{ disciplina.pk }}&divisao={{ divisao.pk }}"
+            <a href="{% url 'diario:lancar_notas' turma.pk disciplina.pk divisao.pk %}"
                class="block w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 mt-3">
                 Inserir Notas
             </a>
@@ -107,16 +107,25 @@
         <div class="bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
             <div class="text-3xl mb-3">📊</div>
             <h3 class="font-bold mb-2">Gerenciar Avaliações</h3>
-            <a href="{% url 'turma:gerenciar_avaliacoes_diario' turma.pk %}?disciplina={{ disciplina.pk }}&divisao={{ divisao.pk }}"
+            <a href="{% url 'diario:gerenciar_avaliacoes' turma.pk disciplina.pk divisao.pk %}"
                class="block w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 mt-3">
                 Criar e Gerenciar
             </a>
         </div>
 
-        <div class="bg-gradient-to-br from-orange-400 to-red-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
+        <div class="bg-gradient-to-br from-sky-400 to-indigo-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
+            <div class="text-3xl mb-3">📝</div>
+            <h3 class="font-bold mb-2">Pareceres</h3>
+            <a href="{% url 'diario:pareceres' turma.pk disciplina.pk divisao.pk %}"
+               class="block w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 mt-3">
+                Parecer Descritivo
+            </a>
+        </div>
+
+        <div class="bg-gradient-to-br from-amber-400 to-orange-500 rounded-xl shadow-lg p-6 text-center text-white hover:scale-105 transition-transform duration-300">
             <div class="text-3xl mb-3">📈</div>
-            <h3 class="font-bold mb-2">Relatórios</h3>
-            <a href="{% url 'turma:visualizar_avaliacoes_diario' turma.pk %}?disciplina={{ disciplina.pk }}&divisao={{ divisao.pk }}"
+            <h3 class="font-bold mb-2">Espelho</h3>
+            <a href="{% url 'diario:visualizar_avaliacoes' turma.pk disciplina.pk divisao.pk %}"
                class="block w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 mt-3">
                 Ver Mais
             </a>
@@ -201,7 +210,7 @@
                     <div class="text-6xl mb-4">📝</div>
                     <h3 class="text-xl font-bold text-gray-800 mb-3">Nenhuma avaliação encontrada</h3>
                     <p class="text-gray-600 mb-6">Crie avaliações para começar a lançar notas</p>
-                    <a href="{% url 'turma:gerenciar_avaliacoes_diario' turma.pk %}?disciplina={{ disciplina.pk }}&divisao={{ divisao.pk }}"
+                    <a href="{% url 'diario:gerenciar_avaliacoes' turma.pk disciplina.pk divisao.pk %}"
                        class="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
                         <i class="fas fa-plus-circle mr-2"></i>
                         Criar Primeira Avaliação
@@ -252,15 +261,15 @@
                 {% if chamadas %}
                 <div class="space-y-3">
                     {% for chamada in chamadas|slice:":5" %}
-                    <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                    <a href="{% url 'diario:chamada' turma.pk disciplina.pk divisao.pk %}?data={{ chamada.data_aula|date:'Y-m-d' }}" class="flex items-center justify-between p-3 bg-gray-50 rounded-lg hover:bg-gray-100">
                         <div>
-                            <p class="font-medium text-gray-900 text-sm">{{ chamada.data_chamada|date:"d/m/Y" }}</p>
-                            <p class="text-xs text-gray-600">{{ chamada.data_chamada|date:"H:i" }}</p>
+                            <p class="font-medium text-gray-900 text-sm">{{ chamada.data_aula|date:"d/m/Y" }}</p>
+                            <p class="text-xs text-gray-600">{{ chamada.data_aula|date:"l" }}</p>
                         </div>
                         <div class="text-right">
-                            <p class="text-xs text-green-600">✅ Realizada</p>
+                            <p class="text-xs text-green-600">✅ {{ chamada.presentes }}/{{ chamada.total }} presentes</p>
                         </div>
-                    </div>
+                    </a>
                     {% endfor %}
                 </div>
                 {% else %}

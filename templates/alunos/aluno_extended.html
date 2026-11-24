@@ -22,6 +22,9 @@
                 <button type="button" @click="aba = 'responsaveis'" :class="aba === 'responsaveis' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'" class="px-6 py-4 text-sm font-medium border-b-2">
                     <i class="fas fa-users mr-2"></i>Responsáveis <span class="badge badge-gray ml-1">{{ responsaveis|length }}</span>
                 </button>
+                <button type="button" @click="aba = 'dados_adicionais'" :class="aba === 'dados_adicionais' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'" class="px-6 py-4 text-sm font-medium border-b-2">
+                    <i class="fas fa-list-alt mr-2"></i>Dados adicionais
+                </button>
                 <button type="button" @click="aba = 'transporte'" :class="aba === 'transporte' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'" class="px-6 py-4 text-sm font-medium border-b-2">
                     <i class="fas fa-bus mr-2"></i>Transporte
                 </button>
@@ -92,6 +95,26 @@
                 </form>
             </div>
         </div>
+
+        <!-- Dados adicionais (campos personalizados de Utilitários) -->
+        <form x-show="aba === 'dados_adicionais'" x-cloak method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="aba_ativa" value="dados_adicionais">
+            <div class="card-body">
+                {% if adicionais_form.fields %}
+                    {% include 'partials/form_fields.html' with form=adicionais_form %}
+                {% else %}
+                    <p class="text-sm text-gray-500"><i class="fas fa-info-circle mr-1"></i>Nenhum campo adicional cadastrado.
+                    {% if user.is_staff or user.is_superuser %}<a href="{% url 'utilitarios:dados_adicionais' %}" class="text-indigo-600 hover:underline">Cadastrar campos</a>{% endif %}</p>
+                {% endif %}
+            </div>
+            {% if adicionais_form.fields %}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-xl">
+                <a href="{{ detalhe_url }}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar dados adicionais</button>
+            </div>
+            {% endif %}
+        </form>
 
         <!-- Transporte -->
         <form x-show="aba === 'transporte'" x-cloak method="post" novalidate>
