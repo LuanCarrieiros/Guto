@@ -1,159 +1,48 @@
 {% extends 'base.html' %}
-{% load static %}
 
-{% block title %}Programa Pedagógico - GUTO{% endblock %}
-
-{% block extra_css %}
-<link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
-{% endblock %}
+{% block title %}Programas Pedagógicos - GUTO{% endblock %}
 
 {% block content %}
 <div class="max-w-7xl mx-auto space-y-6">
-    
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-        <div>
-            <h1 class="text-3xl font-bold text-gray-900">📖 Programa Pedagógico</h1>
-            <p class="text-gray-600 mt-1">
-                Sistema completo de gestão de programas educacionais modulares
-            </p>
-        </div>
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% include 'partials/page_header.html' with title='Programas Pedagógicos' subtitle='Reforço, aceleração, inclusão e demais programas da escola' icon='fa-book-open' no_margin=True %}
+        <a href="{% url 'programa:programa_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Novo programa</a>
+    </div>
+    {% include 'programa/_nav.html' %}
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="card card-body border-l-4 border-orange-500"><p class="detail-label">Programas cadastrados</p><p class="text-3xl font-bold">{{ total_programas }}</p></div>
+        <div class="card card-body border-l-4 border-green-500"><p class="detail-label">Programas ativos</p><p class="text-3xl font-bold">{{ programas_ativos }}</p></div>
+        <div class="card card-body border-l-4 border-indigo-500"><p class="detail-label">Participantes ativos</p><p class="text-3xl font-bold">{{ total_participantes }}</p></div>
     </div>
 
-    <!-- Cards de Estatísticas -->
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-book text-blue-600"></i>
-                    </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Programas Ativos</p>
-                    <p class="text-2xl font-bold text-gray-900">0</p>
-                </div>
-            </div>
+    <div class="grid lg:grid-cols-2 gap-6">
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Programas recentes</h2><a href="{% url 'programa:programa_list' %}" class="text-sm text-indigo-600 hover:underline">Ver todos →</a></div>
+            <ul class="divide-y divide-gray-100">
+                {% for p in programas_recentes %}
+                <li class="px-6 py-3 flex items-center justify-between gap-4">
+                    <div><a href="{% url 'programa:programa_detail' p.pk %}" class="font-medium hover:text-indigo-600">{{ p.nome }}</a><p class="text-xs text-gray-500">{{ p.get_tipo_programa_display }} · {{ p.data_inicio|date:"d/m/Y" }} a {{ p.data_fim|date:"d/m/Y" }}</p></div>
+                    <div class="text-right"><span class="badge {% if p.status == 'ATIVO' %}badge-green{% elif p.status == 'PLANEJAMENTO' %}badge-blue{% else %}badge-gray{% endif %}">{{ p.get_status_display }}</span><p class="text-xs text-gray-500 mt-1">{{ p.ativos }}/{{ p.vagas_disponiveis }} vagas</p></div>
+                </li>
+                {% empty %}
+                <li>{% url 'programa:programa_create' as novo_url %}{% include 'partials/empty_state.html' with icon='fa-book-open' message='Nenhum programa cadastrado.' action_url=novo_url action_label='Novo programa' %}</li>
+                {% endfor %}
+            </ul>
         </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-puzzle-piece text-green-600"></i>
-                    </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Módulos</p>
-                    <p class="text-2xl font-bold text-gray-900">0</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-users text-purple-600"></i>
-                    </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Participantes</p>
-                    <p class="text-2xl font-bold text-gray-900">0</p>
-                </div>
-            </div>
-        </div>
-
-        <div class="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
-            <div class="flex items-center">
-                <div class="flex-shrink-0">
-                    <div class="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                        <i class="fas fa-chalkboard-teacher text-orange-600"></i>
-                    </div>
-                </div>
-                <div class="ml-4">
-                    <p class="text-sm font-medium text-gray-600">Aulas Realizadas</p>
-                    <p class="text-2xl font-bold text-gray-900">0</p>
-                </div>
-            </div>
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Próximas aulas</h2><a href="{% url 'programa:aula_list' %}" class="text-sm text-indigo-600 hover:underline">Ver todas →</a></div>
+            <ul class="divide-y divide-gray-100">
+                {% for a in aulas_proximas %}
+                <li class="px-6 py-3 flex items-center justify-between gap-4">
+                    <div><p class="font-medium">{{ a.titulo }}</p><p class="text-xs text-gray-500">{{ a.modulo.programa.nome }} · {{ a.modulo.nome }}</p></div>
+                    <div class="text-right text-sm"><p>{{ a.data_planejada|date:"d/m/Y" }}</p><p class="text-xs text-gray-500">{{ a.horario_inicio|time:"H:i" }}–{{ a.horario_fim|time:"H:i" }}</p></div>
+                </li>
+                {% empty %}
+                <li class="px-6 py-6 text-sm text-gray-500 text-center">Nenhuma aula planejada.</li>
+                {% endfor %}
+            </ul>
         </div>
     </div>
-
-    <!-- Ações Rápidas -->
-    <div class="bg-white rounded-lg shadow-md overflow-hidden">
-        <div class="px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-b">
-            <h3 class="text-lg font-semibold text-gray-900">Ações Rápidas</h3>
-            <p class="text-sm text-gray-600 mt-1">Acesse as principais funcionalidades dos programas pedagógicos</p>
-        </div>
-        <div class="p-6">
-            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                <div class="action-card group cursor-not-allowed">
-                    <div class="action-card-icon bg-blue-100 group-hover:bg-blue-200">
-                        <i class="fas fa-book text-blue-600"></i>
-                    </div>
-                    <div class="action-card-content">
-                        <h4 class="action-card-title">Programas</h4>
-                        <p class="action-card-description">Gerenciar programas</p>
-                    </div>
-                </div>
-
-                <div class="action-card group cursor-not-allowed">
-                    <div class="action-card-icon bg-green-100 group-hover:bg-green-200">
-                        <i class="fas fa-puzzle-piece text-green-600"></i>
-                    </div>
-                    <div class="action-card-content">
-                        <h4 class="action-card-title">Módulos</h4>
-                        <p class="action-card-description">Gerenciar módulos</p>
-                    </div>
-                </div>
-
-                <div class="action-card group cursor-not-allowed">
-                    <div class="action-card-icon bg-purple-100 group-hover:bg-purple-200">
-                        <i class="fas fa-users text-purple-600"></i>
-                    </div>
-                    <div class="action-card-content">
-                        <h4 class="action-card-title">Participantes</h4>
-                        <p class="action-card-description">Gerenciar participantes</p>
-                    </div>
-                </div>
-
-                <div class="action-card group cursor-not-allowed">
-                    <div class="action-card-icon bg-orange-100 group-hover:bg-orange-200">
-                        <i class="fas fa-chalkboard-teacher text-orange-600"></i>
-                    </div>
-                    <div class="action-card-content">
-                        <h4 class="action-card-title">Aulas</h4>
-                        <p class="action-card-description">Gerenciar aulas</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Módulo em Desenvolvimento -->
-    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div class="flex">
-            <div class="flex-shrink-0">
-                <i class="fas fa-exclamation-triangle text-yellow-400 text-xl"></i>
-            </div>
-            <div class="ml-3">
-                <h3 class="text-sm font-medium text-yellow-800">
-                    Módulo em Desenvolvimento
-                </h3>
-                <div class="mt-2 text-sm text-yellow-700">
-                    <p>Este módulo está sendo desenvolvido. As funcionalidades completas serão implementadas em breve:</p>
-                    <ul class="list-disc pl-5 mt-1">
-                        <li>Gestão completa de programas pedagógicos por modalidade</li>
-                        <li>Sistema modular com aulas e cronogramas</li>
-                        <li>Controle de participantes e inscrições</li>
-                        <li>Registro de frequência por aula</li>
-                        <li>Sistema de avaliações e notas por módulo</li>
-                        <li>Relatórios de desempenho e certificação</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-    </div>
-
 </div>
 {% endblock %}

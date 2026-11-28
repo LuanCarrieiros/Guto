@@ -1,13 +1,16 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+import calendar
+from datetime import date
+
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponse
-from django.template.loader import get_template
-from django.core.paginator import Paginator
-from datetime import date, datetime
+from django.contrib.auth.decorators import login_required
+from django.db.models import Count, Q
+from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
+from django.utils import timezone
+
+from turma.models import Turma
 from .models import TipoRelatorio, FiltroRelatorio, CalendarioEscolar, EventoCalendario
 from .forms import FiltroRelatorioForm, CalendarioEscolarForm, EventoCalendarioForm
-import calendar
 
 @login_required
 def opcoes_home(request):
@@ -53,7 +56,6 @@ def selecionar_relatorio(request, tipo_relatorio_id):
             filtro.usuario = request.user
             filtro.save()
             
-            # Gerar relatório (simulação)
             messages.success(request, f'Relatório "{tipo_relatorio}" gerado com sucesso!')
             return redirect('opcoes:gerar_relatorio', filtro_id=filtro.id)
     else:
@@ -72,36 +74,127 @@ def selecionar_relatorio(request, tipo_relatorio_id):
     }
     return render(request, 'opcoes/documentos/filtro_relatorio.html', context)
 
+# Correspondência entre os tipos de ensino do filtro e os da Turma
+TIPO_ENSINO_TURMA = {
+    'INFANTIL': 'EDUCACAO_INFANTIL',
+    'FUNDAMENTAL_I': 'ENSINO_FUNDAMENTAL_I',
+    'FUNDAMENTAL_II': 'ENSINO_FUNDAMENTAL_II',
+    'MEDIO': 'ENSINO_MEDIO',
+}
+
+
+def buscar_turmas_relatorio(filtro):
+    """Aplica os filtros do relatório (RF607) sobre as turmas cadastradas."""
+    turmas = Turma.objects.filter(periodo_letivo=filtro.periodo_letivo).annotate(
+        total_alunos=Count('enturmacoes', filter=Q(enturmacoes__ativo=True))
+    ).order_by('nome')
+
+    if filtro.tipo_ensino != 'TODOS':
+        turmas = turmas.filter(tipo_ensino=TIPO_ENSINO_TURMA.get(filtro.tipo_ensino, filtro.tipo_ensino))
+    if filtro.turno != 'TODOS':
+        turmas = turmas.filter(turno=filtro.turno)
+    if filtro.status_diario == 'ABERTO':
+        turmas = turmas.filter(diario_fechado=False)
+    elif filtro.status_diario == 'FECHADO':
+        turmas = turmas.filter(diario_fechado=True)
+    # Turmas de anos anteriores ao corrente são consideradas encerradas
+    ano_corrente = str(date.today().year)
+    if filtro.situacao_turma == 'ATIVO':
+        turmas = turmas.filter(periodo_letivo__gte=ano_corrente)
+    elif filtro.situacao_turma == 'ENCERRADO':
+        turmas = turmas.filter(periodo_letivo__lt=ano_corrente)
+
+    turmas = list(turmas)
+    if filtro.ano_serie:
+        termo = filtro.ano_serie.strip().lower()
+        turmas = [
+            t for t in turmas
+            if termo in t.ano_serie.lower() or termo in t.get_ano_serie_display().lower()
+        ]
+    return turmas
+
+
 @login_required
 def gerar_relatorio(request, filtro_id):
     """
     Gerar e exibir relatório com base nos filtros aplicados
     """
     filtro = get_object_or_404(FiltroRelatorio, pk=filtro_id, usuario=request.user)
-    
-    # Dados simulados para o relatório
+    turmas = buscar_turmas_relatorio(filtro)
+
+    turmas_encontradas = []
+    for turma in turmas:
+        enturmacoes = turma.enturmacoes.filter(ativo=True).select_related('aluno').order_by('aluno__nome')
+        turmas_encontradas.append({
+            'turma': turma,
+            'alunos': [e.aluno for e in enturmacoes],
+        })
+
     dados_relatorio = {
         'filtro': filtro,
-        'total_turmas': 15,
-        'total_alunos': 350,
-        'data_geracao': datetime.now(),
-        'turmas_encontradas': [
-            {'nome': '1º A - Matutino', 'alunos': 25, 'status': 'Ativo'},
-            {'nome': '2º B - Vespertino', 'alunos': 28, 'status': 'Ativo'},
-            {'nome': '3º C - Matutino', 'alunos': 22, 'status': 'Ativo'},
-        ]
+        'tipo_relatorio': filtro.tipo_relatorio,
+        'total_turmas': len(turmas),
+        'total_alunos': sum(t.total_alunos for t in turmas),
+        'data_geracao': timezone.now(),
+        'turmas_encontradas': turmas_encontradas,
+        'title': f'Relatório - {filtro.tipo_relatorio}',
     }
-    
+
     if request.GET.get('format') == 'print':
         return render(request, 'opcoes/documentos/relatorio_print.html', dados_relatorio)
-    
-    context = {
-        **dados_relatorio,
-        'title': f'Relatório - {filtro.tipo_relatorio}'
-    }
-    return render(request, 'opcoes/documentos/relatorio_resultado.html', context)
+
+    return render(request, 'opcoes/documentos/relatorio_resultado.html', dados_relatorio)
 
 # === MÓDULO CALENDÁRIO ESCOLAR (RF701-RF704) ===
+
+MESES_PT = [
+    'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+    'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+]
+
+# Cor (classes Tailwind) de cada tipo de evento no calendário visual
+CORES_EVENTO = {
+    'AULA': 'bg-green-100 text-green-800',
+    'FERIADO': 'bg-red-100 text-red-800',
+    'RECESSO': 'bg-orange-100 text-orange-800',
+    'EVENTO_ESPECIAL': 'bg-yellow-100 text-yellow-800',
+    'REUNIAO_PEDAGOGICA': 'bg-blue-100 text-blue-800',
+    'FORMACAO': 'bg-purple-100 text-purple-800',
+}
+
+
+def montar_meses(ano, eventos):
+    """Monta a estrutura (semanas/dias) dos 12 meses com os eventos de cada dia."""
+    eventos_por_data = {}
+    for evento in eventos:
+        eventos_por_data.setdefault(evento.data_evento, []).append(evento)
+
+    hoje = date.today()
+    cal = calendar.Calendar(firstweekday=calendar.MONDAY)
+    meses = []
+    for mes in range(1, 13):
+        semanas = []
+        for semana in cal.monthdatescalendar(ano, mes):
+            dias = []
+            for dia in semana:
+                eventos_dia = eventos_por_data.get(dia, []) if dia.month == mes else []
+                dias.append({
+                    'data': dia,
+                    'no_mes': dia.month == mes,
+                    'hoje': dia == hoje,
+                    'fim_de_semana': dia.weekday() >= 5,
+                    'eventos': eventos_dia,
+                    'cor': CORES_EVENTO.get(eventos_dia[0].tipo_evento, '') if eventos_dia else '',
+                })
+            semanas.append(dias)
+        meses.append({
+            'numero': mes,
+            'nome': MESES_PT[mes - 1],
+            'semanas': semanas,
+            'eventos': [e for e in eventos if e.data_evento.month == mes],
+        })
+    return meses
+
 
 @login_required
 def calendario_escolar(request):
@@ -109,57 +202,38 @@ def calendario_escolar(request):
     Exibir calendário escolar do ano administrativo (RF701-RF702)
     """
     ano_atual = date.today().year
-    ano = request.GET.get('ano', ano_atual)
-    
     try:
-        ano = int(ano)
+        ano = int(request.GET.get('ano', ano_atual))
     except (ValueError, TypeError):
         ano = ano_atual
-    
-    # Buscar calendários do ano
+
     calendarios = CalendarioEscolar.objects.filter(
         periodo_letivo=str(ano),
         ativo=True
     ).select_related('usuario_criacao')
-    
-    # Criar calendário HTML
-    cal = calendar.HTMLCalendar(calendar.MONDAY)
-    
-    # Buscar eventos do ano
-    eventos = EventoCalendario.objects.filter(
+
+    eventos = list(EventoCalendario.objects.filter(
         calendario__periodo_letivo=str(ano),
+        calendario__ativo=True,
         data_evento__year=ano
-    ).select_related('calendario')
-    
-    eventos_por_data = {}
-    for evento in eventos:
-        data_str = evento.data_evento.strftime('%Y-%m-%d')
-        if data_str not in eventos_por_data:
-            eventos_por_data[data_str] = []
-        eventos_por_data[data_str].append(evento)
-    
-    meses_html = []
-    for mes in range(1, 13):
-        mes_html = cal.formatmonth(ano, mes)
-        meses_html.append({
-            'mes': calendar.month_name[mes],
-            'numero': mes,
-            'html': mes_html
-        })
-    
+    ).select_related('calendario').order_by('data_evento'))
+
     context = {
         'ano': ano,
         'calendarios': calendarios,
-        'eventos_por_data': eventos_por_data,
-        'meses': meses_html,
-        'anos_disponiveis': range(ano-5, ano+6),
+        'meses': montar_meses(ano, eventos),
+        'total_eventos': len(eventos),
+        'tipos_evento': [
+            (codigo, nome, CORES_EVENTO[codigo])
+            for codigo, nome in EventoCalendario.TIPO_EVENTO_CHOICES
+        ],
+        'anos_disponiveis': range(ano - 5, ano + 6),
         'title': f'Calendário Escolar {ano}'
     }
-    
-    # Se for requisição para impressão
+
     if request.GET.get('format') == 'print':
         return render(request, 'opcoes/calendario/calendario_print.html', context)
-    
+
     return render(request, 'opcoes/calendario/calendario_escolar.html', context)
 
 @login_required
@@ -185,9 +259,12 @@ def calendario_criar(request):
     context = {
         'form': form,
         'title': 'Criar Calendário Escolar',
-        'action': 'Criar'
+        'subtitle': 'Configure o período letivo por tipo de ensino, série e turno',
+        'icon': 'fa-calendar-plus',
+        'cancel_url': reverse('opcoes:calendario_escolar'),
+        'submit_label': 'Criar calendário',
     }
-    return render(request, 'opcoes/calendario/calendario_form.html', context)
+    return render(request, 'generic/form.html', context)
 
 @login_required
 def calendario_editar(request, pk):
@@ -201,17 +278,19 @@ def calendario_editar(request, pk):
         if form.is_valid():
             form.save()
             messages.success(request, 'Calendário escolar atualizado com sucesso!')
-            return redirect('opcoes:calendario_escolar')
+            return redirect('opcoes:calendario_detalhe', pk=calendario.pk)
     else:
         form = CalendarioEscolarForm(instance=calendario)
     
     context = {
         'form': form,
         'calendario': calendario,
-        'title': f'Editar Calendário Escolar - {calendario}',
-        'action': 'Editar'
+        'title': 'Editar Calendário Escolar',
+        'subtitle': str(calendario),
+        'icon': 'fa-calendar-alt',
+        'cancel_url': reverse('opcoes:calendario_detalhe', args=[calendario.pk]),
     }
-    return render(request, 'opcoes/calendario/calendario_form.html', context)
+    return render(request, 'generic/form.html', context)
 
 @login_required
 def calendario_detalhe(request, pk):
@@ -249,7 +328,10 @@ def evento_criar(request, calendario_id):
     context = {
         'form': form,
         'calendario': calendario,
-        'title': f'Criar Evento - {calendario}',
-        'action': 'Criar'
+        'title': 'Novo Evento',
+        'subtitle': f'Calendário {calendario}',
+        'icon': 'fa-calendar-day',
+        'cancel_url': reverse('opcoes:calendario_detalhe', args=[calendario.pk]),
+        'submit_label': 'Cadastrar evento',
     }
-    return render(request, 'opcoes/calendario/evento_form.html', context)
+    return render(request, 'generic/form.html', context)

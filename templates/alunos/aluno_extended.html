@@ -1,0 +1,147 @@
+{% extends 'base.html' %}
+
+{% block title %}Cadastro Completo - {{ aluno.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto" x-data="{ aba: '{{ aba_ativa }}' }">
+    {% url 'alunos:aluno_detail' aluno.pk as detalhe_url %}
+    {% with codigo=aluno.codigo|stringformat:"s" %}
+    {% include 'partials/page_header.html' with title=aluno.nome subtitle="Cadastro completo do aluno · Código "|add:codigo icon='fa-user-graduate' back_url=detalhe_url %}
+    {% endwith %}
+
+    <!-- Abas -->
+    <div class="card">
+        <div class="border-b border-gray-200 overflow-x-auto">
+            <nav class="flex min-w-max">
+                <button type="button" @click="aba = 'identificacao'" :class="aba === 'identificacao' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'" class="px-6 py-4 text-sm font-medium border-b-2">
+                    <i class="fas fa-id-card mr-2"></i>Identificação
+                </button>
+                <button type="button" @click="aba = 'documentacao'" :class="aba === 'documentacao' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'" class="px-6 py-4 text-sm font-medium border-b-2">
+                    <i class="fas fa-file-alt mr-2"></i>Documentação
+                </button>
+                <button type="button" @click="aba = 'responsaveis'" :class="aba === 'responsaveis' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'" class="px-6 py-4 text-sm font-medium border-b-2">
+                    <i class="fas fa-users mr-2"></i>Responsáveis <span class="badge badge-gray ml-1">{{ responsaveis|length }}</span>
+                </button>
+                <button type="button" @click="aba = 'dados_adicionais'" :class="aba === 'dados_adicionais' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'" class="px-6 py-4 text-sm font-medium border-b-2">
+                    <i class="fas fa-list-alt mr-2"></i>Dados adicionais
+                </button>
+                <button type="button" @click="aba = 'transporte'" :class="aba === 'transporte' ? 'border-indigo-600 text-indigo-700' : 'border-transparent text-gray-500 hover:text-gray-700'" class="px-6 py-4 text-sm font-medium border-b-2">
+                    <i class="fas fa-bus mr-2"></i>Transporte
+                </button>
+            </nav>
+        </div>
+
+        <!-- Identificação -->
+        <form x-show="aba === 'identificacao'" method="post" enctype="multipart/form-data" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="aba_ativa" value="identificacao">
+            <div class="card-body">{% include 'partials/form_fields.html' with form=aluno_form %}</div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-xl">
+                <a href="{{ detalhe_url }}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar identificação</button>
+            </div>
+        </form>
+
+        <!-- Documentação -->
+        <form x-show="aba === 'documentacao'" x-cloak method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="aba_ativa" value="documentacao">
+            <div class="card-body">{% include 'partials/form_fields.html' with form=doc_form %}</div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-xl">
+                <a href="{{ detalhe_url }}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar documentação</button>
+            </div>
+        </form>
+
+        <!-- Responsáveis -->
+        <div x-show="aba === 'responsaveis'" x-cloak>
+            <div class="card-body space-y-6">
+                {% if responsaveis %}
+                <div class="table-responsive border border-gray-100 rounded-lg">
+                    <table class="table">
+                        <thead><tr><th>Nome</th><th>Parentesco</th><th>Telefone</th><th>E-mail</th><th></th></tr></thead>
+                        <tbody class="divide-y divide-gray-100">
+                            {% for r in responsaveis %}
+                            <tr>
+                                <td class="font-medium">{{ r.nome }}</td>
+                                <td>{{ r.parentesco }}</td>
+                                <td>{{ r.telefone|default:"—" }}</td>
+                                <td>{{ r.email|default:"—" }}</td>
+                                <td class="text-right">
+                                    <form method="post" onsubmit="return confirm('Remover este responsável?');">
+                                        {% csrf_token %}
+                                        <input type="hidden" name="aba_ativa" value="responsaveis">
+                                        <input type="hidden" name="remover_responsavel" value="{{ r.pk }}">
+                                        <button type="submit" class="text-red-600 hover:text-red-800" title="Remover"><i class="fas fa-trash-alt"></i></button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-sm text-gray-500"><i class="fas fa-info-circle mr-1"></i>Nenhum responsável cadastrado.</p>
+                {% endif %}
+
+                <form method="post" class="border border-dashed border-gray-300 rounded-lg p-4" novalidate>
+                    {% csrf_token %}
+                    <input type="hidden" name="aba_ativa" value="responsaveis">
+                    <h3 class="font-semibold text-gray-900 mb-4"><i class="fas fa-user-plus mr-2 text-indigo-600"></i>Adicionar responsável</h3>
+                    {% include 'partials/form_fields.html' with form=resp_form %}
+                    <div class="flex justify-end mt-4">
+                        <button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Adicionar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Dados adicionais (campos personalizados de Utilitários) -->
+        <form x-show="aba === 'dados_adicionais'" x-cloak method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="aba_ativa" value="dados_adicionais">
+            <div class="card-body">
+                {% if adicionais_form.fields %}
+                    {% include 'partials/form_fields.html' with form=adicionais_form %}
+                {% else %}
+                    <p class="text-sm text-gray-500"><i class="fas fa-info-circle mr-1"></i>Nenhum campo adicional cadastrado.
+                    {% if user.is_staff or user.is_superuser %}<a href="{% url 'utilitarios:dados_adicionais' %}" class="text-indigo-600 hover:underline">Cadastrar campos</a>{% endif %}</p>
+                {% endif %}
+            </div>
+            {% if adicionais_form.fields %}
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-xl">
+                <a href="{{ detalhe_url }}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar dados adicionais</button>
+            </div>
+            {% endif %}
+        </form>
+
+        <!-- Transporte -->
+        <form x-show="aba === 'transporte'" x-cloak method="post" novalidate>
+            {% csrf_token %}
+            <input type="hidden" name="aba_ativa" value="transporte">
+            <div class="card-body">{% include 'partials/form_fields.html' with form=trans_form %}</div>
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-3 rounded-b-xl">
+                <a href="{{ detalhe_url }}" class="btn-secondary">Cancelar</a>
+                <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar transporte</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    // Habilita/desabilita os campos de transporte conforme a opção "Utiliza Transporte"
+    function toggleTransportFields(ativo) {
+        ['id_trans-nome_motorista', 'id_trans-placa_veiculo', 'id_trans-rota'].forEach(function (id) {
+            var campo = document.getElementById(id);
+            if (campo) { campo.disabled = !ativo; campo.classList.toggle('opacity-50', !ativo); }
+        });
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+        var check = document.getElementById('id_trans-utiliza_transporte');
+        if (check) toggleTransportFields(check.checked);
+    });
+</script>
+{% endblock %}

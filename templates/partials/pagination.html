@@ -1,0 +1,19 @@
+{% comment %}
+Paginação. Uso: {% include 'partials/pagination.html' with page_obj=page_obj %}
+Mantém os filtros da URL atual (exceto "page").
+{% endcomment %}
+{% if page_obj.has_other_pages %}
+<nav class="flex items-center justify-between px-4 py-3 border-t border-gray-100 text-sm no-print">
+    <p class="text-gray-600">
+        Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }} · {{ page_obj.paginator.count }} registro{{ page_obj.paginator.count|pluralize }}
+    </p>
+    <div class="flex gap-2">
+        {% if page_obj.has_previous %}
+        <a href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="btn-secondary btn-sm"><i class="fas fa-chevron-left"></i> Anterior</a>
+        {% endif %}
+        {% if page_obj.has_next %}
+        <a href="?{% for k, v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="btn-secondary btn-sm">Próxima <i class="fas fa-chevron-right"></i></a>
+        {% endif %}
+    </div>
+</nav>
+{% endif %}

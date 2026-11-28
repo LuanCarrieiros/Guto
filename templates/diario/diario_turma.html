@@ -103,6 +103,9 @@
                     </div>
                     <h3 class="text-xl font-bold text-gray-800">{{ disciplina.nome }}</h3>
                     <p class="text-gray-600 text-sm mt-1">{{ disciplina.codigo }}</p>
+                    <p class="text-sm mt-2 {% if disciplina.professor %}text-indigo-700{% else %}text-amber-600{% endif %}">
+                        👩‍🏫 {{ disciplina.professor.nome|default:"Sem professor associado" }}
+                    </p>
                 </div>
 
                 <!-- Status e Estatísticas -->

@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.validators import RegexValidator
 from alunos.models import Aluno
-from funcionarios.models import Funcionario
 from datetime import date
 
 class Motorista(models.Model):
@@ -153,15 +151,6 @@ class Rota(models.Model):
     
     def __str__(self):
         return f"{self.nome} - {self.get_turno_display()}"
-    
-    @property
-    def tempo_percurso_ida(self):
-        from datetime import datetime, timedelta
-        dt_saida = datetime.combine(date.today(), self.horario_saida_ida)
-        dt_chegada = datetime.combine(date.today(), self.horario_chegada_ida)
-        if dt_chegada < dt_saida:
-            dt_chegada += timedelta(days=1)
-        return dt_chegada - dt_saida
     
     @property
     def total_alunos(self):

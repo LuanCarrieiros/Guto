@@ -14,6 +14,12 @@
                 <i class="fas fa-arrow-left mr-2"></i>
                 Voltar
             </a>
+            <a href="{% url 'funcionarios:funcionario_print' %}?{{ request.GET.urlencode }}" target="_blank" class="bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-50 inline-flex items-center" title="Imprimir lista com os filtros atuais">
+                <i class="fas fa-print mr-2"></i>Lista
+            </a>
+            <a href="{% url 'funcionarios:funcionario_print' %}?tipo=frequencia&{{ request.GET.urlencode }}" target="_blank" class="bg-white border border-gray-300 text-gray-700 px-4 py-3 rounded-lg hover:bg-gray-50 inline-flex items-center" title="Folhas de frequência mensal em branco">
+                <i class="fas fa-calendar-check mr-2"></i>Frequência
+            </a>
             <a href="{% url 'funcionarios:funcionario_create' %}" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200 flex items-center space-x-2">
                 <i class="fas fa-plus"></i>
                 <span>Novo Funcionário</span>
@@ -35,11 +41,7 @@
                 <label for="cargo" class="block text-sm font-medium text-gray-700 mb-1">Função</label>
                 <select id="cargo" name="cargo" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
                     <option value="">Todas</option>
-                    <option value="DOCENTE" {% if request.GET.cargo == 'DOCENTE' %}selected{% endif %}>Docente</option>
-                    <option value="DIRETOR" {% if request.GET.cargo == 'DIRETOR' %}selected{% endif %}>Diretor</option>
-                    <option value="COORDENADOR_PEDAGOGICO" {% if request.GET.cargo == 'COORDENADOR_PEDAGOGICO' %}selected{% endif %}>Coord. Ped.</option>
-                    <option value="SECRETARIO_ESCOLAR" {% if request.GET.cargo == 'SECRETARIO_ESCOLAR' %}selected{% endif %}>Secretário</option>
-                    <option value="AUXILIAR_EDUCACIONAL" {% if request.GET.cargo == 'AUXILIAR_EDUCACIONAL' %}selected{% endif %}>Aux. Educ.</option>
+                    {% for codigo, nome in funcoes %}<option value="{{ codigo }}" {% if request.GET.cargo == codigo %}selected{% endif %}>{{ nome }}</option>{% endfor %}
                 </select>
             </div>
             
@@ -221,10 +223,9 @@
             Associações de Professores
         </h3>
         <p class="text-gray-600 mb-4">Gerencie as associações entre professores e turmas.</p>
-        <p class="text-gray-500 text-sm">
-            <i class="fas fa-clock mr-1"></i>
-            Funcionalidade em desenvolvimento
-        </p>
+        <a href="{% url 'funcionarios:associacao_professor_list' %}" class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+            Abrir associações <i class="fas fa-arrow-right ml-1"></i>
+        </a>
     </div>
     
     <div class="bg-white rounded-lg shadow p-6">
@@ -233,10 +234,9 @@
             Outros Profissionais
         </h3>
         <p class="text-gray-600 mb-4">Gerencie outros profissionais associados às turmas.</p>
-        <p class="text-gray-500 text-sm">
-            <i class="fas fa-clock mr-1"></i>
-            Funcionalidade em desenvolvimento
-        </p>
+        <a href="{% url 'funcionarios:associacao_outros_create' %}" class="text-purple-600 hover:text-purple-800 text-sm font-medium">
+            Associar profissional <i class="fas fa-arrow-right ml-1"></i>
+        </a>
     </div>
 </div>
 {% endblock %}

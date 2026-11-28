@@ -79,8 +79,8 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Ano</label>
                     <select name="ano" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">Todos os anos</option>
-                        {% for y in "2020,2021,2022,2023,2024,2025"|split:"," %}
-                            <option value="{{ y }}" {% if request.GET.ano == y %}selected{% endif %}>{{ y }}</option>
+                        {% for y in anos_disponiveis %}
+                            <option value="{{ y }}" {% if ano == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
                         {% endfor %}
                     </select>
                 </div>
@@ -89,9 +89,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Status</label>
                     <select name="status" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">Todos</option>
-                        <option value="ATIVA" {% if request.GET.status == "ATIVA" %}selected{% endif %}>Ativa</option>
-                        <option value="ENCERRADA" {% if request.GET.status == "ENCERRADA" %}selected{% endif %}>Encerrada</option>
-                        <option value="TRANSFERIDA" {% if request.GET.status == "TRANSFERIDA" %}selected{% endif %}>Transferida</option>
+                        {% for codigo, nome in status_choices %}<option value="{{ codigo }}" {% if request.GET.status == codigo %}selected{% endif %}>{{ nome }}</option>{% endfor %}
                     </select>
                 </div>
                 
@@ -99,9 +97,7 @@
                     <label class="block text-sm font-medium text-gray-700 mb-2">Tipo de Ensino</label>
                     <select name="tipo_ensino" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500 focus:border-transparent">
                         <option value="">Todos</option>
-                        <option value="EF" {% if request.GET.tipo_ensino == "EF" %}selected{% endif %}>Ensino Fundamental</option>
-                        <option value="EM" {% if request.GET.tipo_ensino == "EM" %}selected{% endif %}>Ensino Médio</option>
-                        <option value="EI" {% if request.GET.tipo_ensino == "EI" %}selected{% endif %}>Educação Infantil</option>
+                        {% for codigo, nome in tipo_ensino_choices %}<option value="{{ codigo }}" {% if request.GET.tipo_ensino == codigo %}selected{% endif %}>{{ nome }}</option>{% endfor %}
                     </select>
                 </div>
                 
@@ -159,7 +155,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-600 font-medium">Atualizado em</p>
-                    <h3 class="text-lg font-bold text-gray-900">{{ "now"|date:"d/m/Y" }}</h3>
+                    <h3 class="text-lg font-bold text-gray-900">{% now "d/m/Y" %}</h3>
                 </div>
             </div>
         </div>
@@ -261,7 +257,7 @@
     <div class="print-only hidden mt-8 pt-4 border-t border-gray-200">
         <div class="text-center text-sm text-gray-600">
             <p>{{ title }} - GUTO Sistema de Gestão Educacional</p>
-            <p>Relatório gerado em {{ "now"|date:"d/m/Y H:i" }}</p>
+            <p>Relatório gerado em {% now "d/m/Y H:i" %}</p>
             <p>Total de {{ matriculas.count }} matrícula{{ matriculas.count|pluralize:"s" }}</p>
         </div>
     </div>

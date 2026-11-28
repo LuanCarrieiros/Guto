@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}Buscar Funcionário - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto space-y-6">
+    {% url 'funcionarios:funcionarios_home' as home_url %}
+    {% include 'partials/page_header.html' with title='Buscar Funcionário' subtitle='Verifique se o funcionário já está cadastrado antes de criar um novo registro' icon='fa-search' back_url=home_url %}
+
+    <form method="post" class="card card-body guto-form flex flex-col sm:flex-row gap-3 sm:items-end">
+        {% csrf_token %}
+        <div class="sm:w-40"><label class="form-label" for="{{ form.tipo_busca.id_for_label }}">Buscar por</label>{{ form.tipo_busca }}</div>
+        <div class="flex-1"><label class="form-label" for="{{ form.busca.id_for_label }}">Termo</label>{{ form.busca }}{% for e in form.busca.errors %}<p class="form-error">{{ e }}</p>{% endfor %}</div>
+        <button type="submit" class="btn-primary"><i class="fas fa-search"></i> Buscar</button>
+    </form>
+
+    {% if busca_realizada %}
+    <div class="card">
+        {% if funcionarios_encontrados %}
+        <div class="card-header"><h2 class="card-title">Funcionários encontrados</h2></div>
+        <ul class="divide-y divide-gray-100">
+            {% for f in funcionarios_encontrados %}
+            <li class="px-6 py-3 flex items-center justify-between">
+                <div><p class="font-medium">{{ f.nome }}</p><p class="text-xs text-gray-500">Código {{ f.codigo }} · {{ f.get_tipo_arquivo_display }}</p></div>
+                <a href="{% url 'funcionarios:funcionario_detail' f.pk %}" class="btn-sm btn-secondary">Abrir cadastro</a>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <div class="card-body text-center">
+            <p class="text-gray-600 mb-4">Nenhum funcionário encontrado. Você pode prosseguir com o cadastro.</p>
+            <a href="{% url 'funcionarios:funcionario_create' %}" class="btn-primary"><i class="fas fa-user-plus"></i> Cadastrar funcionário</a>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

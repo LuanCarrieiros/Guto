@@ -17,7 +17,12 @@ urlpatterns = [
     path('modulos/', views.modulo_list, name='modulo_list'),
     path('modulos/novo/', views.modulo_create, name='modulo_create'),
     path('modulos/<int:pk>/', views.modulo_detail, name='modulo_detail'),
+    path('modulos/<int:pk>/editar/', views.modulo_edit, name='modulo_edit'),
     
+    # Avaliações dos módulos
+    path('modulos/<int:modulo_pk>/avaliacoes/nova/', views.avaliacao_create, name='avaliacao_create'),
+    path('avaliacoes/<int:pk>/notas/', views.avaliacao_notas, name='avaliacao_notas'),
+
     # Participantes
     path('programas/<int:programa_pk>/participantes/', views.participante_list, name='participante_list'),
     path('programas/<int:programa_pk>/inscrever/', views.participante_create, name='participante_create'),

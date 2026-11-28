@@ -1,0 +1,72 @@
+{% extends 'base.html' %}
+
+{% block title %}Associação de Profissionais - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'funcionarios:funcionarios_home' as home_url %}
+        {% include 'partials/page_header.html' with title='Associação às Turmas' subtitle='Professores por disciplina e demais profissionais por turma' icon='fa-link' back_url=home_url no_margin=True %}
+        <div class="flex gap-3 shrink-0">
+            <a href="{% url 'funcionarios:associacao_outros_create' %}" class="btn-secondary"><i class="fas fa-user-friends"></i> Outro profissional</a>
+            <a href="{% url 'funcionarios:associacao_professor_create' %}" class="btn-primary"><i class="fas fa-plus"></i> Associar professor</a>
+        </div>
+    </div>
+
+    <form method="get" class="card card-body guto-form flex flex-wrap gap-3 items-end">
+        <div><label class="form-label">Turma</label><select name="turma" class="!w-80"><option value="">Todas</option>{% for t in turmas %}<option value="{{ t.pk }}" {% if filtros.turma == t.pk|stringformat:"s" %}selected{% endif %}>{{ t }}</option>{% endfor %}</select></div>
+        <div><label class="form-label">Tipo</label><select name="tipo_associacao" class="!w-64"><option value="">Todos</option>{% for c, n in tipos %}<option value="{{ c }}" {% if filtros.tipo_associacao == c %}selected{% endif %}>{{ n }}</option>{% endfor %}</select></div>
+        <div><label class="form-label">Período</label><select name="vigentes" class="!w-44"><option value="1" {% if filtros.vigentes == '1' %}selected{% endif %}>Somente vigentes</option><option value="0" {% if filtros.vigentes == '0' %}selected{% endif %}>Incluir histórico</option></select></div>
+        <button type="submit" class="btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+    </form>
+
+    <div class="card">
+        <div class="card-header"><h2 class="card-title">Professores ({{ associacoes|length }})</h2></div>
+        {% if associacoes %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Turma</th><th>Disciplina</th><th>Professor</th><th>Período</th><th>Situação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for a in associacoes %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'turma:turma_detail' a.turma.pk %}" class="hover:text-indigo-600">{{ a.turma.nome }}</a><p class="text-xs text-gray-500">{{ a.turma.get_ano_serie_display }} · {{ a.turma.get_turno_display }} · {{ a.turma.periodo_letivo }}</p></td>
+                        <td>{% if a.disciplina %}{{ a.disciplina.nome }}{% else %}<span class="badge badge-purple">Regente (todas)</span>{% endif %}</td>
+                        <td>{% if a.funcionario %}<a href="{% url 'funcionarios:funcionario_detail' a.funcionario.pk %}" class="hover:text-indigo-600">{{ a.funcionario.nome }}</a>{% else %}<span class="badge badge-yellow">Sem docente</span>{% endif %}</td>
+                        <td>{{ a.data_inicio|date:"d/m/Y" }} – {{ a.data_termino|date:"d/m/Y"|default:"atual" }}</td>
+                        <td>{% if a.vigente %}<span class="badge badge-green">Vigente</span>{% else %}<span class="badge badge-gray">Encerrada</span>{% endif %}</td>
+                        <td class="text-right"><a href="{% url 'funcionarios:associacao_professor_edit' a.pk %}" class="text-gray-500 hover:text-indigo-600" title="Editar / registrar substituição"><i class="fas fa-edit"></i></a></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% url 'funcionarios:associacao_professor_create' as novo_url %}
+            {% include 'partials/empty_state.html' with icon='fa-chalkboard-teacher' message='Nenhum professor associado.' action_url=novo_url action_label='Associar professor' %}
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-header"><h2 class="card-title">Outros profissionais ({{ outros|length }})</h2></div>
+        {% if outros %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Turma</th><th>Profissional</th><th>Função</th><th>Período</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for o in outros %}
+                    <tr>
+                        <td class="font-medium">{{ o.turma.nome }} <span class="text-xs text-gray-500">({{ o.turma.periodo_letivo }})</span></td>
+                        <td><a href="{% url 'funcionarios:funcionario_detail' o.funcionario.pk %}" class="hover:text-indigo-600">{{ o.funcionario.nome }}</a></td>
+                        <td>{{ o.get_tipo_profissional_display }}</td>
+                        <td>{{ o.data_inicio|date:"d/m/Y" }} – {{ o.data_termino|date:"d/m/Y"|default:"atual" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="px-6 py-4 text-sm text-gray-500">Nenhum auxiliar, monitor ou intérprete associado.</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

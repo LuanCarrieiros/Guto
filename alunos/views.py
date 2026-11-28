@@ -1,11 +1,12 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.db.models import Q, Count
-from django.http import JsonResponse
 from django.core.paginator import Paginator
+from django.db.models import Count
 from dashboard.models import AtividadeRecente
 from .models import Aluno, DocumentacaoAluno, Responsavel, TransporteAluno, Matricula
+from utilitarios.forms import DadosAdicionaisAlunoForm
 from .forms import AlunoForm, DocumentacaoAlunoForm, ResponsavelForm, TransporteAlunoForm, MatriculaForm
 
 @login_required
@@ -22,13 +23,16 @@ def alunos_home(request):
     # Últimos 5 alunos cadastrados
     alunos_recentes = Aluno.objects.all().order_by('-codigo')[:5]
 
-    # Distribuição por série (usando dados reais ou simulados)
-    # Você pode ajustar isso baseado na estrutura real do modelo Aluno
+    # Distribuição das matrículas ativas por ano/série
     alunos_por_serie = []
-    if total_alunos > 0:
-        # Exemplo: contar por ano/série se existir esse campo
-        # Ajuste conforme a estrutura real do modelo
-        pass
+    por_serie = Matricula.objects.filter(status='ATIVA').values('serie_ano').annotate(total=Count('id')).order_by('serie_ano')
+    total_ativas = sum(item['total'] for item in por_serie)
+    for item in por_serie:
+        alunos_por_serie.append({
+            'nome': item['serie_ano'],
+            'total': item['total'],
+            'percentual': item['total'] * 100 / total_ativas if total_ativas else 0,
+        })
 
     context = {
         'total_alunos': total_alunos,
@@ -115,7 +119,7 @@ def aluno_create(request):
                 modulo='ALUNOS',
                 objeto_nome=aluno.nome,
                 objeto_id=aluno.codigo,
-                descricao=f'Novo aluno cadastrado no sistema'
+                descricao='Novo aluno cadastrado no sistema'
             )
             
             messages.success(request, 'Inclusão do Aluno realizada com sucesso.')
@@ -150,7 +154,7 @@ def aluno_edit(request, pk):
                 modulo='ALUNOS',
                 objeto_nome=aluno.nome,
                 objeto_id=aluno.codigo,
-                descricao=f'Dados básicos do aluno atualizados'
+                descricao='Dados básicos do aluno atualizados'
             )
             
             messages.success(request, 'Alteração do Aluno realizada com sucesso')
@@ -179,7 +183,7 @@ def aluno_detail(request, pk):
         modulo='ALUNOS',
         objeto_nome=aluno.nome,
         objeto_id=aluno.codigo,
-        descricao=f'Visualizou detalhes do aluno'
+        descricao='Visualizou detalhes do aluno'
     )
     
     context = {
@@ -188,57 +192,101 @@ def aluno_detail(request, pk):
         'responsaveis': aluno.responsaveis.all(),
         'transporte': getattr(aluno, 'transporte', None),
         'matriculas': aluno.matriculas.all().order_by('-ano_administrativo'),
+        'enturmacoes': aluno.enturmacoes.select_related('turma').order_by('-ativo', '-data_enturmacao'),
+        'dados_adicionais': aluno.dados_adicionais.filter(dado_adicional__ativo=True).select_related(
+            'dado_adicional').order_by('dado_adicional__ordem', 'dado_adicional__rotulo'),
     }
-    
+
     return render(request, 'alunos/aluno_detail.html', context)
 
 @login_required
 def aluno_edit_extended(request, pk):
     """
-    Cadastro estendido do aluno com abas (RF105)
+    Cadastro estendido do aluno com abas (RF105):
+    identificação, documentação, responsáveis e transporte.
     """
     aluno = get_object_or_404(Aluno, pk=pk)
-    
+
     # Criar instâncias relacionadas se não existirem
-    documentacao, created = DocumentacaoAluno.objects.get_or_create(aluno=aluno)
-    transporte, created = TransporteAluno.objects.get_or_create(aluno=aluno)
-    
-    if request.method == 'POST':
-        aba_ativa = request.POST.get('aba_ativa', 'identificacao')
-        
-        if aba_ativa == 'identificacao':
-            aluno_form = AlunoForm(request.POST, request.FILES, instance=aluno, prefix='aluno')
-            if aluno_form.is_valid():
-                aluno_form.save()
-                messages.success(request, 'Dados de identificação atualizados com sucesso')
-        
-        elif aba_ativa == 'documentacao':
-            doc_form = DocumentacaoAlunoForm(request.POST, instance=documentacao, prefix='doc')
-            if doc_form.is_valid():
-                doc_form.save()
-                messages.success(request, 'Documentação atualizada com sucesso')
-        
-        elif aba_ativa == 'transporte':
-            trans_form = TransporteAlunoForm(request.POST, instance=transporte, prefix='trans')
-            if trans_form.is_valid():
-                trans_form.save()
-                messages.success(request, 'Dados de transporte atualizados com sucesso')
-        
-        return redirect('alunos:aluno_edit_extended', pk=aluno.pk)
-    
-    # Forms para cada aba
+    documentacao, _ = DocumentacaoAluno.objects.get_or_create(aluno=aluno)
+    transporte, _ = TransporteAluno.objects.get_or_create(aluno=aluno)
+
+    abas_validas = ('identificacao', 'documentacao', 'responsaveis', 'transporte', 'dados_adicionais')
+    aba_ativa = request.GET.get('aba', 'identificacao')
+
     aluno_form = AlunoForm(instance=aluno, prefix='aluno')
     doc_form = DocumentacaoAlunoForm(instance=documentacao, prefix='doc')
     trans_form = TransporteAlunoForm(instance=transporte, prefix='trans')
-    
+    resp_form = ResponsavelForm(prefix='resp')
+    adicionais_form = DadosAdicionaisAlunoForm(aluno=aluno, prefix='adic')
+
+    if request.method == 'POST':
+        aba_ativa = request.POST.get('aba_ativa', 'identificacao')
+        form_salvo = None
+
+        if aba_ativa == 'identificacao':
+            aluno_form = AlunoForm(request.POST, request.FILES, instance=aluno, prefix='aluno')
+            if aluno_form.is_valid():
+                form_salvo = aluno_form.save()
+                mensagem = 'Dados de identificação atualizados com sucesso.'
+        elif aba_ativa == 'documentacao':
+            doc_form = DocumentacaoAlunoForm(request.POST, instance=documentacao, prefix='doc')
+            if doc_form.is_valid():
+                form_salvo = doc_form.save()
+                mensagem = 'Documentação atualizada com sucesso.'
+        elif aba_ativa == 'transporte':
+            trans_form = TransporteAlunoForm(request.POST, instance=transporte, prefix='trans')
+            if trans_form.is_valid():
+                form_salvo = trans_form.save()
+                mensagem = 'Dados de transporte atualizados com sucesso.'
+        elif aba_ativa == 'dados_adicionais':
+            adicionais_form = DadosAdicionaisAlunoForm(request.POST, aluno=aluno, prefix='adic')
+            if adicionais_form.is_valid():
+                adicionais_form.save(request.user)
+                form_salvo = True
+                mensagem = 'Dados adicionais atualizados com sucesso.'
+        elif aba_ativa == 'responsaveis':
+            remover_id = request.POST.get('remover_responsavel')
+            if remover_id:
+                Responsavel.objects.filter(pk=remover_id, aluno=aluno).delete()
+                form_salvo = True
+                mensagem = 'Responsável removido.'
+            else:
+                resp_form = ResponsavelForm(request.POST, prefix='resp')
+                if resp_form.is_valid():
+                    responsavel = resp_form.save(commit=False)
+                    responsavel.aluno = aluno
+                    responsavel.save()
+                    form_salvo = True
+                    mensagem = 'Responsável adicionado com sucesso.'
+
+        if form_salvo:
+            AtividadeRecente.registrar_atividade(
+                usuario=request.user,
+                acao='EDITAR',
+                modulo='ALUNOS',
+                objeto_nome=aluno.nome,
+                objeto_id=aluno.codigo,
+                descricao='Cadastro completo do aluno atualizado'
+            )
+            messages.success(request, mensagem)
+            return redirect(f"{reverse('alunos:aluno_edit_extended', args=[aluno.pk])}?aba={aba_ativa}")
+        messages.error(request, 'Corrija os erros destacados no formulário.')
+
+    if aba_ativa not in abas_validas:
+        aba_ativa = 'identificacao'
+
     context = {
         'aluno': aluno,
         'aluno_form': aluno_form,
         'doc_form': doc_form,
         'trans_form': trans_form,
+        'resp_form': resp_form,
+        'adicionais_form': adicionais_form,
         'responsaveis': aluno.responsaveis.all(),
+        'aba_ativa': aba_ativa,
     }
-    
+
     return render(request, 'alunos/aluno_extended.html', context)
 
 @login_required
@@ -265,7 +313,7 @@ def aluno_delete(request, pk):
                 modulo='ALUNOS',
                 objeto_nome=nome_aluno,
                 objeto_id=codigo_aluno,
-                descricao=f'Aluno removido do sistema'
+                descricao='Aluno removido do sistema'
             )
             
             aluno.delete()

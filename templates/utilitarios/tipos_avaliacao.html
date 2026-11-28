@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Tipos de Avaliação - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    {% include 'partials/page_header.html' with title='Tipos de Avaliação' subtitle='Tipos usados ao criar avaliações no diário eletrônico' icon='fa-clipboard-list' %}
+    {% include 'utilitarios/_nav.html' %}
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card">
+            <div class="card-header"><h2 class="card-title">Tipos cadastrados</h2></div>
+            {% if tipos %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Tipo</th><th>Peso padrão</th><th>Avaliações</th><th>Situação</th><th></th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for t in tipos %}
+                        <tr {% if editando.pk == t.pk %}class="bg-indigo-50"{% endif %}>
+                            <td><span class="inline-block w-3 h-3 rounded-full mr-2 align-middle" style="background-color: {{ t.cor_display }}"></span><span class="font-medium">{{ t.nome }}</span><p class="text-xs text-gray-500 whitespace-normal">{{ t.descricao|default:"" }}</p></td>
+                            <td>{{ t.peso_default }}</td>
+                            <td>{{ t.total_avaliacoes }}</td>
+                            <td>{% if t.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</td>
+                            <td class="text-right"><a href="?editar={{ t.pk }}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-edit"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                {% include 'partials/empty_state.html' with icon='fa-clipboard-list' message='Nenhum tipo de avaliação cadastrado.' %}
+            {% endif %}
+        </div>
+        <form method="post" class="card self-start" novalidate>
+            {% csrf_token %}
+            <div class="card-header">
+                <h2 class="card-title">{% if editando %}Editar tipo{% else %}Novo tipo{% endif %}</h2>
+                {% if editando %}<a href="{% url 'utilitarios:tipos_avaliacao' %}" class="text-sm text-gray-500 hover:underline">Cancelar</a>{% endif %}
+            </div>
+            <div class="card-body">{% include 'partials/form_fields.html' with form=form %}</div>
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end"><button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

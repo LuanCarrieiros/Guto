@@ -1,0 +1,6 @@
+<div class="flex flex-wrap gap-3">
+    {% for codigo, nome, cor in tipos_evento %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium {{ cor }}">{{ nome }}</span>
+    {% endfor %}
+    <span class="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ring-2 ring-indigo-500 text-indigo-700">Hoje</span>
+</div>

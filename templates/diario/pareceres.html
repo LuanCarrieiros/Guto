@@ -1,0 +1,39 @@
+{% extends 'base.html' %}
+
+{% block title %}Pareceres - {{ disciplina.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    {% url 'diario:divisao' turma.pk disciplina.pk divisao.pk as voltar_url %}
+    {% include 'partials/page_header.html' with title='Parecer Descritivo' subtitle=turma.nome|add:" · "|add:disciplina.nome|add:" · "|add:divisao.nome icon='fa-pen-nib' back_url=voltar_url %}
+
+    {% if diario_eletronico.diario_fechado %}
+    <div class="mb-4 p-4 rounded-lg bg-red-50 text-red-800 text-sm"><i class="fas fa-lock mr-2"></i>O diário está fechado: os pareceres podem ser consultados, mas não alterados.</div>
+    {% endif %}
+
+    <form method="post" class="card">
+        {% csrf_token %}
+        <div class="card-header">
+            <p class="text-sm text-gray-600">Descreva o desenvolvimento de cada aluno no período. Os pareceres aparecem no boletim. Deixe em branco para não registrar.</p>
+        </div>
+        {% if linhas %}
+        <ul class="divide-y divide-gray-100 guto-form">
+            {% for l in linhas %}
+            <li class="px-6 py-4">
+                <label for="parecer_{{ l.aluno.pk }}" class="form-label">{{ forloop.counter }}. {{ l.aluno.nome }}</label>
+                <textarea id="parecer_{{ l.aluno.pk }}" name="parecer_{{ l.aluno.pk }}" rows="3" {% if diario_eletronico.diario_fechado %}disabled{% endif %}>{{ l.texto }}</textarea>
+            </li>
+            {% endfor %}
+        </ul>
+        {% if not diario_eletronico.diario_fechado %}
+        <div class="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl flex justify-end gap-3">
+            <a href="{{ voltar_url }}" class="btn-secondary">Cancelar</a>
+            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar pareceres</button>
+        </div>
+        {% endif %}
+        {% else %}
+            {% include 'partials/empty_state.html' with icon='fa-users' message='Nenhum aluno enturmado nesta turma.' %}
+        {% endif %}
+    </form>
+</div>
+{% endblock %}

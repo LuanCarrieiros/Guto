@@ -1,7 +1,7 @@
 from django.test import TestCase, Client
 from django.contrib.auth.models import User
-from datetime import date, timedelta
-from alunos.models import Aluno, Matricula, DocumentacaoAluno, Responsavel, TransporteAluno
+from datetime import date
+from alunos.models import Aluno, Matricula, DocumentacaoAluno
 
 
 class AlunoModelTest(TestCase):
@@ -259,7 +259,7 @@ class AlunoViewsTest(TestCase):
             'sexo': 'F',
         }
 
-        response = self.client.post(
+        self.client.post(
             f'/alunos/{self.aluno.codigo}/editar/',
             data
         )
@@ -276,3 +276,24 @@ class AlunoViewsTest(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, 'Maria Fernanda')
+
+
+class DadosAdicionaisAlunoTest(TestCase):
+    def test_preencher_campos_adicionais(self):
+        from guto_system.testing import criar_admin, criar_aluno
+        from utilitarios.models import DadoAdicional, ValorDadoAdicional
+        admin = criar_admin()
+        self.client.force_login(admin)
+        aluno = criar_aluno(admin)
+        alergia = DadoAdicional.objects.create(rotulo='Alergia', tipo_campo='TEXTO', obrigatorio=True, usuario_criacao=admin)
+        bolsa = DadoAdicional.objects.create(rotulo='Bolsa Família', tipo_campo='CHECKBOX', usuario_criacao=admin)
+        url = f'/alunos/{aluno.pk}/editar-completo/'
+
+        resposta = self.client.post(url, {'aba_ativa': 'dados_adicionais'})
+        self.assertEqual(resposta.status_code, 200, 'Campo obrigatório vazio deve ser recusado')
+
+        self.client.post(url, {'aba_ativa': 'dados_adicionais', f'adic-campo_{alergia.pk}': 'Amendoim',
+                               f'adic-campo_{bolsa.pk}': 'on'})
+        valores = dict(ValorDadoAdicional.objects.values_list('dado_adicional__rotulo', 'valor'))
+        self.assertEqual(valores, {'Alergia': 'Amendoim', 'Bolsa Família': 'Sim'})
+        self.assertContains(self.client.get(f'/alunos/{aluno.pk}/'), 'Amendoim')

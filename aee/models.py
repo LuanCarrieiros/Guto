@@ -1,7 +1,7 @@
 from django.db import models
+from guto_system.utils import ano_atual
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator, MaxValueValidator
-from datetime import date
 from alunos.models import Aluno
 
 class ProjetoPedagogico(models.Model):
@@ -13,7 +13,7 @@ class ProjetoPedagogico(models.Model):
     
     nome = models.CharField(max_length=255, verbose_name="Nome do Projeto")
     tipo_projeto = models.CharField(max_length=10, choices=TIPO_PROJETO_CHOICES, verbose_name="Tipo de Projeto")
-    periodo_letivo = models.CharField(max_length=4, default=str(date.today().year), verbose_name="Período Letivo")
+    periodo_letivo = models.CharField(max_length=4, default=ano_atual, verbose_name="Período Letivo")
     descricao = models.TextField(blank=True, null=True, verbose_name="Descrição")
     carga_horaria = models.IntegerField(default=20, verbose_name="Carga Horária Semanal")
     ativo = models.BooleanField(default=True, verbose_name="Projeto Ativo")
@@ -63,7 +63,7 @@ class TurmaAEE(models.Model):
     
     # Campos obrigatórios (RF806.1)
     nome = models.CharField(max_length=255, verbose_name="Nome da Turma")
-    periodo_letivo = models.CharField(max_length=4, default=str(date.today().year), verbose_name="Período Letivo")
+    periodo_letivo = models.CharField(max_length=4, default=ano_atual, verbose_name="Período Letivo")
     turno = models.CharField(max_length=15, choices=TURNO_CHOICES, verbose_name="Turno")
     projeto_pedagogico = models.ForeignKey(ProjetoPedagogico, on_delete=models.PROTECT, verbose_name="Projeto Pedagógico")
     
@@ -160,7 +160,12 @@ class EnturmacaoAEE(models.Model):
         verbose_name = "Enturmação AEE/AC"
         verbose_name_plural = "Enturmações AEE/AC"
         ordering = ['turma', 'aluno__nome']
-        unique_together = ['turma', 'aluno', 'ativo']  # Um aluno só pode estar ativo em uma turma por vez
+        constraints = [
+            # Um aluno não pode estar ativo duas vezes na mesma turma; saídas ficam no histórico
+            models.UniqueConstraint(
+                fields=['turma', 'aluno'], condition=models.Q(ativo=True), name='enturmacao_aee_unica_ativa',
+            ),
+        ]
     
     def __str__(self):
         return f"{self.aluno.nome} - {self.turma.nome}"
@@ -189,20 +194,3 @@ class HistoricoEnturmacao(models.Model):
         if self.aluno:
             return f"{self.get_acao_display()} - {self.aluno.nome} em {self.turma.nome}"
         return f"{self.get_acao_display()} - {self.turma.nome}"
-
-class AssociacaoEscola(models.Model):
-    """Model para associar alunos de outras escolas à escola atual (RF1005)"""
-    aluno = models.ForeignKey(Aluno, on_delete=models.CASCADE, verbose_name="Aluno")
-    escola_atual = models.CharField(max_length=255, verbose_name="Escola Atual")
-    escola_origem = models.CharField(max_length=255, verbose_name="Escola de Origem")
-    data_associacao = models.DateTimeField(auto_now_add=True, verbose_name="Data da Associação")
-    usuario_associacao = models.ForeignKey(User, on_delete=models.PROTECT, verbose_name="Usuário que Associou")
-    ativo = models.BooleanField(default=True, verbose_name="Associação Ativa")
-    
-    class Meta:
-        verbose_name = "Associação de Escola"
-        verbose_name_plural = "Associações de Escolas"
-        unique_together = ['aluno', 'escola_atual']
-    
-    def __str__(self):
-        return f"{self.aluno.nome} - {self.escola_origem} → {self.escola_atual}"

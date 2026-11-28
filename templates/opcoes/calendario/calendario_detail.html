@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div class="flex items-center gap-4">
+            <a href="{% url 'opcoes:calendario_escolar' %}?ano={{ calendario.periodo_letivo }}" class="p-2 rounded-lg text-gray-500 hover:text-indigo-600 hover:bg-indigo-50" title="Voltar"><i class="fas fa-arrow-left"></i></a>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Calendário {{ calendario.periodo_letivo }}</h1>
+                <p class="text-gray-600">{{ calendario.get_tipo_ensino_display }} · {{ calendario.get_serie_display }} · {{ calendario.get_turno_display }}</p>
+            </div>
+        </div>
+        <div class="flex gap-3">
+            <a href="{% url 'opcoes:calendario_editar' calendario.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            <a href="{% url 'opcoes:evento_criar' calendario.pk %}" class="btn-primary"><i class="fas fa-plus"></i> Novo evento</a>
+        </div>
+    </div>
+
+    <div class="card card-body">
+        <div class="detail-grid">
+            <div><p class="detail-label">Início do ano letivo</p><p class="detail-value">{{ calendario.data_inicio_letivo|date:"d/m/Y" }}</p></div>
+            <div><p class="detail-label">Fim do ano letivo</p><p class="detail-value">{{ calendario.data_fim_letivo|date:"d/m/Y" }}</p></div>
+            <div><p class="detail-label">Situação</p><p class="detail-value">{% if calendario.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</p></div>
+            <div><p class="detail-label">Dias letivos</p><p class="detail-value">{{ calendario.dias_letivos }}</p></div>
+            <div><p class="detail-label">Dias escolares</p><p class="detail-value">{{ calendario.dias_escolares }}</p></div>
+            <div><p class="detail-label">Criado por</p><p class="detail-value">{{ calendario.usuario_criacao.get_full_name|default:calendario.usuario_criacao.username }} em {{ calendario.data_criacao|date:"d/m/Y" }}</p></div>
+        </div>
+        {% if calendario.observacoes %}
+        <div class="mt-4"><p class="detail-label">Observações</p><p class="detail-value whitespace-pre-line">{{ calendario.observacoes }}</p></div>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <div class="card-header">
+            <h2 class="card-title">Eventos ({{ eventos|length }})</h2>
+        </div>
+        {% if eventos %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Data</th><th>Evento</th><th>Tipo</th><th>Dia letivo</th><th>Descrição</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for evento in eventos %}
+                    <tr>
+                        <td>{{ evento.data_evento|date:"d/m/Y (D)" }}</td>
+                        <td class="font-medium">{{ evento.nome_evento }}</td>
+                        <td><span class="badge badge-blue">{{ evento.get_tipo_evento_display }}</span></td>
+                        <td>{% if evento.dia_letivo %}<i class="fas fa-check text-green-600"></i>{% else %}<i class="fas fa-times text-gray-400"></i>{% endif %}</td>
+                        <td class="whitespace-normal text-gray-600">{{ evento.descricao|default:"—" }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% url 'opcoes:evento_criar' calendario.pk as novo_evento_url %}
+            {% include 'partials/empty_state.html' with icon='fa-calendar-day' message='Nenhum evento cadastrado neste calendário.' action_url=novo_evento_url action_label='Cadastrar evento' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

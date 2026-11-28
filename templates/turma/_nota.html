@@ -1,0 +1,1 @@
+{% if n is None %}<span class="text-gray-300">—</span>{% elif n >= criterios.media %}<span class="font-semibold text-green-700">{{ n|floatformat:1 }}</span>{% else %}<span class="font-semibold text-red-600">{{ n|floatformat:1 }}</span>{% endif %}

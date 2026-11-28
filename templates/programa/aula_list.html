@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+
+{% block title %}Aulas - Programas - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        {% include 'partials/page_header.html' with title='Aulas' subtitle='Aulas de todos os programas' icon='fa-chalkboard' no_margin=True %}
+        <a href="{% url 'programa:aula_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Nova aula</a>
+    </div>
+    {% include 'programa/_nav.html' %}
+    <div class="card">
+        <form method="get" class="card-header guto-form">
+            <div class="flex flex-wrap gap-3 flex-1">
+                <select name="programa" class="!w-72"><option value="">Todos os programas</option>{% for p in programas %}<option value="{{ p.pk }}" {% if programa_id == p.pk|stringformat:"s" %}selected{% endif %}>{{ p.nome }}</option>{% endfor %}</select>
+                <select name="status" class="!w-44"><option value="">Todas as situações</option>{% for c, n in status_choices %}<option value="{{ c }}" {% if c == status %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+                <button type="submit" class="btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+            </div>
+        </form>
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Data</th><th>Aula</th><th>Programa / módulo</th><th>Horário</th><th>Presença</th><th>Situação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for a in page_obj %}
+                    <tr>
+                        <td>{{ a.data_planejada|date:"d/m/Y" }}</td>
+                        <td class="font-medium">{{ a.numero_aula }}. {{ a.titulo }}</td>
+                        <td>{{ a.modulo.programa.nome }}<p class="text-xs text-gray-500"><a href="{% url 'programa:modulo_detail' a.modulo.pk %}" class="hover:text-indigo-600">{{ a.modulo.nome }}</a></p></td>
+                        <td>{{ a.horario_inicio|time:"H:i" }}–{{ a.horario_fim|time:"H:i" }}</td>
+                        <td>{% if a.total_alunos %}{{ a.presentes }}/{{ a.total_alunos }}{% else %}—{% endif %}</td>
+                        <td><span class="badge {% if a.status == 'REALIZADA' %}badge-green{% elif a.status == 'PLANEJADA' %}badge-blue{% elif a.status == 'ADIADA' %}badge-yellow{% else %}badge-gray{% endif %}">{{ a.get_status_display }}</span></td>
+                        <td class="text-right">{% if a.status != 'CANCELADA' %}<a href="{% url 'programa:frequencia_aula' a.pk %}" class="text-indigo-600 hover:text-indigo-800" title="Frequência"><i class="fas fa-user-check"></i></a>{% endif %}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+        {% else %}
+            {% include 'partials/empty_state.html' with icon='fa-chalkboard' message='Nenhuma aula encontrada.' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

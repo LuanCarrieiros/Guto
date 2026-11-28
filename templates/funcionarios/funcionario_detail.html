@@ -35,11 +35,14 @@
         </div>
         
         <div class="flex space-x-3">
-            <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+            <a href="{% url 'funcionarios:funcionario_list' %}" class="btn-voltar bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
                     <i class="fas fa-arrow-left mr-2"></i>Voltar
                 </a>
             <a href="{% url 'funcionarios:funcionario_edit' funcionario.pk %}" class="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors">
                 <i class="fas fa-edit mr-2"></i>Editar
+            </a>
+            <a href="{% url 'funcionarios:funcionario_move_to_permanent' funcionario.pk %}" class="bg-yellow-500 text-white px-4 py-2 rounded-lg hover:bg-yellow-600 transition-colors">
+                <i class="fas fa-archive mr-2"></i>{% if funcionario.tipo_arquivo == 'PERMANENTE' %}Reativar{% else %}Arquivo permanente{% endif %}
             </a>
             <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.pk %}" class="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 transition-colors">
                 <i class="fas fa-cogs mr-2"></i>Edição Completa
@@ -254,9 +257,9 @@
                 <div class="text-center py-8">
                     <i class="fas fa-file-alt text-4xl text-gray-300 mb-2"></i>
                     <p class="text-gray-500">Nenhum documento cadastrado</p>
-                    <span class="text-gray-500 mt-2 inline-block">
-                        <i class="fas fa-clock mr-1"></i>Funcionalidade em desenvolvimento
-                    </span>
+                    <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.pk %}?aba=documentacao" class="text-purple-600 hover:underline mt-2 inline-block text-sm">
+                        <i class="fas fa-edit mr-1"></i>Editar documentação
+                    </a>
                 </div>
                 {% endif %}
             </div>
@@ -267,41 +270,41 @@
     <div class="mt-8 border-t border-gray-200 pt-6">
         <h3 class="text-lg font-semibold text-gray-800 mb-4">Ações Rápidas</h3>
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
-            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
-                <i class="fas fa-file-alt text-2xl text-gray-500 mb-2"></i>
-                <p class="text-sm font-medium text-gray-600">Documentação</p>
-                <p class="text-xs text-gray-500">Em desenvolvimento</p>
-            </div>
+            <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.pk %}?aba=documentacao" class="bg-gray-50 p-4 rounded-lg text-center hover:bg-purple-50 hover:shadow transition">
+                <i class="fas fa-file-alt text-2xl text-purple-600 mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Documentação</p>
+                <p class="text-xs text-gray-500">Editar</p>
+            </a>
             
-            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
-                <i class="fas fa-briefcase text-2xl text-gray-500 mb-2"></i>
-                <p class="text-sm font-medium text-gray-600">Dados Funcionais</p>
-                <p class="text-xs text-gray-500">Em desenvolvimento</p>
-            </div>
+            <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.pk %}?aba=funcionais" class="bg-gray-50 p-4 rounded-lg text-center hover:bg-purple-50 hover:shadow transition">
+                <i class="fas fa-briefcase text-2xl text-purple-600 mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Dados Funcionais</p>
+                <p class="text-xs text-gray-500">Editar</p>
+            </a>
             
-            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
-                <i class="fas fa-certificate text-2xl text-gray-500 mb-2"></i>
-                <p class="text-sm font-medium text-gray-600">Habilitação</p>
-                <p class="text-xs text-gray-500">Em desenvolvimento</p>
-            </div>
+            <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.pk %}?aba=habilitacao" class="bg-gray-50 p-4 rounded-lg text-center hover:bg-purple-50 hover:shadow transition">
+                <i class="fas fa-certificate text-2xl text-purple-600 mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Habilitação</p>
+                <p class="text-xs text-gray-500">Editar</p>
+            </a>
             
-            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
-                <i class="fas fa-graduation-cap text-2xl text-gray-500 mb-2"></i>
-                <p class="text-sm font-medium text-gray-600">Escolaridade</p>
-                <p class="text-xs text-gray-500">Em desenvolvimento</p>
-            </div>
+            <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.pk %}?aba=escolaridade" class="bg-gray-50 p-4 rounded-lg text-center hover:bg-purple-50 hover:shadow transition">
+                <i class="fas fa-graduation-cap text-2xl text-purple-600 mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Escolaridade</p>
+                <p class="text-xs text-gray-500">Editar</p>
+            </a>
             
-            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
-                <i class="fas fa-clock text-2xl text-gray-500 mb-2"></i>
-                <p class="text-sm font-medium text-gray-600">Disponibilidade</p>
-                <p class="text-xs text-gray-500">Em desenvolvimento</p>
-            </div>
+            <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.pk %}?aba=disponibilidade" class="bg-gray-50 p-4 rounded-lg text-center hover:bg-purple-50 hover:shadow transition">
+                <i class="fas fa-clock text-2xl text-purple-600 mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Disponibilidade</p>
+                <p class="text-xs text-gray-500">Editar</p>
+            </a>
             
-            <div class="bg-gray-50 p-4 rounded-lg text-center opacity-60">
-                <i class="fas fa-book text-2xl text-gray-500 mb-2"></i>
-                <p class="text-sm font-medium text-gray-600">Disciplinas</p>
-                <p class="text-xs text-gray-500">Em desenvolvimento</p>
-            </div>
+            <a href="{% url 'funcionarios:funcionario_edit_extended' funcionario.pk %}?aba=disciplinas" class="bg-gray-50 p-4 rounded-lg text-center hover:bg-purple-50 hover:shadow transition">
+                <i class="fas fa-book text-2xl text-purple-600 mb-2"></i>
+                <p class="text-sm font-medium text-gray-700">Disciplinas</p>
+                <p class="text-xs text-gray-500">Editar</p>
+            </a>
         </div>
     </div>
 </div>

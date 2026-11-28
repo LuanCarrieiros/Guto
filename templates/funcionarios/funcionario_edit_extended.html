@@ -22,12 +22,12 @@
         </div>
         
         <div class="flex space-x-3">
-            <a href="#" class="btn-voltar btn-voltar btn-voltar btn-voltar bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
+            <a href="{% url 'funcionarios:funcionario_list' %}" class="btn-voltar bg-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-400 transition-colors" onclick="event.preventDefault(); window.gutoNav?.goBack() || history.back();">
                     <i class="fas fa-arrow-left mr-2"></i>Voltar
                 </a>
-            <button id="save-all" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200">
-                <i class="fas fa-save mr-2"></i>Salvar Tudo
-            </button>
+            <a href="{% url 'funcionarios:funcionario_detail' funcionario.pk %}" class="bg-gradient-to-r from-purple-600 to-pink-600 text-white px-6 py-3 rounded-lg hover:from-purple-700 hover:to-pink-700 transition-all duration-200">
+                <i class="fas fa-check mr-2"></i>Concluir
+            </a>
         </div>
     </div>
 
@@ -57,7 +57,7 @@
     </div>
 
     <!-- Tab Navigation -->
-    <div x-data="{ activeTab: 'pessoais', autoSave: true, savedTabs: [] }" class="space-y-6">
+    <div x-data="{ activeTab: '{{ aba_inicial }}', autoSave: true, savedTabs: [] }" class="space-y-6">
         <!-- Navigation -->
         <div class="border-b border-gray-200">
             <nav class="-mb-px flex space-x-8 overflow-x-auto">
@@ -93,6 +93,20 @@
                     <span class="ml-2 w-2 h-2 rounded-full bg-green-500" x-show="savedTabs.includes('habilitacao')"></span>
                 </button>
                 
+                <button @click="activeTab = 'formacao'"
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'formacao', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'formacao' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-university mr-2"></i>
+                    Formação Superior
+                </button>
+
+                <button @click="activeTab = 'vinculos'"
+                        :class="{ 'border-purple-500 text-purple-600': activeTab === 'vinculos', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'vinculos' }"
+                        class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
+                    <i class="fas fa-id-badge mr-2"></i>
+                    Duplo Vínculo
+                </button>
+
                 <button @click="activeTab = 'escolaridade'" 
                         :class="{ 'border-purple-500 text-purple-600': activeTab === 'escolaridade', 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300': activeTab !== 'escolaridade' }"
                         class="whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center">
@@ -250,12 +264,14 @@
                                             <p class="text-xs text-gray-500 mt-1">{{ habilitacao.instituicao }} • {{ habilitacao.ano_conclusao }}</p>
                                         </div>
                                         <div class="flex space-x-2">
-                                            <button class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50" title="Editar">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover">
+                                            <form method="post" onsubmit="return confirm('Remover este registro?')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="aba_ativa" value="habilitacao">
+                                            <input type="hidden" name="remover_id" value="{{ habilitacao.pk }}">
+                                            <button type="submit" class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover">
                                                 <i class="fas fa-trash"></i>
                                             </button>
+                                        </form>
                                         </div>
                                     </div>
                                 </div>
@@ -269,11 +285,72 @@
                         </div>
                     {% endif %}
 
-                    <div class="flex justify-end mt-6">
-                        <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                            <i class="fas fa-plus mr-2"></i>Adicionar Habilitação
-                        </button>
+                    <form method="post" class="mt-6 bg-white border border-dashed border-gray-300 rounded-lg p-4" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="aba_ativa" value="habilitacao">
+                        {% include 'partials/form_fields.html' with form=habilitacao_form %}
+                        <div class="flex justify-end mt-4">
+                            <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Adicionar Habilitação
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Formação Superior Tab -->
+            <div x-show="activeTab === 'formacao'" class="space-y-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Formação Superior</h3>
+                    {% for item in formacoes_superiores %}
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 flex items-start justify-between mb-3">
+                        <div><h4 class="font-medium text-gray-900">{{ item.curso }}</h4><p class="text-sm text-gray-600">{{ item.instituicao }} · {{ item.ano_conclusao }} · {{ item.get_tipo_curso_display }}</p></div>
+                        <form method="post" onsubmit="return confirm('Remover este registro?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="aba_ativa" value="formacao">
+                            <input type="hidden" name="remover_id" value="{{ item.pk }}">
+                            <button type="submit" class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover"><i class="fas fa-trash"></i></button>
+                        </form>
                     </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-6">Nenhum registro cadastrado.</p>
+                    {% endfor %}
+                    <form method="post" class="mt-6 bg-white border border-dashed border-gray-300 rounded-lg p-4" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="aba_ativa" value="formacao">
+                        {% include 'partials/form_fields.html' with form=formacao_form %}
+                        <div class="flex justify-end mt-4">
+                            <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"><i class="fas fa-plus mr-2"></i>Adicionar formação</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Duplo Vínculo Tab -->
+            <div x-show="activeTab === 'vinculos'" class="space-y-6">
+                <div class="bg-gray-50 rounded-lg p-6">
+                    <h3 class="text-lg font-semibold text-gray-800 mb-4">Duplo Vínculo</h3>
+                    {% for item in duplos_vinculos %}
+                    <div class="bg-white rounded-lg p-4 border border-gray-200 flex items-start justify-between mb-3">
+                        <div><h4 class="font-medium text-gray-900">Matrícula {{ item.matricula_secundaria }}</h4><p class="text-sm text-gray-600">{{ item.get_funcao_secundaria_display }} · {{ item.get_tipo_vinculo_secundario_display }} · desde {{ item.data_admissao_secundaria|date:"d/m/Y" }}</p></div>
+                        <form method="post" onsubmit="return confirm('Remover este registro?')">
+                            {% csrf_token %}
+                            <input type="hidden" name="aba_ativa" value="vinculos">
+                            <input type="hidden" name="remover_id" value="{{ item.pk }}">
+                            <button type="submit" class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover"><i class="fas fa-trash"></i></button>
+                        </form>
+                    </div>
+                    {% empty %}
+                    <p class="text-gray-500 text-center py-6">Nenhum registro cadastrado.</p>
+                    {% endfor %}
+                    <form method="post" class="mt-6 bg-white border border-dashed border-gray-300 rounded-lg p-4" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="aba_ativa" value="vinculos">
+                        {% include 'partials/form_fields.html' with form=vinculo_form %}
+                        <div class="flex justify-end mt-4">
+                            <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors"><i class="fas fa-plus mr-2"></i>Adicionar vínculo</button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -359,12 +436,14 @@
                                         </p>
                                     </div>
                                     <div class="flex space-x-2">
-                                        <button class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50" title="Editar">
-                                            <i class="fas fa-edit"></i>
-                                        </button>
-                                        <button class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover">
-                                            <i class="fas fa-trash"></i>
-                                        </button>
+                                        <form method="post" onsubmit="return confirm('Remover este registro?')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="aba_ativa" value="disciplinas">
+                                            <input type="hidden" name="remover_id" value="{{ disciplina.pk }}">
+                                            <button type="submit" class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
                                     </div>
                                 </div>
                             {% endfor %}
@@ -376,11 +455,16 @@
                         </div>
                     {% endif %}
 
-                    <div class="flex justify-end mt-6">
-                        <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                            <i class="fas fa-plus mr-2"></i>Adicionar Disciplina
-                        </button>
-                    </div>
+                    <form method="post" class="mt-6 bg-white border border-dashed border-gray-300 rounded-lg p-4" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="aba_ativa" value="disciplinas">
+                        {% include 'partials/form_fields.html' with form=disciplina_form %}
+                        <div class="flex justify-end mt-4">
+                            <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Adicionar Disciplina
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
 
@@ -401,12 +485,14 @@
                                             {% endif %}
                                         </div>
                                         <div class="flex space-x-2">
-                                            <button class="text-blue-600 hover:text-blue-800 p-2 rounded-lg hover:bg-blue-50" title="Editar">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover">
+                                            <form method="post" onsubmit="return confirm('Remover este registro?')">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="aba_ativa" value="deficiencias">
+                                            <input type="hidden" name="remover_id" value="{{ deficiencia.pk }}">
+                                            <button type="submit" class="text-red-600 hover:text-red-800 p-2 rounded-lg hover:bg-red-50" title="Remover">
                                                 <i class="fas fa-trash"></i>
                                             </button>
+                                        </form>
                                         </div>
                                     </div>
                                 </div>
@@ -420,11 +506,16 @@
                         </div>
                     {% endif %}
 
-                    <div class="flex justify-end mt-6">
-                        <button class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
-                            <i class="fas fa-plus mr-2"></i>Registrar Deficiência
-                        </button>
-                    </div>
+                    <form method="post" class="mt-6 bg-white border border-dashed border-gray-300 rounded-lg p-4" novalidate>
+                        {% csrf_token %}
+                        <input type="hidden" name="aba_ativa" value="deficiencias">
+                        {% include 'partials/form_fields.html' with form=deficiencia_form %}
+                        <div class="flex justify-end mt-4">
+                            <button type="submit" class="bg-purple-600 text-white px-6 py-2 rounded-lg hover:bg-purple-700 transition-colors">
+                                <i class="fas fa-plus mr-2"></i>Registrar Deficiência
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
         </div>
@@ -485,7 +576,7 @@ document.addEventListener('DOMContentLoaded', function() {
     updateProgress();
 
     // Tab navigation with Alpine.js integration
-    const tabs = ['pessoais', 'documentacao', 'funcionais', 'habilitacao', 'escolaridade', 'disponibilidade', 'disciplinas', 'deficiencias'];
+    const tabs = ['pessoais', 'documentacao', 'funcionais', 'habilitacao', 'formacao', 'vinculos', 'escolaridade', 'disponibilidade', 'disciplinas', 'deficiencias'];
     let currentTabIndex = 0;
 
     function updateTabNavigation() {

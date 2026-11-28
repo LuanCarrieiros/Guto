@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ title }} - Impressão</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>@page { size: A4 landscape; margin: 1cm; } .break-inside-avoid { break-inside: avoid; }</style>
+</head>
+<body class="bg-white text-gray-900 p-6">
+    <div class="flex items-center justify-between mb-6 print:hidden">
+        <button onclick="window.print()" class="px-4 py-2 bg-indigo-600 text-white rounded-lg">Imprimir</button>
+        <button onclick="window.close()" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-lg">Fechar</button>
+    </div>
+    <header class="text-center mb-6">
+        <h1 class="text-2xl font-bold">{{ title }}</h1>
+        <p class="text-sm text-gray-600">Emitido em {% now "d/m/Y H:i" %}</p>
+    </header>
+
+    {% if calendarios %}
+    <table class="w-full text-xs border border-gray-300 mb-6">
+        <thead class="bg-gray-100">
+            <tr><th class="p-2 text-left">Tipo de ensino</th><th class="p-2 text-left">Série</th><th class="p-2 text-left">Turno</th><th class="p-2 text-left">Período letivo</th><th class="p-2 text-right">Dias letivos</th></tr>
+        </thead>
+        <tbody>
+            {% for c in calendarios %}
+            <tr class="border-t border-gray-200">
+                <td class="p-2">{{ c.get_tipo_ensino_display }}</td>
+                <td class="p-2">{{ c.get_serie_display }}</td>
+                <td class="p-2">{{ c.get_turno_display }}</td>
+                <td class="p-2">{{ c.data_inicio_letivo|date:"d/m/Y" }} a {{ c.data_fim_letivo|date:"d/m/Y" }}</td>
+                <td class="p-2 text-right">{{ c.dias_letivos }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% endif %}
+
+    {% include 'opcoes/calendario/_meses.html' %}
+    <div class="mt-6">{% include 'opcoes/calendario/_legenda.html' %}</div>
+</body>
+</html>

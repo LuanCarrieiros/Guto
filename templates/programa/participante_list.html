@@ -1,0 +1,44 @@
+{% extends 'base.html' %}
+
+{% block title %}Participantes - {{ programa.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        {% url 'programa:programa_detail' programa.pk as programa_url %}
+        {% include 'partials/page_header.html' with title='Participantes' subtitle=programa.nome icon='fa-users' back_url=programa_url no_margin=True %}
+        {% if programa.vagas_restantes > 0 %}<a href="{% url 'programa:participante_create' programa.pk %}" class="btn-primary shrink-0"><i class="fas fa-user-plus"></i> Inscrever ({{ programa.vagas_restantes }} vaga{{ programa.vagas_restantes|pluralize }})</a>{% else %}<span class="badge badge-red">Sem vagas</span>{% endif %}
+    </div>
+    <div class="card">
+        {% if participantes %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Aluno</th><th>Inscrição</th><th>Frequência</th><th>Nota final</th><th>Situação</th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for p in participantes %}
+                    <tr class="{% if not p.ativo %}opacity-60{% endif %}">
+                        <td class="font-medium"><a href="{% url 'alunos:aluno_detail' p.aluno.pk %}" class="hover:text-indigo-600">{{ p.aluno.nome }}</a></td>
+                        <td>{{ p.data_inscricao|date:"d/m/Y" }}</td>
+                        <td>{{ p.frequencia_total|floatformat:0 }}%</td>
+                        <td>{{ p.nota_final|default:"—" }}</td>
+                        <td>
+                            <form method="post" class="guto-form">
+                                {% csrf_token %}
+                                <input type="hidden" name="participante" value="{{ p.pk }}">
+                                <select name="situacao" onchange="this.form.submit()" class="!py-1 !w-40">
+                                    {% for c, n in situacoes %}<option value="{{ c }}" {% if c == p.situacao %}selected{% endif %}>{{ n }}</option>{% endfor %}
+                                </select>
+                            </form>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% url 'programa:participante_create' programa.pk as inscrever_url %}
+            {% include 'partials/empty_state.html' with icon='fa-users' message='Nenhum participante inscrito.' action_url=inscrever_url action_label='Inscrever participante' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

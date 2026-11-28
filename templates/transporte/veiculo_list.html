@@ -1,0 +1,51 @@
+{% extends 'base.html' %}
+
+{% block title %}Veículos - Transporte - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-4">
+        {% include 'partials/page_header.html' with title='Veículos' subtitle='Frota do transporte escolar' icon='fa-bus' no_margin=True %}
+        <a href="{% url 'transporte:veiculo_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Novo veículo</a>
+    </div>
+    {% include 'transporte/_nav.html' %}
+    <div class="card">
+        <form method="get" class="card-header guto-form">
+            <div class="flex flex-wrap gap-3 flex-1">
+                <input type="search" name="busca" value="{{ busca }}" placeholder="Placa, marca ou modelo" class="!w-56">
+                <select name="tipo" class="!w-44"><option value="">Todos os tipos</option>{% for c, n in tipos_veiculo %}<option value="{{ c }}" {% if tipo|upper == c %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+                <select name="status" class="!w-44"><option value="">Todas as situações</option>{% for c, n in status_choices %}<option value="{{ c }}" {% if status|upper == c %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+                <select name="alerta" class="!w-48"><option value="">Sem alerta</option><option value="vistoria" {% if alerta == 'vistoria' %}selected{% endif %}>Vistoria vencida</option><option value="seguro" {% if alerta == 'seguro' %}selected{% endif %}>Seguro vencido</option></select>
+                <button type="submit" class="btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+            </div>
+        </form>
+        {% if page_obj %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Placa</th><th>Veículo</th><th>Tipo</th><th>Capacidade</th><th>Próxima vistoria</th><th>Situação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for v in page_obj %}
+                    <tr>
+                        <td class="font-mono font-semibold"><a href="{% url 'transporte:veiculo_detail' v.pk %}" class="hover:text-indigo-600">{{ v.placa }}</a></td>
+                        <td>{{ v.marca }} {{ v.modelo }} <span class="text-xs text-gray-500">{{ v.ano_fabricacao }}</span></td>
+                        <td>{{ v.get_tipo_veiculo_display }}</td>
+                        <td>{{ v.capacidade_passageiros }} lugares</td>
+                        <td>{% if v.proxima_vistoria %}{% if v.vistoria_vencida %}<span class="text-red-600 font-semibold">{{ v.proxima_vistoria|date:"d/m/Y" }}</span>{% else %}{{ v.proxima_vistoria|date:"d/m/Y" }}{% endif %}{% else %}—{% endif %}</td>
+                        <td><span class="badge {% if v.status == 'ATIVO' %}badge-green{% elif v.status == 'MANUTENCAO' %}badge-yellow{% else %}badge-gray{% endif %}">{{ v.get_status_display }}</span></td>
+                        <td class="text-right space-x-3">
+                            <a href="{% url 'transporte:veiculo_detail' v.pk %}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'transporte:veiculo_edit' v.pk %}" class="text-gray-600 hover:text-gray-800"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% include 'partials/pagination.html' %}
+        {% else %}
+            {% url 'transporte:veiculo_create' as novo_url %}
+            {% include 'partials/empty_state.html' with icon='fa-bus' message='Nenhum veículo encontrado.' action_url=novo_url action_label='Novo veículo' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -134,6 +134,42 @@
         </div>
     </div>
 
+    <!-- Disciplinas e professores -->
+    <div class="card mb-8">
+        <div class="card-header">
+            <div>
+                <h2 class="card-title">Disciplinas e professores</h2>
+                <p class="text-sm text-gray-500">Cada disciplina desta turma tem seu próprio professor{% if regente %}; regente: <strong>{{ regente.funcionario.nome|default:"sem docente" }}</strong>{% endif %}.</p>
+            </div>
+            <a href="{% url 'turma:gerenciar_disciplinas_turma' turma.pk %}" class="btn-secondary btn-sm"><i class="fas fa-book"></i> Disciplinas da turma</a>
+        </div>
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Disciplina</th><th>Professor</th><th>Desde</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for item in professores %}
+                    <tr>
+                        <td class="font-medium">{{ item.disciplina.nome }}</td>
+                        <td>
+                            {% if item.associacao.funcionario %}{{ item.associacao.funcionario.nome }}{% if item.associacao.tipo_associacao == 'TURMA' %} <span class="badge badge-purple">regente</span>{% endif %}
+                            {% elif item.associacao %}<span class="badge badge-yellow">Sem docente</span>
+                            {% else %}<span class="text-amber-600">Nenhum professor associado</span>{% endif %}
+                        </td>
+                        <td>{{ item.associacao.data_inicio|date:"d/m/Y"|default:"—" }}</td>
+                        <td class="text-right">
+                            {% if item.associacao and item.associacao.tipo_associacao == 'DISCIPLINA' %}
+                            <a href="{% url 'funcionarios:associacao_professor_edit' item.associacao.pk %}?next={{ request.path|urlencode }}" class="text-sm text-indigo-600 hover:underline">Editar / substituir</a>
+                            {% else %}
+                            <a href="{% url 'funcionarios:associacao_professor_create' %}?turma={{ turma.pk }}&disciplina={{ item.disciplina.pk }}&next={{ request.path|urlencode }}" class="text-sm text-indigo-600 hover:underline">Associar professor</a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
     <!-- Lista de Alunos Enturmados -->
     <div class="bg-white rounded-lg shadow overflow-hidden">
         <div class="px-6 py-4 border-b border-gray-200">
@@ -216,5 +252,19 @@
             </div>
         {% endif %}
     </div>
+
+    {% if historico_enturmacoes %}
+    <div class="card mt-8">
+        <div class="card-header"><h2 class="card-title">Saídas e transferências recentes</h2></div>
+        <ul class="divide-y divide-gray-100">
+            {% for e in historico_enturmacoes %}
+            <li class="px-6 py-3 text-sm flex justify-between gap-4">
+                <span><a href="{% url 'alunos:aluno_detail' e.aluno.pk %}" class="font-medium hover:text-indigo-600">{{ e.aluno.nome }}</a> <span class="text-gray-500">· {{ e.motivo_desenturmacao|default:"saiu da turma" }}</span></span>
+                <span class="text-gray-500">{{ e.data_enturmacao|date:"d/m/Y" }} – {{ e.data_desenturmacao|date:"d/m/Y" }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+    {% endif %}
 </div>
 {% endblock %}

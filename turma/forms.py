@@ -1,15 +1,28 @@
 from django import forms
-from django.core.exceptions import ValidationError
 from .models import (
-    Turma, Disciplina, DivisaoPeriodoLetivo, LancamentoNota, 
-    Conceito, AtestadoMedico, RecuperacaoEspecial, AulaRegistrada,
-    RegistroFrequencia, TipoAvaliacao, Avaliacao, NotaAvaliacao
+    Conceito,
+    Turma, Disciplina, DivisaoPeriodoLetivo, TipoAvaliacao, 
+    Avaliacao
 )
-from alunos.models import Aluno
-from funcionarios.models import Funcionario
+
+
+def mesmo_nome(nome, queryset, campo='nome'):
+    """Verifica nomes iguais ignorando maiúsculas, acentuação de caixa e espaços extras.
+    (Feito em Python porque o SQLite só compara maiúsculas/minúsculas de letras sem acento.)"""
+    alvo = ' '.join(nome.split()).casefold()
+    return any(' '.join(valor.split()).casefold() == alvo for valor in queryset.values_list(campo, flat=True))
 
 
 class TurmaForm(forms.ModelForm):
+    def clean(self):
+        dados = super().clean()
+        nome, periodo = dados.get('nome'), dados.get('periodo_letivo')
+        if nome and periodo and mesmo_nome(nome, Turma.objects.filter(periodo_letivo=periodo).exclude(pk=self.instance.pk)):
+            self.add_error('nome', f'Já existe uma turma com este nome em {periodo}.')
+        if nome:
+            dados['nome'] = ' '.join(nome.split())
+        return dados
+
     """Formulário para criação e edição de turmas"""
     
     class Meta:
@@ -86,6 +99,15 @@ class TurmaForm(forms.ModelForm):
 
 class DisciplinaForm(forms.ModelForm):
     """Formulário para criação e edição de disciplinas"""
+
+    def clean_nome(self):
+        nome = ' '.join(self.cleaned_data['nome'].split())
+        if mesmo_nome(nome, Disciplina.objects.exclude(pk=self.instance.pk)):
+            raise forms.ValidationError(
+                'Já existe uma disciplina com este nome. Uma disciplina (ex.: Matemática) é cadastrada '
+                'uma única vez e vinculada a várias turmas, cada uma com seu professor.'
+            )
+        return nome
     
     class Meta:
         model = Disciplina
@@ -142,156 +164,19 @@ class DivisaoPeriodoLetivoForm(forms.ModelForm):
             'data_fim': forms.DateInput(attrs={
                 'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500',
                 'type': 'date'
-            }),
-        }
-
-
-class EnturmacaoForm(forms.Form):
-    """Formulário para enturmação de alunos"""
-    
-    turma = forms.ModelChoiceField(
-        queryset=Turma.objects.all(),
-        empty_label="Selecione uma turma",
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-        })
-    )
-    
-    alunos = forms.ModelMultipleChoiceField(
-        queryset=Aluno.objects.filter(tipo_arquivo='CORRENTE'),
-        widget=forms.CheckboxSelectMultiple(attrs={
-            'class': 'form-checkbox text-green-600'
-        }),
-        required=False
-    )
-    
-    def __init__(self, *args, **kwargs):
-        turma_id = kwargs.pop('turma_id', None)
-        super().__init__(*args, **kwargs)
-        
-        if turma_id:
-            # Se uma turma específica foi selecionada, filtrar alunos disponíveis
-            from .models import Enturmacao
-            alunos_ja_enturmados = Enturmacao.objects.filter(
-                turma_id=turma_id
-            ).values_list('aluno_id', flat=True)
-            
-            self.fields['alunos'].queryset = Aluno.objects.filter(
-                tipo_arquivo='CORRENTE'
-            ).exclude(id__in=alunos_ja_enturmados)
-
-
-class LancamentoNotaForm(forms.ModelForm):
-    """Formulário para lançamento de notas"""
-    
-    class Meta:
-        model = LancamentoNota
-        fields = ['turma', 'disciplina', 'divisao_periodo', 'aluno', 'nota', 'conceito', 
-                  'aulas_previstas', 'aulas_lecionadas', 'faltas', 'faltas_justificadas']
-        
-        widgets = {
-            'turma': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'disciplina': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'divisao_periodo': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'aluno': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'nota': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'step': '0.1',
-                'min': '0',
-                'max': '10'
-            }),
-            'conceito': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'aulas_previstas': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'aulas_lecionadas': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'faltas': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'faltas_justificadas': forms.NumberInput(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-        }
-
-
-class AulaRegistradaForm(forms.ModelForm):
-    """Formulário para registro de aulas"""
-    
-    class Meta:
-        model = AulaRegistrada
-        fields = ['turma', 'disciplina', 'data_aula', 'horario_inicio', 'horario_fim', 
-                  'conteudo_programatico', 'observacoes']
-        
-        widgets = {
-            'turma': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'disciplina': forms.Select(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'data_aula': forms.DateInput(attrs={
-                'type': 'date',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'horario_inicio': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'horario_fim': forms.TimeInput(attrs={
-                'type': 'time',
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500'
-            }),
-            'conteudo_programatico': forms.Textarea(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
-                'rows': 4,
-                'placeholder': 'Descreva o conteúdo que será ministrado na aula...'
-            }),
-            'observacoes': forms.Textarea(attrs={
-                'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500',
-                'rows': 2,
-                'placeholder': 'Observações adicionais (opcional)...'
-            }),
+            }, format='%Y-%m-%d'),
         }
 
     def clean(self):
-        cleaned_data = super().clean()
-        horario_inicio = cleaned_data.get('horario_inicio')
-        horario_fim = cleaned_data.get('horario_fim')
-        
-        if horario_inicio and horario_fim and horario_fim <= horario_inicio:
-            raise ValidationError('O horário de fim deve ser posterior ao horário de início.')
-        
-        return cleaned_data
-
-
-class RegistroFrequenciaForm(forms.ModelForm):
-    """Formulário para registro de frequência"""
-    
-    class Meta:
-        model = RegistroFrequencia
-        fields = ['situacao', 'observacoes']
-        
-        widgets = {
-            'situacao': forms.Select(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'observacoes': forms.TextInput(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'placeholder': 'Observações...'
-            }),
-        }
+        dados = super().clean()
+        inicio, fim = dados.get('data_inicio'), dados.get('data_fim')
+        if inicio and fim and fim < inicio:
+            self.add_error('data_fim', 'A data de fim deve ser posterior ao início.')
+        periodo, ordem = dados.get('periodo_letivo'), dados.get('ordem')
+        if periodo and ordem and DivisaoPeriodoLetivo.objects.filter(
+                periodo_letivo=periodo, ordem=ordem).exclude(pk=self.instance.pk).exists():
+            self.add_error('ordem', f'Já existe uma divisão com a ordem {ordem} em {periodo}.')
+        return dados
 
 
 class TipoAvaliacaoForm(forms.ModelForm):
@@ -374,102 +259,50 @@ class AvaliacaoForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         user = kwargs.pop('user', None)
+        self.user = user
         super().__init__(*args, **kwargs)
         
-        if user and user.groups.filter(name='Professor').exists():
-            # Filtrar apenas turmas do professor
-            turmas_ids = AulaRegistrada.objects.filter(
-                professor=user
-            ).values_list('turma', flat=True).distinct()
-            self.fields['turma'].queryset = Turma.objects.filter(id__in=turmas_ids)
-
-
-class NotaAvaliacaoForm(forms.ModelForm):
-    """Formulário para lançamento de notas individuais"""
-    
-    class Meta:
-        model = NotaAvaliacao
-        fields = ['nota', 'conceito', 'observacoes', 'ausente', 'dispensado']
-        
-        widgets = {
-            'nota': forms.NumberInput(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'step': '0.01',
-                'min': '0'
-            }),
-            'conceito': forms.Select(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500'
-            }),
-            'observacoes': forms.TextInput(attrs={
-                'class': 'w-full px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-blue-500',
-                'placeholder': 'Observações...'
-            }),
-            'ausente': forms.CheckboxInput(attrs={
-                'class': 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
-            }),
-            'dispensado': forms.CheckboxInput(attrs={
-                'class': 'w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 rounded focus:ring-blue-500'
-            }),
-        }
+        if user is not None:
+            # Professores veem apenas as turmas em que estão associados
+            from diario.acesso import filtrar_turmas
+            self.fields['turma'].queryset = filtrar_turmas(user, Turma.objects.order_by('-periodo_letivo', 'nome'))
+        self.fields['disciplina'].queryset = Disciplina.objects.filter(ativo=True).order_by('nome')
 
     def clean(self):
-        cleaned_data = super().clean()
-        nota = cleaned_data.get('nota')
-        conceito = cleaned_data.get('conceito')
-        ausente = cleaned_data.get('ausente')
-        dispensado = cleaned_data.get('dispensado')
-        
-        if not ausente and not dispensado and not nota and not conceito:
-            raise ValidationError('Informe uma nota ou conceito, ou marque como ausente/dispensado.')
-        
-        if nota and conceito:
-            raise ValidationError('Informe apenas nota OU conceito, não ambos.')
-        
-        return cleaned_data
+        dados = super().clean()
+        turma, divisao, user = dados.get('turma'), dados.get('divisao_periodo'), self.user
+        if turma and divisao and divisao.periodo_letivo != turma.periodo_letivo:
+            self.add_error('divisao_periodo', f'O período deve ser do ano letivo da turma ({turma.periodo_letivo}).')
+        if turma and dados.get('disciplina') and user is not None:
+            from diario.acesso import pode_acessar
+            if not pode_acessar(user, turma, dados['disciplina']):
+                self.add_error('disciplina', 'Você não é o professor desta disciplina nesta turma.')
+        return dados
 
 
-class FiltroRelatorioForm(forms.Form):
-    """Formulário para filtros de relatórios"""
-    
-    turma = forms.ModelChoiceField(
-        queryset=Turma.objects.all(),
-        required=False,
-        empty_label="Todas as turmas",
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
-    
-    disciplina = forms.ModelChoiceField(
-        queryset=Disciplina.objects.all(),
-        required=False,
-        empty_label="Todas as disciplinas",
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
-    
-    periodo = forms.ModelChoiceField(
-        queryset=DivisaoPeriodoLetivo.objects.filter(ativo=True),
-        required=False,
-        empty_label="Todos os períodos",
-        widget=forms.Select(attrs={
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
-    
-    data_inicio = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
-    
-    data_fim = forms.DateField(
-        required=False,
-        widget=forms.DateInput(attrs={
-            'type': 'date',
-            'class': 'w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-500 focus:border-gray-500'
-        })
-    )
+class AvaliacaoDiarioForm(forms.ModelForm):
+    """Validação das avaliações criadas/editadas pelo diário (turma, disciplina e período vêm da URL)."""
+
+    class Meta:
+        model = Avaliacao
+        fields = ['nome', 'tipo_avaliacao', 'peso', 'data_aplicacao', 'descricao']
+
+    def clean_peso(self):
+        peso = self.cleaned_data['peso']
+        if peso is None or peso <= 0:
+            raise forms.ValidationError('O peso deve ser maior que zero.')
+        return peso
+
+
+class ConceitoForm(forms.ModelForm):
+    class Meta:
+        model = Conceito
+        fields = ['nome', 'descricao', 'valor_numerico', 'cor_display', 'ativo']
+        widgets = {'cor_display': forms.TextInput(attrs={'type': 'color'})}
+        help_texts = {'valor_numerico': 'Nota equivalente (0 a 10) usada no cálculo das médias.'}
+
+    def clean_nome(self):
+        nome = self.cleaned_data['nome'].strip().upper()
+        if mesmo_nome(nome, Conceito.objects.exclude(pk=self.instance.pk)):
+            raise forms.ValidationError('Já existe um conceito com este nome.')
+        return nome

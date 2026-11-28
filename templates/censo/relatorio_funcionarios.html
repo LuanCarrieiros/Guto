@@ -143,7 +143,7 @@
                 </div>
                 <div>
                     <p class="text-sm text-gray-600 font-medium">Atualizado em</p>
-                    <h3 class="text-lg font-bold text-gray-900">{{ "now"|date:"d/m/Y" }}</h3>
+                    <h3 class="text-lg font-bold text-gray-900">{% now "d/m/Y" %}</h3>
                 </div>
             </div>
         </div>
@@ -310,7 +310,7 @@
     <div class="print-only hidden mt-8 pt-4 border-t border-gray-200">
         <div class="text-center text-sm text-gray-600">
             <p>{{ title }} - GUTO Sistema de Gestão Educacional</p>
-            <p>Relatório gerado em {{ "now"|date:"d/m/Y H:i" }}</p>
+            <p>Relatório gerado em {% now "d/m/Y H:i" %}</p>
             <p>Total de {{ funcionarios.count }} funcionário{{ funcionarios.count|pluralize:"s" }}</p>
         </div>
     </div>

@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from datetime import date, timedelta
+from datetime import date
 from .models import (
     Motorista, Veiculo, Rota, PontoParada, 
     AlunoTransporte, RegistroViagem, ManutencaoVeiculo
@@ -153,8 +153,15 @@ class PontoParadaForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        rota = kwargs.pop('rota', None)
         super().__init__(*args, **kwargs)
         self.fields['rota'].queryset = Rota.objects.filter(ativa=True)
+        if rota is not None:
+            # Rota definida pela tela de origem
+            self.instance.rota = rota
+            del self.fields['rota']
+            if not self.instance.pk:
+                self.initial.setdefault('ordem', rota.pontos.count() + 1)
 
 
 class AlunoTransporteForm(forms.ModelForm):
@@ -181,20 +188,37 @@ class AlunoTransporteForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
+        rota = kwargs.pop('rota', None)
         super().__init__(*args, **kwargs)
-        self.fields['aluno'].queryset = Aluno.objects.filter(ativo=True)
+        self.fields['aluno'].queryset = Aluno.objects.filter(tipo_arquivo='CORRENTE').order_by('nome')
         self.fields['rota'].queryset = Rota.objects.filter(ativa=True)
-        
-        if self.instance.pk and self.instance.rota:
-            self.fields['ponto_embarque'].queryset = PontoParada.objects.filter(
-                rota=self.instance.rota, ativo=True
-            )
-            self.fields['ponto_desembarque'].queryset = PontoParada.objects.filter(
-                rota=self.instance.rota, ativo=True
-            )
+
+        rota = rota or (self.instance.rota if self.instance.pk else None)
+        if rota is not None:
+            self.instance.rota = rota
+            del self.fields['rota']
+            pontos = PontoParada.objects.filter(rota=rota, ativo=True).order_by('ordem')
         else:
-            self.fields['ponto_embarque'].queryset = PontoParada.objects.none()
-            self.fields['ponto_desembarque'].queryset = PontoParada.objects.none()
+            pontos = PontoParada.objects.filter(ativo=True, rota__ativa=True).select_related('rota')
+        self.fields['ponto_embarque'].queryset = pontos
+        self.fields['ponto_desembarque'].queryset = pontos
+
+    def clean(self):
+        cleaned_data = super().clean()
+        rota = cleaned_data.get('rota') or self.instance.rota
+        for campo in ('ponto_embarque', 'ponto_desembarque'):
+            ponto = cleaned_data.get(campo)
+            if ponto and rota and ponto.rota_id != rota.pk:
+                self.add_error(campo, 'O ponto deve pertencer à rota selecionada.')
+        aluno = cleaned_data.get('aluno')
+        if aluno and cleaned_data.get('ativo', True):
+            outros = AlunoTransporte.objects.filter(aluno=aluno, ativo=True).exclude(pk=self.instance.pk)
+            if outros.exists():
+                self.add_error('aluno', 'O aluno já está vinculado a outra rota ativa.')
+        inicio, fim = cleaned_data.get('data_inicio'), cleaned_data.get('data_fim')
+        if inicio and fim and fim < inicio:
+            self.add_error('data_fim', 'A data de término deve ser posterior ao início.')
+        return cleaned_data
 
 
 class RegistroViagemForm(forms.ModelForm):
@@ -260,6 +284,15 @@ class ManutencaoVeiculoForm(forms.ModelForm):
             'km_veiculo': forms.NumberInput(attrs={'class': 'form-input', 'min': '0'}),
             'observacoes': forms.Textarea(attrs={'class': 'form-textarea', 'rows': 3}),
         }
+
+    def __init__(self, *args, **kwargs):
+        veiculo = kwargs.pop('veiculo', None)
+        super().__init__(*args, **kwargs)
+        if veiculo is not None:
+            self.instance.veiculo = veiculo
+            del self.fields['veiculo']
+            if not self.instance.pk:
+                self.initial.setdefault('km_veiculo', veiculo.km_atual)
 
     def clean(self):
         cleaned_data = super().clean()

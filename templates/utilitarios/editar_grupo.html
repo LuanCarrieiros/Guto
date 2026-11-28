@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Grupo {{ grupo.nome }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto">
+    {% url 'utilitarios:gerenciar_grupos' as voltar_url %}
+    {% include 'partials/page_header.html' with title=grupo.nome subtitle='Dados do grupo e permissões por módulo' icon='fa-user-shield' back_url=voltar_url %}
+
+    <form method="post" class="space-y-6" novalidate>
+        {% csrf_token %}
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Dados do grupo</h2></div>
+            <div class="card-body">{% include 'partials/form_fields.html' with form=form %}</div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <div>
+                    <h2 class="card-title">Permissões</h2>
+                    <p class="text-sm text-gray-500">Marque "Restringir" para definir o que o grupo pode fazer no módulo. Módulos sem restrição ficam com acesso total.</p>
+                </div>
+            </div>
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Módulo</th><th class="text-center">Restringir</th>{% for c in campos %}<th class="text-center">{{ c|capfirst }}</th>{% endfor %}</tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for linha in matriz %}
+                        <tr x-data="{ restrito: {{ linha.restringir|yesno:'true,false' }} }">
+                            <td class="font-medium">{{ linha.nome }}</td>
+                            <td class="text-center"><input type="checkbox" name="{{ linha.codigo }}__restringir" x-model="restrito" class="form-checkbox" {% if linha.restringir %}checked{% endif %}></td>
+                            {% for campo, valor in linha.valores %}
+                            <td class="text-center"><input type="checkbox" name="{{ linha.codigo }}__{{ campo }}" class="form-checkbox" :disabled="!restrito" {% if valor %}checked{% endif %}></td>
+                            {% endfor %}
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Usuários do grupo ({{ usuarios|length }})</h2></div>
+            <div class="card-body">
+                {% for u in usuarios %}
+                <a href="{% url 'utilitarios:editar_usuario' u.pk %}" class="badge badge-blue mr-2 mb-2">{{ u.get_full_name|default:u.username }}</a>
+                {% empty %}
+                <p class="text-sm text-gray-500">Nenhum usuário. Vincule usuários pela tela de <a href="{% url 'utilitarios:gerenciar_usuarios' %}" class="text-indigo-600 hover:underline">usuários</a>.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div class="flex justify-end gap-3">
+            <a href="{{ voltar_url }}" class="btn-secondary">Cancelar</a>
+            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar grupo</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

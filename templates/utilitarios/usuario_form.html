@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ title }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    {% url 'utilitarios:gerenciar_usuarios' as voltar_url %}
+    {% include 'partials/page_header.html' with title=title subtitle='Dados de acesso, grupos e informações complementares' icon='fa-user-cog' back_url=voltar_url %}
+
+    <form method="post" class="space-y-6" novalidate>
+        {% csrf_token %}
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Acesso</h2></div>
+            <div class="card-body">
+                {% include 'partials/form_fields.html' with form=form %}
+                {% if not form.grupos.field.queryset.exists %}
+                <p class="form-help mt-3">Nenhum grupo de acesso cadastrado. <a href="{% url 'utilitarios:gerenciar_grupos' %}" class="text-indigo-600 hover:underline">Cadastrar grupos</a>.</p>
+                {% endif %}
+            </div>
+        </div>
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Dados complementares <span class="text-sm font-normal text-gray-500">(opcional)</span></h2></div>
+            <div class="card-body">{% include 'partials/form_fields.html' with form=perfil_form %}</div>
+        </div>
+        <div class="flex justify-end gap-3">
+            <a href="{{ voltar_url }}" class="btn-secondary">Cancelar</a>
+            <button type="submit" class="btn-primary"><i class="fas fa-save"></i> Salvar usuário</button>
+        </div>
+    </form>
+</div>
+{% endblock %}

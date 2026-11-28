@@ -13,10 +13,7 @@
             <a href="{% url 'diario:turma' turma.pk %}" class="hover:text-blue-600 transition-colors">🎓 {{ turma.nome }}</a>
             <i class="fas fa-chevron-right text-xs"></i>
             <a href="{% url 'diario:disciplina' turma.pk disciplina.pk %}" class="hover:text-blue-600 transition-colors">📖 {{ disciplina.nome }}</a>
-            {% if request.GET.divisao %}
-            <i class="fas fa-chevron-right text-xs"></i>
-            <a href="{% url 'diario:divisao' turma.pk disciplina.pk request.GET.divisao %}" class="hover:text-blue-600 transition-colors">📅 Período</a>
-            {% elif divisao %}
+            {% if divisao %}
             <i class="fas fa-chevron-right text-xs"></i>
             <a href="{% url 'diario:divisao' turma.pk disciplina.pk divisao.pk %}" class="hover:text-blue-600 transition-colors">📅 {{ divisao.nome }}</a>
             {% endif %}
@@ -37,17 +34,11 @@
                             🎓 {{ turma.get_turno_display }}
                         </span>
                         <span class="bg-white/20 px-3 py-1 rounded-full text-sm font-medium">
-                            📚 {{ avaliacoes.count }} avaliações
+                            📚 {{ avaliacoes|length }} avaliações
                         </span>
                     </div>
                 </div>
-                {% if request.GET.divisao %}
-                <a href="{% url 'diario:divisao' turma.pk disciplina.pk request.GET.divisao %}"
-                   class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
-                    <i class="fas fa-arrow-left mr-2"></i>
-                    Voltar ao Diário
-                </a>
-                {% elif divisao %}
+                {% if divisao %}
                 <a href="{% url 'diario:divisao' turma.pk disciplina.pk divisao.pk %}"
                    class="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-all duration-200 border border-white/30">
                     <i class="fas fa-arrow-left mr-2"></i>
@@ -175,7 +166,7 @@
                 
                 <!-- Botões -->
                 <div class="flex items-center justify-end gap-4 pt-4">
-                    <a href="{% url 'turma:lancar_notas_diario' turma_id=turma.pk %}?disciplina={{ disciplina.pk }}"
+                    <a href="{% url 'diario:lancar_notas' turma.pk disciplina.pk divisao.pk %}"
                        class="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors">
                         Cancelar
                     </a>
@@ -240,15 +231,16 @@
 
             <!-- Ações -->
             <div class="grid grid-cols-2 gap-3">
-                <a href="{% url 'turma:editar_avaliacao_diario' avaliacao.pk %}"
+                <a href="{% url 'diario:editar_avaliacao' avaliacao.pk %}"
                    class="text-center px-3 py-2 bg-gradient-to-r from-blue-400 to-cyan-500 hover:from-blue-500 hover:to-cyan-600 text-white font-bold rounded-lg transition-all duration-300 shadow-md transform hover:scale-105">
                     ✏️ Editar
                 </a>
-                <a href="{% url 'turma:excluir_avaliacao_diario' avaliacao.pk %}"
-                   class="text-center px-3 py-2 bg-gradient-to-r from-red-400 to-pink-500 hover:from-red-500 hover:to-pink-600 text-white font-bold rounded-lg transition-all duration-300 shadow-md transform hover:scale-105"
-                   onclick="return confirm('Tem certeza que deseja excluir esta avaliação?')">
-                    🗑️ Excluir
-                </a>
+                <form method="post" action="{% url 'diario:excluir_avaliacao' avaliacao.pk %}" onsubmit="return confirm('Tem certeza que deseja excluir esta avaliação?')">
+                    {% csrf_token %}
+                    <button type="submit" class="w-full text-center px-3 py-2 bg-gradient-to-r from-red-400 to-pink-500 hover:from-red-500 hover:to-pink-600 text-white font-bold rounded-lg transition-all duration-300 shadow-md transform hover:scale-105">
+                        🗑️ Excluir
+                    </button>
+                </form>
             </div>
         </div>
         {% endfor %}

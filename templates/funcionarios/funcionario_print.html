@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if tipo_relatorio == 'frequencia' %}Folha de Frequência{% else %}Lista de Funcionários{% endif %} - GUTO</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% include 'partials/ui_styles.html' %}
+    <style>
+        @page { size: A4 {% if tipo_relatorio == 'frequencia' %}landscape{% endif %}; margin: 1cm; }
+        table { border-collapse: collapse; }
+        .grade td, .grade th { border: 1px solid #9ca3af; }
+        .frequencia-funcionario { break-after: page; }
+    </style>
+</head>
+<body class="bg-white text-gray-900 p-6 text-sm">
+    <div class="flex gap-3 mb-6 no-print">
+        <button onclick="window.print()" class="btn-primary">Imprimir</button>
+        <button onclick="window.close()" class="btn-secondary">Fechar</button>
+    </div>
+
+    {% if tipo_relatorio == 'frequencia' %}
+        {% for f in funcionarios %}
+        <section class="frequencia-funcionario mb-8">
+            <header class="mb-3">
+                <h1 class="text-lg font-bold">Folha de Frequência — {{ mes_referencia|date:"F/Y" }}</h1>
+                <p>{{ f.nome }} · Matrícula {{ f.dados_funcionais.matricula|default:"—" }} · {{ f.dados_funcionais.get_funcao_display|default:"" }}</p>
+            </header>
+            <table class="grade w-full text-xs">
+                <thead class="bg-gray-100"><tr><th class="p-1 w-12">Dia</th><th class="p-1">Entrada</th><th class="p-1">Saída</th><th class="p-1">Entrada</th><th class="p-1">Saída</th><th class="p-1 w-1/3">Assinatura</th></tr></thead>
+                <tbody>{% for d in dias %}<tr><td class="p-1 text-center">{{ d }}</td><td></td><td></td><td></td><td></td><td></td></tr>{% endfor %}</tbody>
+            </table>
+        </section>
+        {% empty %}
+        <p>Nenhum funcionário encontrado para os filtros informados.</p>
+        {% endfor %}
+    {% else %}
+        <header class="text-center mb-6">
+            <h1 class="text-xl font-bold">Lista de Funcionários</h1>
+            <p class="text-gray-600">Emitida em {% now "d/m/Y H:i" %} · {{ funcionarios|length }} funcionário{{ funcionarios|length|pluralize }}</p>
+        </header>
+        <table class="grade w-full">
+            <thead class="bg-gray-100"><tr><th class="p-2 text-left">Código</th><th class="p-2 text-left">Matrícula</th><th class="p-2 text-left">Nome</th><th class="p-2 text-left">CPF</th><th class="p-2 text-left">Função</th></tr></thead>
+            <tbody>
+                {% for f in funcionarios %}
+                <tr><td class="p-2">{{ f.codigo }}</td><td class="p-2">{{ f.dados_funcionais.matricula|default:"—" }}</td><td class="p-2">{{ f.nome }}</td><td class="p-2">{{ f.documentacao.cpf|default:"—" }}</td><td class="p-2">{{ f.dados_funcionais.get_funcao_display|default:"—" }}</td></tr>
+                {% empty %}
+                <tr><td colspan="5" class="p-4 text-center">Nenhum funcionário encontrado.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
+</body>
+</html>

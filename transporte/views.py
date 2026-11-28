@@ -1,19 +1,46 @@
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib.auth.decorators import login_required
+from datetime import date, timedelta
+
 from django.contrib import messages
-from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
 from django.core.paginator import Paginator
-from django.db.models import Q, Count, Sum
-from django.utils import timezone
-from datetime import date, datetime, timedelta
-from .models import (
-    Motorista, Veiculo, Rota, PontoParada, AlunoTransporte, 
-    RegistroViagem, ManutencaoVeiculo
-)
+from django.db.models import Count, F, Q, Sum
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
+
+from dashboard.models import AtividadeRecente
 from .forms import (
-    MotoristaForm, VeiculoForm, RotaForm, PontoParadaForm, 
-    AlunoTransporteForm, RegistroViagemForm, ManutencaoVeiculoForm
+    AlunoTransporteForm, ManutencaoVeiculoForm, MotoristaForm, PontoParadaForm, RegistroViagemForm,
+    RotaForm, VeiculoForm,
 )
+from .models import (
+    AlunoTransporte, ManutencaoVeiculo, Motorista, PontoParada, RegistroViagem, Rota, Veiculo,
+)
+
+MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto',
+            'Setembro', 'Outubro', 'Novembro', 'Dezembro']
+
+
+def registrar(request, acao, objeto, descricao):
+    AtividadeRecente.registrar_atividade(
+        usuario=request.user, acao=acao, modulo='TRANSPORTE',
+        objeto_nome=str(objeto), objeto_id=objeto.pk, descricao=descricao,
+    )
+
+
+def km_percorridos(viagens):
+    """Soma dos km de cada viagem (km_final - km_inicial)."""
+    return viagens.filter(km_final__isnull=False, km_inicial__isnull=False).aggregate(
+        total=Sum(F('km_final') - F('km_inicial'))
+    )['total'] or 0
+
+
+def form_page(request, form, title, cancel_url, icon='fa-bus', subtitle=None, submit_label=None):
+    return render(request, 'generic/form.html', {
+        'form': form, 'title': title, 'subtitle': subtitle, 'icon': icon,
+        'cancel_url': cancel_url, 'submit_label': submit_label,
+    })
+
 
 @login_required
 def transporte_home(request):
@@ -40,7 +67,7 @@ def transporte_home(request):
             'titulo': 'CNHs Vencendo',
             'mensagem': f'{cnhs_vencendo} motorista(s) com CNH vencida ou vencendo em 30 dias',
             'icone': 'fa-id-card',
-            'link': '/transporte/motoristas/?alerta=cnh'
+            'link': reverse('transporte:motorista_list') + '?alerta=cnh'
         })
     
     # Veículos em manutenção
@@ -51,7 +78,7 @@ def transporte_home(request):
             'titulo': 'Veículos em Manutenção',
             'mensagem': f'{veiculos_manutencao} veículo(s) em manutenção',
             'icone': 'fa-wrench',
-            'link': '/transporte/veiculos/?status=manutencao'
+            'link': reverse('transporte:veiculo_list') + '?status=manutencao'
         })
     
     # Vistorias vencidas
@@ -65,13 +92,13 @@ def transporte_home(request):
             'titulo': 'Vistorias Vencidas',
             'mensagem': f'{vistorias_vencidas} veículo(s) com vistoria vencida',
             'icone': 'fa-clipboard-check',
-            'link': '/transporte/veiculos/?alerta=vistoria'
+            'link': reverse('transporte:veiculo_list') + '?alerta=vistoria'
         })
     
     # Rotas mais utilizadas
     rotas_populares = Rota.objects.filter(ativa=True).annotate(
-        total_alunos=Count('alunos_rota', filter=Q(alunos_rota__ativo=True))
-    ).order_by('-total_alunos')[:5]
+        alunos_ativos=Count('alunos_rota', filter=Q(alunos_rota__ativo=True))
+    ).order_by('-alunos_ativos')[:5]
     
     # Viagens recentes
     viagens_recentes = RegistroViagem.objects.select_related(
@@ -148,26 +175,17 @@ def motorista_list(request):
 
 @login_required
 def motorista_create(request):
-    """
-    Criar novo motorista
-    """
-    if request.method == 'POST':
-        form = MotoristaForm(request.POST)
-        if form.is_valid():
-            motorista = form.save(commit=False)
-            motorista.usuario_cadastro = request.user
-            motorista.save()
-            messages.success(request, f'Motorista "{motorista.nome}" criado com sucesso!')
-            return redirect('transporte:motorista_detail', pk=motorista.pk)
-    else:
-        form = MotoristaForm()
-    
-    context = {
-        'title': 'Novo Motorista',
-        'form': form,
-        'action': 'Criar'
-    }
-    return render(request, 'transporte/motorista_form.html', context)
+    """Criar novo motorista"""
+    form = MotoristaForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        motorista = form.save(commit=False)
+        motorista.usuario_cadastro = request.user
+        motorista.save()
+        registrar(request, 'CRIAR', motorista, 'Novo motorista cadastrado')
+        messages.success(request, f'Motorista "{motorista.nome}" criado com sucesso!')
+        return redirect('transporte:motorista_detail', pk=motorista.pk)
+    return form_page(request, form, 'Novo Motorista', reverse('transporte:motorista_list'),
+                     icon='fa-id-card', submit_label='Cadastrar motorista')
 
 @login_required
 def motorista_detail(request, pk):
@@ -186,9 +204,7 @@ def motorista_detail(request, pk):
     
     # Estatísticas
     total_viagens = RegistroViagem.objects.filter(motorista=motorista).count()
-    km_percorridos = RegistroViagem.objects.filter(
-        motorista=motorista
-    ).aggregate(total_km=Sum('km_final') - Sum('km_inicial'))['total_km'] or 0
+    km_total = km_percorridos(RegistroViagem.objects.filter(motorista=motorista))
     
     context = {
         'title': f'Motorista: {motorista.nome}',
@@ -196,58 +212,46 @@ def motorista_detail(request, pk):
         'rotas_ativas': rotas_ativas,
         'viagens_recentes': viagens_recentes,
         'total_viagens': total_viagens,
-        'km_percorridos': km_percorridos,
+        'km_percorridos': km_total,
     }
     return render(request, 'transporte/motorista_detail.html', context)
 
 @login_required
 def motorista_edit(request, pk):
-    """
-    Editar motorista
-    """
+    """Editar motorista"""
     motorista = get_object_or_404(Motorista, pk=pk)
-    
-    if request.method == 'POST':
-        form = MotoristaForm(request.POST, instance=motorista)
-        if form.is_valid():
-            form.save()
-            messages.success(request, f'Motorista "{motorista.nome}" atualizado com sucesso!')
-            return redirect('transporte:motorista_detail', pk=motorista.pk)
-    else:
-        form = MotoristaForm(instance=motorista)
-    
-    context = {
-        'title': f'Editar Motorista: {motorista.nome}',
-        'form': form,
-        'motorista': motorista,
-        'action': 'Salvar Alterações'
-    }
-    return render(request, 'transporte/motorista_form.html', context)
+    form = MotoristaForm(request.POST or None, instance=motorista)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        registrar(request, 'EDITAR', motorista, 'Motorista atualizado')
+        messages.success(request, f'Motorista "{motorista.nome}" atualizado com sucesso!')
+        return redirect('transporte:motorista_detail', pk=motorista.pk)
+    return form_page(request, form, 'Editar Motorista', reverse('transporte:motorista_detail', args=[pk]),
+                     icon='fa-id-card', subtitle=motorista.nome)
 
 @login_required
 def motorista_delete(request, pk):
-    """
-    Deletar motorista
-    """
+    """Excluir motorista (somente sem rotas ativas)"""
     motorista = get_object_or_404(Motorista, pk=pk)
-    
-    if request.method == 'POST':
-        # Verificar se tem vínculos ativos
-        rotas_ativas = Rota.objects.filter(motorista=motorista, ativa=True).count()
-        if rotas_ativas > 0:
-            messages.error(request, 'Não é possível excluir motorista com rotas ativas.')
-            return redirect('transporte:motorista_detail', pk=pk)
-        
+    if Rota.objects.filter(motorista=motorista, ativa=True).exists():
+        messages.error(request, 'Não é possível excluir motorista com rotas ativas.')
+        return redirect('transporte:motorista_detail', pk=pk)
+    if motorista.registroviagem_set.exists():
+        messages.error(request, 'Motorista possui viagens registradas. Desative-o em vez de excluir.')
+        return redirect('transporte:motorista_detail', pk=pk)
+
+    if request.method == 'POST' and request.POST.get('confirmar') == 'sim':
         nome_motorista = motorista.nome
+        registrar(request, 'DELETAR', motorista, 'Motorista excluído')
         motorista.delete()
         messages.success(request, f'Motorista "{nome_motorista}" excluído com sucesso!')
         return redirect('transporte:motorista_list')
-    
-    context = {
-        'title': f'Excluir Motorista: {motorista.nome}',
-        'motorista': motorista,
-    }
-    return render(request, 'transporte/motorista_confirm_delete.html', context)
+
+    return render(request, 'generic/confirm_delete.html', {
+        'title': 'Excluir Motorista',
+        'object_label': motorista.nome,
+        'cancel_url': reverse('transporte:motorista_detail', args=[pk]),
+    })
 
 # ================ VEÍCULOS ================
 
@@ -306,26 +310,46 @@ def veiculo_list(request):
 
 @login_required
 def veiculo_create(request):
-    """
-    Criar novo veículo
-    """
-    if request.method == 'POST':
-        form = VeiculoForm(request.POST)
-        if form.is_valid():
-            veiculo = form.save(commit=False)
-            veiculo.usuario_cadastro = request.user
-            veiculo.save()
-            messages.success(request, f'Veículo "{veiculo.placa}" criado com sucesso!')
-            return redirect('transporte:veiculo_detail', pk=veiculo.pk)
-    else:
-        form = VeiculoForm()
-    
-    context = {
-        'title': 'Novo Veículo',
-        'form': form,
-        'action': 'Criar'
-    }
-    return render(request, 'transporte/veiculo_form.html', context)
+    """Criar novo veículo"""
+    form = VeiculoForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        veiculo = form.save(commit=False)
+        veiculo.usuario_cadastro = request.user
+        veiculo.save()
+        registrar(request, 'CRIAR', veiculo, 'Novo veículo cadastrado')
+        messages.success(request, f'Veículo "{veiculo.placa}" criado com sucesso!')
+        return redirect('transporte:veiculo_detail', pk=veiculo.pk)
+    return form_page(request, form, 'Novo Veículo', reverse('transporte:veiculo_list'),
+                     icon='fa-bus', submit_label='Cadastrar veículo')
+
+
+@login_required
+def veiculo_edit(request, pk):
+    """Editar veículo"""
+    veiculo = get_object_or_404(Veiculo, pk=pk)
+    form = VeiculoForm(request.POST or None, instance=veiculo)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        registrar(request, 'EDITAR', veiculo, 'Veículo atualizado')
+        messages.success(request, f'Veículo "{veiculo.placa}" atualizado com sucesso!')
+        return redirect('transporte:veiculo_detail', pk=veiculo.pk)
+    return form_page(request, form, 'Editar Veículo', reverse('transporte:veiculo_detail', args=[pk]),
+                     icon='fa-bus', subtitle=f'{veiculo.placa} · {veiculo.marca} {veiculo.modelo}')
+
+
+@login_required
+def manutencao_create(request, veiculo_pk):
+    """Registrar manutenção para um veículo"""
+    veiculo = get_object_or_404(Veiculo, pk=veiculo_pk)
+    form = ManutencaoVeiculoForm(request.POST or None, veiculo=veiculo)
+    if request.method == 'POST' and form.is_valid():
+        manutencao = form.save(commit=False)
+        manutencao.usuario_cadastro = request.user
+        manutencao.save()
+        messages.success(request, 'Manutenção registrada com sucesso!')
+        return redirect('transporte:veiculo_detail', pk=veiculo.pk)
+    return form_page(request, form, 'Registrar Manutenção', reverse('transporte:veiculo_detail', args=[veiculo.pk]),
+                     icon='fa-wrench', subtitle=f'Veículo {veiculo.placa}', submit_label='Registrar')
 
 @login_required
 def veiculo_detail(request, pk):
@@ -349,9 +373,7 @@ def veiculo_detail(request, pk):
     
     # Estatísticas
     total_viagens = RegistroViagem.objects.filter(veiculo=veiculo).count()
-    total_km = RegistroViagem.objects.filter(
-        veiculo=veiculo
-    ).aggregate(total=Sum('km_final') - Sum('km_inicial'))['total'] or 0
+    total_km = km_percorridos(RegistroViagem.objects.filter(veiculo=veiculo))
     
     context = {
         'title': f'Veículo: {veiculo.placa}',
@@ -371,8 +393,8 @@ def rota_list(request):
     """
     Lista de rotas
     """
-    rotas = Rota.objects.annotate(
-        total_alunos=Count('alunos_rota', filter=Q(alunos_rota__ativo=True))
+    rotas = Rota.objects.select_related('veiculo', 'motorista').annotate(
+        alunos_ativos=Count('alunos_rota', filter=Q(alunos_rota__ativo=True))
     )
     
     # Filtros
@@ -410,26 +432,57 @@ def rota_list(request):
 
 @login_required
 def rota_create(request):
-    """
-    Criar nova rota
-    """
-    if request.method == 'POST':
-        form = RotaForm(request.POST)
-        if form.is_valid():
-            rota = form.save(commit=False)
-            rota.usuario_cadastro = request.user
-            rota.save()
-            messages.success(request, f'Rota "{rota.nome}" criada com sucesso!')
-            return redirect('transporte:rota_detail', pk=rota.pk)
-    else:
-        form = RotaForm()
-    
-    context = {
-        'title': 'Nova Rota',
-        'form': form,
-        'action': 'Criar'
-    }
-    return render(request, 'transporte/rota_form.html', context)
+    """Criar nova rota"""
+    form = RotaForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        rota = form.save(commit=False)
+        rota.usuario_cadastro = request.user
+        rota.save()
+        registrar(request, 'CRIAR', rota, 'Nova rota cadastrada')
+        messages.success(request, f'Rota "{rota.nome}" criada. Cadastre agora os pontos de parada.')
+        return redirect('transporte:rota_detail', pk=rota.pk)
+    return form_page(request, form, 'Nova Rota', reverse('transporte:rota_list'),
+                     icon='fa-route', submit_label='Criar rota')
+
+
+@login_required
+def rota_edit(request, pk):
+    """Editar rota"""
+    rota = get_object_or_404(Rota, pk=pk)
+    form = RotaForm(request.POST or None, instance=rota)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        registrar(request, 'EDITAR', rota, 'Rota atualizada')
+        messages.success(request, f'Rota "{rota.nome}" atualizada com sucesso!')
+        return redirect('transporte:rota_detail', pk=rota.pk)
+    return form_page(request, form, 'Editar Rota', reverse('transporte:rota_detail', args=[pk]),
+                     icon='fa-route', subtitle=rota.nome)
+
+
+@login_required
+def ponto_create(request, rota_pk):
+    """Cadastrar ponto de parada na rota"""
+    rota = get_object_or_404(Rota, pk=rota_pk)
+    form = PontoParadaForm(request.POST or None, rota=rota)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Ponto de parada cadastrado com sucesso!')
+        return redirect('transporte:rota_detail', pk=rota.pk)
+    return form_page(request, form, 'Novo Ponto de Parada', reverse('transporte:rota_detail', args=[rota.pk]),
+                     icon='fa-map-marker-alt', subtitle=f'Rota {rota.nome}', submit_label='Cadastrar ponto')
+
+
+@login_required
+def ponto_edit(request, pk):
+    """Editar ponto de parada"""
+    ponto = get_object_or_404(PontoParada, pk=pk)
+    form = PontoParadaForm(request.POST or None, instance=ponto, rota=ponto.rota)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Ponto de parada atualizado com sucesso!')
+        return redirect('transporte:rota_detail', pk=ponto.rota_id)
+    return form_page(request, form, 'Editar Ponto de Parada', reverse('transporte:rota_detail', args=[ponto.rota_id]),
+                     icon='fa-map-marker-alt', subtitle=ponto.nome)
 
 @login_required
 def rota_detail(request, pk):
@@ -511,6 +564,60 @@ def aluno_transporte_list(request):
     }
     return render(request, 'transporte/aluno_transporte_list.html', context)
 
+
+@login_required
+def aluno_transporte_create(request, rota_pk):
+    """Vincular aluno a uma rota"""
+    rota = get_object_or_404(Rota, pk=rota_pk)
+    detalhe_url = reverse('transporte:rota_detail', args=[rota.pk])
+    if not rota.pontos.filter(ativo=True).exists():
+        messages.error(request, 'Cadastre ao menos um ponto de parada antes de vincular alunos.')
+        return redirect(detalhe_url)
+    form = AlunoTransporteForm(request.POST or None, rota=rota, initial={'data_inicio': date.today()})
+    if request.method == 'POST' and form.is_valid():
+        vinculo = form.save(commit=False)
+        vinculo.usuario_cadastro = request.user
+        vinculo.save()
+        registrar(request, 'CRIAR', vinculo.aluno, f'Aluno vinculado à rota {rota.nome}')
+        messages.success(request, f'{vinculo.aluno.nome} vinculado(a) à rota {rota.nome}.')
+        return redirect(detalhe_url)
+    return form_page(request, form, 'Vincular Aluno à Rota', detalhe_url,
+                     icon='fa-user-plus', subtitle=rota.nome, submit_label='Vincular')
+
+
+@login_required
+def aluno_transporte_edit(request, pk):
+    """Editar vínculo do aluno com o transporte"""
+    vinculo = get_object_or_404(AlunoTransporte.objects.select_related('aluno', 'rota'), pk=pk)
+    form = AlunoTransporteForm(request.POST or None, instance=vinculo)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        messages.success(request, 'Dados de transporte do aluno atualizados.')
+        return redirect('transporte:rota_detail', pk=vinculo.rota_id)
+    return form_page(request, form, 'Editar Transporte do Aluno', reverse('transporte:rota_detail', args=[vinculo.rota_id]),
+                     icon='fa-user-edit', subtitle=f'{vinculo.aluno.nome} · {vinculo.rota.nome}')
+
+
+@login_required
+def viagem_create(request):
+    """Registrar uma viagem realizada"""
+    rota = Rota.objects.filter(pk=request.GET.get('rota')).select_related('motorista', 'veiculo').first()
+    inicial = {'data_viagem': date.today()}
+    if rota:
+        inicial.update({'rota': rota.pk, 'motorista': rota.motorista_id, 'veiculo': rota.veiculo_id})
+    form = RegistroViagemForm(request.POST or None, initial=inicial)
+    if request.method == 'POST' and form.is_valid():
+        viagem = form.save(commit=False)
+        viagem.usuario_cadastro = request.user
+        viagem.save()
+        if viagem.km_final and viagem.km_final > (viagem.veiculo.km_atual or 0):
+            viagem.veiculo.km_atual = viagem.km_final
+            viagem.veiculo.save(update_fields=['km_atual'])
+        messages.success(request, 'Viagem registrada com sucesso!')
+        return redirect('transporte:rota_detail', pk=viagem.rota_id)
+    cancelar = reverse('transporte:rota_detail', args=[rota.pk]) if rota else reverse('transporte:transporte_home')
+    return form_page(request, form, 'Registrar Viagem', cancelar, icon='fa-road', submit_label='Registrar viagem')
+
 @login_required
 def relatorio_transporte(request):
     """
@@ -526,9 +633,7 @@ def relatorio_transporte(request):
     ).count()
     
     # KM percorridos no mês
-    km_mes = RegistroViagem.objects.filter(
-        data_viagem__gte=inicio_mes
-    ).aggregate(total=Sum('km_final') - Sum('km_inicial'))['total'] or 0
+    km_mes = km_percorridos(RegistroViagem.objects.filter(data_viagem__gte=inicio_mes))
     
     # Alunos transportados no mês
     alunos_mes = RegistroViagem.objects.filter(
@@ -556,7 +661,7 @@ def relatorio_transporte(request):
         'alunos_mes': alunos_mes,
         'rotas_por_turno': rotas_por_turno,
         'veiculos_por_tipo': veiculos_por_tipo,
-        'mes_atual': inicio_mes.strftime('%B %Y'),
+        'mes_atual': f'{MESES_PT[inicio_mes.month - 1]} {inicio_mes.year}',
     }
     return render(request, 'transporte/relatorio_transporte.html', context)
 
@@ -572,21 +677,3 @@ def ajax_pontos_rota(request, rota_id):
     ).values('id', 'nome', 'ordem').order_by('ordem')
     
     return JsonResponse({'pontos': list(pontos)})
-
-@login_required
-def ajax_alunos_sem_transporte(request):
-    """
-    Retorna alunos que não têm transporte ativo
-    """
-    from alunos.models import Aluno
-    
-    # Alunos que não estão em nenhuma rota ativa
-    alunos_com_transporte = AlunoTransporte.objects.filter(
-        ativo=True
-    ).values_list('aluno_id', flat=True)
-    
-    alunos_sem_transporte = Aluno.objects.exclude(
-        id__in=alunos_com_transporte
-    ).values('id', 'nome', 'codigo').order_by('nome')
-    
-    return JsonResponse({'alunos': list(alunos_sem_transporte)})

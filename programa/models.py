@@ -2,7 +2,6 @@ from django.db import models
 from django.contrib.auth.models import User
 from alunos.models import Aluno
 from funcionarios.models import Funcionario
-from datetime import date
 
 class ProgramaPedagogico(models.Model):
     TIPO_PROGRAMA_CHOICES = [
@@ -104,10 +103,6 @@ class ProgramaPedagogico(models.Model):
     def vagas_restantes(self):
         return self.vagas_disponiveis - self.total_participantes
     
-    @property
-    def programa_em_andamento(self):
-        today = date.today()
-        return self.data_inicio <= today <= self.data_fim and self.status == 'ATIVO'
 
 class ModuloPrograma(models.Model):
     programa = models.ForeignKey(ProgramaPedagogico, on_delete=models.CASCADE, related_name='modulos', verbose_name="Programa")
@@ -147,9 +142,6 @@ class ModuloPrograma(models.Model):
     def __str__(self):
         return f"{self.programa.nome} - Módulo {self.ordem}: {self.nome}"
     
-    @property
-    def dias_duracao(self):
-        return (self.data_fim - self.data_inicio).days + 1
 
 class ParticipantePrograma(models.Model):
     SITUACAO_CHOICES = [
@@ -366,6 +358,3 @@ class NotaPrograma(models.Model):
     def __str__(self):
         return f"{self.participante.aluno.nome} - {self.avaliacao.nome} ({self.nota})"
     
-    @property
-    def nota_percentual(self):
-        return (self.nota / self.avaliacao.nota_maxima) * 100

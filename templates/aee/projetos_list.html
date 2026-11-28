@@ -1,0 +1,48 @@
+{% extends 'base.html' %}
+
+{% block title %}Projetos Pedagógicos - AEE - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
+        {% url 'aee:aee_home' as home_url %}
+        {% include 'partials/page_header.html' with title='Projetos Pedagógicos' subtitle='Projetos de AEE e Atividade Complementar' icon='fa-lightbulb' back_url=home_url no_margin=True %}
+        <a href="{% url 'aee:projeto_create' %}" class="btn-primary shrink-0"><i class="fas fa-plus"></i> Novo projeto</a>
+    </div>
+    <div class="card">
+        <form method="get" class="card-header guto-form">
+            <div class="flex flex-wrap gap-3 flex-1">
+                <select name="tipo" class="!w-72"><option value="">Todos os tipos</option>{% for c, n in tipos %}<option value="{{ c }}" {% if c == tipo_projeto %}selected{% endif %}>{{ n }}</option>{% endfor %}</select>
+                <select name="periodo" class="!w-40"><option value="">Todos os anos</option>{% for p in periodos %}<option value="{{ p }}" {% if p == periodo_letivo %}selected{% endif %}>{{ p }}</option>{% endfor %}</select>
+                <button type="submit" class="btn-secondary"><i class="fas fa-filter"></i> Filtrar</button>
+            </div>
+        </form>
+        {% if projetos %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead><tr><th>Projeto</th><th>Tipo</th><th>Período</th><th>Carga semanal</th><th>Turmas</th><th>Situação</th><th></th></tr></thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for p in projetos %}
+                    <tr>
+                        <td class="font-medium"><a href="{% url 'aee:projeto_detail' p.pk %}" class="hover:text-indigo-600">{{ p.nome }}</a></td>
+                        <td><span class="badge {% if p.tipo_projeto == 'AEE' %}badge-purple{% else %}badge-blue{% endif %}">{{ p.tipo_projeto }}</span></td>
+                        <td>{{ p.periodo_letivo }}</td>
+                        <td>{{ p.carga_horaria }}h</td>
+                        <td>{{ p.total_turmas }}</td>
+                        <td>{% if p.ativo %}<span class="badge badge-green">Ativo</span>{% else %}<span class="badge badge-gray">Inativo</span>{% endif %}</td>
+                        <td class="text-right space-x-3">
+                            <a href="{% url 'aee:projeto_detail' p.pk %}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-eye"></i></a>
+                            <a href="{% url 'aee:projeto_edit' p.pk %}" class="text-gray-600 hover:text-gray-800"><i class="fas fa-edit"></i></a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+            {% url 'aee:projeto_create' as novo_url %}
+            {% include 'partials/empty_state.html' with icon='fa-lightbulb' message='Nenhum projeto encontrado.' action_url=novo_url action_label='Novo projeto' %}
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

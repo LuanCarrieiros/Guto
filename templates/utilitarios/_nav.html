@@ -1,0 +1,15 @@
+{% comment %}Navegação entre as telas de Utilitários.{% endcomment %}
+{% with atual=request.resolver_match.url_name %}
+<nav class="flex flex-wrap gap-2 mb-6 no-print">
+    <a href="{% url 'utilitarios:dashboard' %}" class="btn-sm btn {% if atual == 'dashboard' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-tools"></i> Início</a>
+    <a href="{% url 'utilitarios:gerenciar_usuarios' %}" class="btn-sm btn {% if atual == 'gerenciar_usuarios' or atual == 'criar_usuario' or atual == 'editar_usuario' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-user"></i> Usuários</a>
+    <a href="{% url 'utilitarios:gerenciar_grupos' %}" class="btn-sm btn {% if atual == 'gerenciar_grupos' or atual == 'editar_grupo' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-user-shield"></i> Grupos</a>
+    <a href="{% url 'utilitarios:instituicoes' %}" class="btn-sm btn {% if atual == 'instituicoes' or atual == 'editar_instituicao' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-school"></i> Instituições</a>
+    <a href="{% url 'utilitarios:solicitacoes_transferencia' %}" class="btn-sm btn {% if atual == 'solicitacoes_transferencia' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-exchange-alt"></i> Transferências</a>
+    <a href="{% url 'utilitarios:tipos_avaliacao' %}" class="btn-sm btn {% if atual == 'tipos_avaliacao' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-clipboard-list"></i> Tipos de avaliação</a>
+    <a href="{% url 'utilitarios:dados_adicionais' %}" class="btn-sm btn {% if atual == 'dados_adicionais' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-list-alt"></i> Dados adicionais</a>
+    <a href="{% url 'utilitarios:configuracoes_sistema' %}" class="btn-sm btn {% if atual == 'configuracoes_sistema' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-sliders-h"></i> Configurações</a>
+    <a href="{% url 'utilitarios:bloqueios_funcionalidade' %}" class="btn-sm btn {% if atual == 'bloqueios_funcionalidade' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-ban"></i> Bloqueios</a>
+    <a href="{% url 'utilitarios:auditoria' %}" class="btn-sm btn {% if atual == 'auditoria' %}bg-teal-600 text-white{% else %}bg-white border border-gray-200 text-gray-700 hover:bg-gray-50{% endif %}"><i class="fas fa-history"></i> Auditoria</a>
+</nav>
+{% endwith %}

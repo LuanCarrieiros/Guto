@@ -1,6 +1,6 @@
 from django import forms
 from django.core.exceptions import ValidationError
-from .models import ItinerarioFormativo, UnidadeCurricular, EnturmacaoItinerario
+from .models import AssociacaoItinerarioUnidade, EnturmacaoItinerario, ItinerarioFormativo, UnidadeCurricular
 from alunos.models import Aluno
 
 class ItinerarioFormativoForm(forms.ModelForm):
@@ -103,3 +103,24 @@ class EnturmacaoItinerarioForm(forms.ModelForm):
             self.fields['aluno'].queryset = self.fields['aluno'].queryset.exclude(
                 pk__in=alunos_enturmados
             )
+
+class AssociacaoUnidadeForm(forms.ModelForm):
+    """Adiciona uma unidade curricular à grade de um itinerário"""
+
+    class Meta:
+        model = AssociacaoItinerarioUnidade
+        fields = ['unidade', 'ordem']
+
+    def __init__(self, *args, **kwargs):
+        self.itinerario = kwargs.pop('itinerario')
+        super().__init__(*args, **kwargs)
+        ja_associadas = self.itinerario.unidades.values_list('unidade_id', flat=True)
+        self.fields['unidade'].queryset = UnidadeCurricular.objects.exclude(pk__in=ja_associadas).order_by('nome')
+        self.fields['unidade'].empty_label = 'Selecione uma unidade...'
+        self.fields['ordem'].initial = self.itinerario.unidades.count() + 1
+
+    def clean_unidade(self):
+        unidade = self.cleaned_data['unidade']
+        if self.itinerario.unidades.filter(unidade=unidade).exists():
+            raise ValidationError('Esta unidade já faz parte do itinerário.')
+        return unidade

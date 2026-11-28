@@ -1,0 +1,43 @@
+{% extends 'base.html' %}
+
+{% block title %}Instituições - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    {% include 'partials/page_header.html' with title='Instituições' subtitle='Escolas, secretarias e órgãos usados em transferências e associações' icon='fa-school' %}
+    {% include 'utilitarios/_nav.html' %}
+
+    <div class="grid lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card">
+            <div class="card-header"><h2 class="card-title">Instituições cadastradas</h2></div>
+            {% if instituicoes %}
+            <div class="table-responsive">
+                <table class="table">
+                    <thead><tr><th>Nome</th><th>Código</th><th>Tipo</th><th>Superior</th><th>Situação</th><th></th></tr></thead>
+                    <tbody class="divide-y divide-gray-100">
+                        {% for i in instituicoes %}
+                        <tr>
+                            <td class="font-medium">{{ i.nome }}</td>
+                            <td>{{ i.codigo }}</td>
+                            <td>{{ i.get_tipo_instituicao_display }}</td>
+                            <td>{{ i.instituicao_pai.nome|default:"—" }}</td>
+                            <td>{% if i.ativo %}<span class="badge badge-green">Ativa</span>{% else %}<span class="badge badge-gray">Inativa</span>{% endif %}</td>
+                            <td class="text-right"><a href="{% url 'utilitarios:editar_instituicao' i.pk %}" class="text-indigo-600 hover:text-indigo-800"><i class="fas fa-edit"></i></a></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+                {% include 'partials/empty_state.html' with icon='fa-school' message='Nenhuma instituição cadastrada.' %}
+            {% endif %}
+        </div>
+        <form method="post" class="card self-start" novalidate>
+            {% csrf_token %}
+            <div class="card-header"><h2 class="card-title">Nova instituição</h2></div>
+            <div class="card-body">{% include 'partials/form_fields.html' with form=form %}</div>
+            <div class="px-6 py-4 border-t border-gray-100 flex justify-end"><button type="submit" class="btn-primary"><i class="fas fa-plus"></i> Cadastrar</button></div>
+        </form>
+    </div>
+</div>
+{% endblock %}

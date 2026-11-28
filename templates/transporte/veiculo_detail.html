@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Veículo {{ veiculo.placa }} - GUTO{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {% url 'transporte:veiculo_list' as lista_url %}
+        {% with sub=veiculo.marca|add:" "|add:veiculo.modelo %}
+        {% include 'partials/page_header.html' with title=veiculo.placa subtitle=sub icon='fa-bus' back_url=lista_url no_margin=True %}
+        {% endwith %}
+        <div class="flex gap-3 shrink-0">
+            <a href="{% url 'transporte:veiculo_edit' veiculo.pk %}" class="btn-secondary"><i class="fas fa-edit"></i> Editar</a>
+            <a href="{% url 'transporte:manutencao_create' veiculo.pk %}" class="btn-primary"><i class="fas fa-wrench"></i> Registrar manutenção</a>
+        </div>
+    </div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div class="card card-body"><p class="detail-label">Situação</p><p class="mt-1"><span class="badge {% if veiculo.status == 'ATIVO' %}badge-green{% elif veiculo.status == 'MANUTENCAO' %}badge-yellow{% else %}badge-gray{% endif %}">{{ veiculo.get_status_display }}</span></p></div>
+        <div class="card card-body"><p class="detail-label">Km atual</p><p class="text-2xl font-bold">{{ veiculo.km_atual|default:0 }}</p></div>
+        <div class="card card-body"><p class="detail-label">Viagens</p><p class="text-2xl font-bold">{{ total_viagens }}</p></div>
+        <div class="card card-body"><p class="detail-label">Km em viagens</p><p class="text-2xl font-bold">{{ total_km }}</p></div>
+    </div>
+    <div class="card card-body">
+        <div class="detail-grid">
+            <div><p class="detail-label">Tipo</p><p class="detail-value">{{ veiculo.get_tipo_veiculo_display }}</p></div>
+            <div><p class="detail-label">Ano / cor</p><p class="detail-value">{{ veiculo.ano_fabricacao }} · {{ veiculo.cor|default:"—" }}</p></div>
+            <div><p class="detail-label">Capacidade</p><p class="detail-value">{{ veiculo.capacidade_passageiros }} passageiros</p></div>
+            <div><p class="detail-label">RENAVAM</p><p class="detail-value">{{ veiculo.renavam|default:"—" }}</p></div>
+            <div><p class="detail-label">Chassi</p><p class="detail-value">{{ veiculo.chassi|default:"—" }}</p></div>
+            <div><p class="detail-label">Vistoria</p><p class="detail-value">Última: {{ veiculo.data_ultima_vistoria|date:"d/m/Y"|default:"—" }} · Próxima: {{ veiculo.proxima_vistoria|date:"d/m/Y"|default:"—" }}{% if veiculo.vistoria_vencida %} <span class="text-red-600 font-semibold">(vencida)</span>{% endif %}</p></div>
+            <div><p class="detail-label">Seguro</p><p class="detail-value">{{ veiculo.seguradora|default:"—" }} {% if veiculo.numero_apolice %}· apólice {{ veiculo.numero_apolice }}{% endif %}</p></div>
+            <div><p class="detail-label">Validade do seguro</p><p class="detail-value {% if veiculo.seguro_vencido %}text-red-600 font-semibold{% endif %}">{{ veiculo.validade_seguro|date:"d/m/Y"|default:"—" }}{% if veiculo.seguro_vencido %} (vencido){% endif %}</p></div>
+        </div>
+    </div>
+    <div class="grid lg:grid-cols-2 gap-6">
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Manutenções</h2></div>
+            <ul class="divide-y divide-gray-100">
+                {% for m in manutencoes %}
+                <li class="px-6 py-3 text-sm flex justify-between gap-4">
+                    <div><p class="font-medium">{{ m.get_tipo_manutencao_display }} · {{ m.data_agendamento|date:"d/m/Y" }}</p><p class="text-xs text-gray-500">{{ m.descricao|truncatechars:80 }}</p></div>
+                    <span class="badge {% if m.status == 'CONCLUIDA' %}badge-green{% elif m.status == 'CANCELADA' %}badge-gray{% else %}badge-yellow{% endif %} self-start">{{ m.get_status_display }}</span>
+                </li>
+                {% empty %}<li class="px-6 py-4 text-sm text-gray-500">Nenhuma manutenção registrada.</li>{% endfor %}
+            </ul>
+        </div>
+        <div class="card">
+            <div class="card-header"><h2 class="card-title">Rotas e viagens</h2></div>
+            <div class="px-6 py-3 border-b border-gray-100 text-sm">
+                {% for r in rotas_ativas %}<a href="{% url 'transporte:rota_detail' r.pk %}" class="badge badge-blue mr-1">{{ r.nome }}</a>{% empty %}<span class="text-gray-500">Sem rotas ativas.</span>{% endfor %}
+            </div>
+            <ul class="divide-y divide-gray-100">
+                {% for v in viagens_recentes %}<li class="px-6 py-3 text-sm">{{ v.data_viagem|date:"d/m/Y" }} · {{ v.get_tipo_viagem_display }} · {{ v.rota.nome }} <span class="text-gray-500">({{ v.motorista.nome }})</span></li>
+                {% empty %}<li class="px-6 py-4 text-sm text-gray-500">Nenhuma viagem registrada.</li>{% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}
